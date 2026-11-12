@@ -4,6 +4,8 @@ namespace Microsoft.AspNetCore.Hosting;
 
 internal static class MigrateDbContextExtensions
 {
+    public const string SeedingDisabledKey = "Seeding:Disabled";
+
     private static readonly string ActivitySourceName = "DbMigrations";
     private static readonly ActivitySource ActivitySource = new(ActivitySourceName);
 
@@ -63,6 +65,15 @@ internal static class MigrateDbContextExtensions
         try
         {
             await context.Database.MigrateAsync();
+
+            // Seeding:Disabled=true (set by the test stack) keeps the migrations but skips the built-in seed
+            // data, so scenario files own the data. Unset everywhere else: behaviour is unchanged.
+            if (services.GetRequiredService<IConfiguration>().GetValue<bool>(SeedingDisabledKey))
+            {
+                services.GetRequiredService<ILogger<TContext>>().LogInformation("Seeding disabled by {Key}; skipping the seeder of {DbContextName}", SeedingDisabledKey, typeof(TContext).Name);
+                return;
+            }
+
             await seeder(context, services);
         }
         catch (Exception ex)
