@@ -18,7 +18,6 @@ The .NET SDK is in `~/.dotnet` (put it on `PATH`: `export PATH=$HOME/.dotnet:$PA
 | Concern | Follow |
 | --- | --- |
 | HTTP endpoint | `src/Catalog.API/Apis/CatalogApi.cs`: `MapGroup` + `HasApiVersion`, handlers returning `TypedResults`, `[ProducesResponseType<ProblemDetails>]` for 400s |
-| Input validation | return `TypedResults.BadRequest(...)` / `ValidationProblem` from the handler (see `CatalogApi.cs`); Ordering commands use FluentValidation in `src/Ordering.API/Application/Validations` |
 | Application wiring | `src/<Service>/Extensions/Extensions.cs` (`AddApplicationServices`), `Program.cs` stays thin |
 | Auth | `builder.AddDefaultAuthentication()` from `src/eShop.ServiceDefaults/AuthenticationExtensions.cs`; `RequireAuthorization()` on groups |
 | Persistence and migrations | EF Core contexts in `src/<Service>/Infrastructure` (`CatalogContext.cs`); migrations in `Infrastructure/Migrations`, created with `dotnet ef migrations add <Name> --project src/<Service>` |

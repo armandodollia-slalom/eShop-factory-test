@@ -79,7 +79,7 @@ Product code (`src/`) is never changed by this agent. Scenarios: `.factory/stack
 
 ### Story tag
 
-- MSTest: class `[TestCategory("<KEY>")]`, each test `[TestProperty("TestCase", "TC-<KEY>-NN")]` and a method name starting with the case id, underscores for dashes: `TC_BUG_11_01_NegativePageSizeReturns400`.
+- MSTest: class `[TestCategory("<KEY>")]`, each test `[TestProperty("TestCase", "TC-<KEY>-NN")]` and a method name starting with the case id, underscores for dashes: `TC_ABC_12_03_GuestSeesSignInLink`.
 - xUnit: class `[Trait("Story", "<KEY>")]`, each test `[Trait("TestCase", "TC-<KEY>-NN")]`, same method naming.
 - Playwright: the test title starts with the case id: `test('TC-<KEY>-NN shopper ...', ...)`.
 

@@ -4,7 +4,7 @@ Services, layers and datastore owners are in `.factory/policy/profile.yaml`; the
 
 ### What to check in this codebase
 
-- Endpoints follow `src/Catalog.API/Apis/CatalogApi.cs`: versioned groups, `TypedResults`, `ProblemDetails` for client errors, never an unhandled exception (500) for bad input.
+- Endpoints follow `src/Catalog.API/Apis/CatalogApi.cs`: versioned groups, `TypedResults`, `ProblemDetails` for client errors.
 - Package versions only in `Directory.Packages.props`.
 - Schema changes come as an EF migration in the owning service's `Infrastructure/Migrations`.
 - Catalog.API endpoint changes include the regenerated `Catalog.API*.json`.
