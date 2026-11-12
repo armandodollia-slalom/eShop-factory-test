@@ -26,11 +26,11 @@
         "paths": [
           "src/Basket.API/**"
         ],
-        "unitTests": "tests/Basket.UnitTests",
         "dependsOn": [
           "eshop-servicedefaults",
           "eventbusrabbitmq"
-        ]
+        ],
+        "unitTests": "tests/Basket.UnitTests"
       },
       {
         "name": "catalog-api",
@@ -38,12 +38,20 @@
         "paths": [
           "src/Catalog.API/**"
         ],
-        "unitTests": "tests/Application.UnitTests",
         "dependsOn": [
           "eventbusrabbitmq",
           "integrationeventlogef",
           "eshop-servicedefaults"
-        ]
+        ],
+        "unitTests": "tests/Application.UnitTests"
+      },
+      {
+        "name": "clientapp",
+        "kind": "frontend",
+        "paths": [
+          "src/ClientApp/**"
+        ],
+        "note": ".NET MAUI: not in eShop.Web.slnf; built by the upstream MAUI workflow only"
       },
       {
         "name": "eventbus",
@@ -63,15 +71,26 @@
         ]
       },
       {
+        "name": "hybridapp",
+        "kind": "frontend",
+        "paths": [
+          "src/HybridApp/**"
+        ],
+        "dependsOn": [
+          "webappcomponents"
+        ],
+        "note": ".NET MAUI: not in eShop.Web.slnf; built by the upstream MAUI workflow only"
+      },
+      {
         "name": "identity-api",
         "kind": "frontend",
         "paths": [
           "src/Identity.API/**"
         ],
-        "unitTests": "tests/Application.UnitTests",
         "dependsOn": [
           "eshop-servicedefaults"
-        ]
+        ],
+        "unitTests": "tests/Application.UnitTests"
       },
       {
         "name": "integrationeventlogef",
@@ -89,11 +108,11 @@
         "paths": [
           "src/OrderProcessor/**"
         ],
-        "unitTests": "tests/Application.UnitTests",
         "dependsOn": [
           "eshop-servicedefaults",
           "eventbusrabbitmq"
-        ]
+        ],
+        "unitTests": "tests/Application.UnitTests"
       },
       {
         "name": "ordering-api",
@@ -101,14 +120,14 @@
         "paths": [
           "src/Ordering.API/**"
         ],
-        "unitTests": "tests/Ordering.UnitTests",
         "dependsOn": [
           "eventbusrabbitmq",
           "integrationeventlogef",
           "eshop-servicedefaults",
           "ordering-domain",
           "ordering-infrastructure"
-        ]
+        ],
+        "unitTests": "tests/Ordering.UnitTests"
       },
       {
         "name": "ordering-domain",
@@ -124,11 +143,11 @@
         "paths": [
           "src/Ordering.Infrastructure/**"
         ],
-        "unitTests": "tests/Ordering.UnitTests",
         "dependsOn": [
           "integrationeventlogef",
           "ordering-domain"
-        ]
+        ],
+        "unitTests": "tests/Ordering.UnitTests"
       },
       {
         "name": "paymentprocessor",
@@ -136,11 +155,11 @@
         "paths": [
           "src/PaymentProcessor/**"
         ],
-        "unitTests": "tests/Application.UnitTests",
         "dependsOn": [
           "eshop-servicedefaults",
           "eventbusrabbitmq"
-        ]
+        ],
+        "unitTests": "tests/Application.UnitTests"
       },
       {
         "name": "webapp",
@@ -159,7 +178,8 @@
         "kind": "library",
         "paths": [
           "src/WebAppComponents/**"
-        ]
+        ],
+        "ui": true
       },
       {
         "name": "webhookclient",
@@ -167,10 +187,10 @@
         "paths": [
           "src/WebhookClient/**"
         ],
-        "unitTests": "tests/Application.UnitTests",
         "dependsOn": [
           "eshop-servicedefaults"
-        ]
+        ],
+        "unitTests": "tests/Application.UnitTests"
       },
       {
         "name": "webhooks-api",
@@ -178,16 +198,16 @@
         "paths": [
           "src/Webhooks.API/**"
         ],
-        "unitTests": "tests/Application.UnitTests",
         "dependsOn": [
           "eventbusrabbitmq",
           "integrationeventlogef",
           "eshop-servicedefaults"
-        ]
+        ],
+        "unitTests": "tests/Application.UnitTests"
       },
       {
         "name": "eshop-apphost",
-        "kind": "backend",
+        "kind": "host",
         "paths": [
           "src/eShop.AppHost/**"
         ],
@@ -199,6 +219,15 @@
         "paths": [
           "src/eShop.ServiceDefaults/**"
         ]
+      },
+      {
+        "name": "shared",
+        "kind": "library",
+        "paths": [
+          "src/Shared/**"
+        ],
+        "shared": true,
+        "note": "src/Shared: sources linked into several services (Compile Include)"
       }
     ],
     "frontendPaths": [
@@ -315,6 +344,38 @@
     ],
     "unitTests": {
       "cmd": "dotnet test --project {project}"
+    },
+    "reviewGate": {
+      "floor": {
+        "paths": [
+          ".github/workflows/**",
+          ".github/CODEOWNERS",
+          ".factory/config.json",
+          "**/Migrations/**",
+          "src/Identity.API/**",
+          "src/PaymentProcessor/**"
+        ]
+      },
+      "sharedPaths": {
+        "Build": [
+          "Directory.Build.props",
+          "Directory.Build.targets",
+          "Directory.Packages.props",
+          "global.json",
+          "nuget.config"
+        ]
+      },
+      "contractPaths": {
+        "Integration events": [
+          "src/Basket.API/IntegrationEvents/Events/**",
+          "src/Catalog.API/IntegrationEvents/Events/**",
+          "src/OrderProcessor/Events/**",
+          "src/Ordering.API/Application/IntegrationEvents/Events/**",
+          "src/PaymentProcessor/IntegrationEvents/Events/**",
+          "src/WebApp/Services/OrderStatus/IntegrationEvents/Events/**",
+          "src/Webhooks.API/IntegrationEvents/**"
+        ]
+      }
     }
   },
   "precheck": {
