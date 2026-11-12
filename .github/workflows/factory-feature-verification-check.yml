@@ -5,7 +5,7 @@ permissions:
   contents: read
   issues: read
 
-# feature verification stage gate, called by ai-pipeline.yml:
+# feature verification stage gate, called by factory-gate.yml:
 # - stories touched by the PR (plan or scenario folders, tests with their case ids, keys in the branch
 #   or commit messages) have a test plan that passed the plan verifier (10/10) for the current story text
 # - automated tests and scenarios for those stories passed the automation verifier and were not edited afterwards
