@@ -30,6 +30,7 @@ runs:
         echo "::error::could not clone the factory v$version from $source. A private factory needs the FACTORY_TOKEN secret (Contents: read on that repository); the tag v$version must exist there."
         exit 1
       fi
-      if [ -f "$dest/package-lock.json" ]; then (cd "$dest" && npm ci --omit=dev --silent); fi
+      # Not --silent: when the install fails, the log must say why.
+      if [ -f "$dest/package-lock.json" ]; then (cd "$dest" && npm ci --omit=dev --no-audit --no-fund --loglevel=error); fi
       echo "$dest/bin" >> "$GITHUB_PATH"
       echo "FACTORY_HOME=$dest" >> "$GITHUB_ENV"
