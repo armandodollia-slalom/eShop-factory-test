@@ -26,6 +26,30 @@ jobs:
       run: factory check
     - name: Configured models are allowed (agent.allowedModels)
       run: factory models check
+    - name: Test stack scenarios parse, and the stack matches the application
+      if: hashFiles('.factory/stack/**') != ''
+      run: |
+        factory teststack validate
+        if node -e "process.exit(require('./.factory/config.json').teststack?.commands?.drift ? 0 : 1)"; then factory teststack drift; fi
+
+  lint:
+    # The repository's linters (precheck.lint) on the lines this pull request changes.
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+    - uses: ./.github/actions/setup-factory
+      with:
+        token: ${{ secrets.FACTORY_TOKEN }}
+    - name: "Toolchain (yours: .github/actions/factory-toolchain)"
+      if: hashFiles('.github/actions/factory-toolchain/action.yml') != ''
+      uses: ./.github/actions/factory-toolchain
+    - name: Lint the changed lines
+      run: factory lint --base origin/${{ github.base_ref }}
 
   feature-verification:
     needs: pipeline

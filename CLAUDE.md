@@ -26,4 +26,14 @@ The MCP server `lsp` exposes this repository's language servers. Use it for prec
 - After every edit, run `lsp_diagnostics` on the edited files.
 - Rename with `lsp_rename` (`dry_run: true` first) instead of search and replace.
 - Paths are absolute and inside your own checkout; line and column are 1-indexed. When a call answers "language server unavailable", do not retry in a loop: search instead.
+
+## Feature videos (definition of done)
+
+Every e2e test is recorded on video (`video` in the Playwright config). By default only failed tests keep theirs (`artifacts/e2e-videos/<project>/<spec>--<test>.failed.webm`, plus keyframes for agents); set `E2E_KEEP_VIDEOS=1` to keep passing tests' videos too. When you implement or change anything a user can see or do in the browser, you are not done until a passing e2e test covers the flow and you have its video. Follow the factory's `feature-demo-video` skill (`skills/feature-demo-video/SKILL.md` in the factory install; `factory version --path` prints where that is):
+
+1. Add or extend an e2e spec for the flow on the test stack (`e2e/teststack/<feature>.spec.ts`), narrated with the `demo` fixture from `e2e/demo.ts`. Specs import `test` from `e2e/fixtures.ts` (or `e2e/demo.ts`), never from `@playwright/test`, so contexts opened with `browser.newContext()` are recorded too.
+2. Run it: `factory teststack up`, then `E2E_KEEP_VIDEOS=1 npx playwright test -c playwright.teststack.config.ts <feature>` (PowerShell: `$env:E2E_KEEP_VIDEOS=1` first). It must pass.
+3. Embed the resulting `artifacts/e2e-videos/**/*.webm` (absolute path) in your final summary, and describe what it shows in the PR description. Never commit the videos.
+
+Skip this only for backend-only, docs-only or no-behavior-change work, and say so in your summary.
 <!-- factory:end -->

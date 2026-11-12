@@ -181,6 +181,16 @@ The .NET SDK is in `~/.dotnet` (put it on `PATH`: `export PATH=$HOME/.dotnet:$PA
 - A service never references another service's project or connects to its database (policy ARCH-004, DATA-001).
 - `Seeding:Disabled` (in `src/Shared/MigrateDbContextExtensions.cs`) is the test stack's switch; keep seeders working when it is unset.
 
+### A new service, end to end
+
+Register it in every place, in one subtask: `src/eShop.AppHost/AppHost.cs` (`AddDotnetProject`, `WithReference` to its database and the event bus, `Identity__Url` if it validates tokens); `src/Identity.API/Configuration/Config.cs` when it needs a scope or a client; `eShop.Web.slnf`; the test stack (`.factory/stack/docker-compose.yaml` service with `${<NAME>_IMAGE}` and a host port variable, `stack.services.<name>` with its `project` and `image`, `stack.ports`, `teststack.services` readiness URL in `.factory/config.json`). `node .factory/bin/factory.mjs teststack drift` must pass afterwards; it compares the AppHost with the stack.
+
+### Time, UI, optional features
+
+- No clock abstraction exists (direct `DateTime.UtcNow` calls); new code injects `TimeProvider` (register `TimeProvider.System`) so tests can control time. Leave existing calls alone.
+- WebApp pages are static server-side rendering with `[StreamRendering]` (`src/WebApp/Components/Pages/Catalog/Catalog.razor`); interactivity only where a component needs it (`@rendermode InteractiveServer`, as in `Pages/User/OrdersRefreshOnStatusChange.razor`). Forms on static pages use `EditForm ... FormName=... Enhance` with `[SupplyParameterFromForm]` (`Pages/Checkout/Checkout.razor`).
+- The AI features are off unless configured: `CatalogAI.cs` (embeddings, `textEmbeddingModel`) and the WebApp chatbot (`chatModel`); code must keep working with them off.
+
 ### Planning subtasks
 
 `Directory.Packages.props`, a service's `Extensions/Extensions.cs` and `Program.cs`, and `src/Shared/*` go in the first subtask that needs them.

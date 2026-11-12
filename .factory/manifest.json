@@ -8,7 +8,7 @@
     },
     ".claude/agents/architecture-reviewer.md": {
       "kind": "file",
-      "sha": "35ba064bd3bb00fb"
+      "sha": "0081fb5135072448"
     },
     ".claude/agents/bug-triage.md": {
       "kind": "file",
@@ -20,7 +20,7 @@
     },
     ".claude/agents/implementer.md": {
       "kind": "file",
-      "sha": "8d796f4255912624"
+      "sha": "f42f7eb631a710df"
     },
     ".claude/agents/pair-implementer.md": {
       "kind": "file",
@@ -32,7 +32,7 @@
     },
     ".claude/agents/pair-verifier.md": {
       "kind": "file",
-      "sha": "313bc7cbaee37c86"
+      "sha": "676d4efd9c93279f"
     },
     ".claude/agents/pr-check-acceptance.md": {
       "kind": "file",
@@ -80,7 +80,7 @@
     },
     ".claude/agents/test-automation.md": {
       "kind": "file",
-      "sha": "249e2a1f9f007ff2"
+      "sha": "854d1b2dd40cf874"
     },
     ".claude/agents/test-plan-verifier.md": {
       "kind": "file",
@@ -88,7 +88,7 @@
     },
     ".claude/agents/test-planner.md": {
       "kind": "file",
-      "sha": "05e01f5d5a3308c6"
+      "sha": "ba09e5c2f614b088"
     },
     ".claude/settings.json": {
       "kind": "json",
@@ -104,7 +104,7 @@
     },
     ".cursor/rules/factory.mdc": {
       "kind": "file",
-      "sha": "42f8c886d75812a5"
+      "sha": "d3bf5c29ca377f9f"
     },
     ".factory/.gitignore": {
       "kind": "file",
@@ -138,6 +138,10 @@
       "kind": "file",
       "sha": "f1bd060652aff767"
     },
+    ".factory/githooks/pre-commit": {
+      "kind": "file",
+      "sha": "8b191457d22f711c"
+    },
     ".factory/githooks/pre-push": {
       "kind": "file",
       "sha": "d957e4b2df1ca214"
@@ -164,7 +168,7 @@
     },
     ".github/agents/architecture-reviewer.agent.md": {
       "kind": "file",
-      "sha": "f56d68d96b3951f2"
+      "sha": "21ea3d349c74f3b2"
     },
     ".github/agents/bug-triage.agent.md": {
       "kind": "file",
@@ -176,7 +180,7 @@
     },
     ".github/agents/implementer.agent.md": {
       "kind": "file",
-      "sha": "b27bedecf9166dab"
+      "sha": "411ddeef428a338a"
     },
     ".github/agents/pair-implementer.agent.md": {
       "kind": "file",
@@ -188,7 +192,7 @@
     },
     ".github/agents/pair-verifier.agent.md": {
       "kind": "file",
-      "sha": "7dc2d53fc32ce518"
+      "sha": "a3cf8c9260c00b3d"
     },
     ".github/agents/pr-check-acceptance.agent.md": {
       "kind": "file",
@@ -236,7 +240,7 @@
     },
     ".github/agents/test-automation.agent.md": {
       "kind": "file",
-      "sha": "249e2a1f9f007ff2"
+      "sha": "854d1b2dd40cf874"
     },
     ".github/agents/test-plan-verifier.agent.md": {
       "kind": "file",
@@ -244,7 +248,7 @@
     },
     ".github/agents/test-planner.agent.md": {
       "kind": "file",
-      "sha": "05e01f5d5a3308c6"
+      "sha": "ba09e5c2f614b088"
     },
     ".github/workflows/factory-board-epic-assign.yml": {
       "kind": "file",
@@ -260,7 +264,7 @@
     },
     ".github/workflows/factory-gate.yml": {
       "kind": "file",
-      "sha": "0d822e8cce2eb634"
+      "sha": "011189fa63e73958"
     },
     ".github/workflows/factory-graphify-cache-prune.yml": {
       "kind": "file",
@@ -292,15 +296,15 @@
     },
     "AGENTS.md": {
       "kind": "block",
-      "sha": "a5ed94a8d0a1214b"
+      "sha": "919e7fff4e09c5bb"
     },
     "CLAUDE.md": {
       "kind": "block",
-      "sha": "a5ed94a8d0a1214b"
+      "sha": "919e7fff4e09c5bb"
     },
     "GEMINI.md": {
       "kind": "block",
-      "sha": "a5ed94a8d0a1214b"
+      "sha": "919e7fff4e09c5bb"
     }
   }
 }

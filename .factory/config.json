@@ -340,6 +340,10 @@
       {
         "name": "build",
         "cmd": "dotnet build eShop.Web.slnf -nologo -v q -clp:ErrorsOnly"
+      },
+      {
+        "name": "test stack matches the application (factory teststack drift)",
+        "cmd": "node .factory/bin/factory.mjs teststack drift"
       }
     ],
     "unitTests": {
@@ -394,6 +398,10 @@
         "--verify-no-changes",
         "--include",
         "{files}"
+      ],
+      ".md": [
+        "node_modules/.bin/markdownlint",
+        "{files}"
       ]
     },
     "fix": {
@@ -402,6 +410,11 @@
         "format",
         "eShop.Web.slnf",
         "--include",
+        "{files}"
+      ],
+      ".md": [
+        "node_modules/.bin/markdownlint",
+        "--fix",
         "{files}"
       ]
     },
@@ -703,7 +716,13 @@
       }
     ],
     "commands": {
-      "hash-password": "pack:dotnet/stack/hash-password.mjs"
+      "hash-password": "pack:dotnet/stack/hash-password.mjs",
+      "drift": "pack:dotnet/stack/apphost-drift.mjs"
+    },
+    "drift": {
+      "ignore": [
+        "mobile-bff"
+      ]
     }
   },
   "prVideo": {
