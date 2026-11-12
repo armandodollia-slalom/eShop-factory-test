@@ -116,7 +116,7 @@
     },
     ".factory/bin/factory.cmd": {
       "kind": "file",
-      "sha": "912a192a91a09216"
+      "sha": "b68e2493aefd1ac3"
     },
     ".factory/bin/factory.mjs": {
       "kind": "file",
@@ -140,7 +140,7 @@
     },
     ".gitattributes": {
       "kind": "block",
-      "sha": "b17e40468c9cf8c8"
+      "sha": "869ffdf8c3155cc0"
     },
     ".github/actions/setup-agent-cli/action.yml": {
       "kind": "file",
