@@ -20,44 +20,45 @@ schema_version: 1
 validators:
 
   - id: VAL-SECRET-SCAN
-    name: Secret scan
+    name: Hard-coded secret scan
     type: deterministic
     implementation: text_validators:forbidden_pattern
-    description: Rejects private keys, cloud access key IDs and quoted credential literals in source and configuration.
+    description: Detects credential literals, connection-string passwords, private keys and well-known token formats.
     checkpoints: [pre_commit, code_review, ci]
     params:
-      ignore_comments: false
       patterns:
-        - regex: '-----BEGIN (?:[A-Z]+ )?PRIVATE KEY-----'
-          message: A private key is committed. Remove it, rotate it and load it from a secret store.
-        - regex: '\bAKIA[0-9A-Z]{16}\b'
-          message: An AWS access key ID is committed. Remove it, rotate it and use the platform's credential provider.
-        # A value that is a lowercase snake/kebab/dotted name ("access_token", "client-secret") is a key or
-        # claim name, not a credential.
-        - regex: '(?:password|passwd|pwd|secret|api[_-]?key|access[_-]?token|client[_-]?secret)["'']?\s*[:=]\s*["''](?![a-z]+(?:[_.-][a-z]+)+["''])[^"''\s${}<>]{8,}["'']'
-          flags: [i]
-          message: A credential literal is committed. Read it from the environment or a secret store.
+        - regex: '\b\w*(?i:password|passwd|pwd|secret|apikey|api_key|accesskey|access_key)\w*\s*=\s*"[^"\s]{4,}"'
+          message: Credential assigned from a string literal. Load it from configuration / Aspire parameters / Key Vault.
+        - regex: '\b\w*(?i:token)\w*\s*=\s*"[A-Za-z0-9._~+/=-]{20,}"'
+          message: Token-like literal assigned to a token variable. Load it from configuration / Key Vault.
+        - regex: 'new\s+Secret\(\s*"[^"]+"'
+          message: IdentityServer client secret is a literal. Load it from secure configuration.
+        - regex: '(?i)"(?!\w*(?:variable|env|name)")\w*(password|secret|apikey|api_key|clientsecret|accesskey)\w*"\s*:\s*"[^"]{4,}"'
+          message: Secret value stored in a JSON configuration file.
+        - regex: '(?i)[;"]\s*(password|pwd)\s*=\s*[^;"\s{}]{3,}'
+          message: Connection string embeds a password.
+        - regex: '-----BEGIN (RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----'
+          message: Private key material committed to source.
+        - regex: '\b(AKIA[0-9A-Z]{16}|sk-[A-Za-z0-9]{32,}|ghp_[A-Za-z0-9]{36}|xox[baprs]-[A-Za-z0-9-]{10,})\b'
+          message: Cloud/API token committed to source.
     self_tests:
-      - name: hard-coded password fails
+      - name: literal client secret fails
         files:
-          app/settings.conf: 'db_password = "S3cr3t-Pa55word!"'
+          src/Web/Extensions/Extensions.cs: 'options.ClientSecret = "secret";'
         expect: fail
-      - name: value from the environment passes
+      - name: connection string password fails
         files:
-          app/settings.conf: 'db_password = env("DB_PASSWORD")'
-        expect: pass
-      - name: placeholder passes
-        files:
-          app/settings.conf: 'db_password = "${DB_PASSWORD}"'
-        expect: pass
-      - name: a key or claim name is not a credential
-        files:
-          app/Settings.cs: 'private const string AccessToken = "access_token";'
-        expect: pass
-      - name: a lowercase secret with digits still fails
-        files:
-          app/settings.conf: 'api_key = "hunter2hunter2"'
+          src/Catalog.Api/appsettings.json: '{ "ConnectionStrings": { "db": "Host=x;Password=hunter22;" } }'
         expect: fail
+      - name: configuration lookup passes
+        files:
+          src/Web/Extensions/Extensions.cs: 'options.ClientSecret = builder.Configuration["IdentityClientSecret"];'
+        expect: pass
+      - name: env-var name references and storage keys pass
+        files:
+          config/stack.json: '{ "postgres": { "passwordVariable": "POSTGRES_PASSWORD" } }'
+          src/Web/Services/X.cs: 'private const string UserAccessToken = "user_token";'
+        expect: pass
 
   - id: VAL-GENERATED-MARKER
     name: Generated-code marker
@@ -84,36 +85,25 @@ validators:
         expect: pass
 
   - id: VAL-DB-OWNERSHIP
-    name: Datastore ownership
+    name: Database-per-service ownership
     type: deterministic
     implementation: data_validators:database_ownership
-    description: A file of one service must not name a datastore that profile.services says another service owns.
+    description: Resolves connection names used by a project and fails when the datastore is owned by another service.
     checkpoints: [pre_commit, code_review, ci]
     params:
-      # How this codebase names the datastore it connects to; the named group 'name' is looked up in
-      # profile.services[].owns_datastores. Add the forms your stack uses (a config key, a client constructor).
       connection_patterns:
-        # Aspire client integrations and EF Core: AddNpgsqlDbContext<T>("catalogdb"), GetConnectionString("orderingdb"), AddRedisClient("redis").
-        - 'Add(?:Npgsql|Azure)?\w*(?:DbContext|DataSource|Client)(?:<[^>]+>)?\(\s*"(?P<name>[A-Za-z0-9_-]+)"'
-        - 'GetConnectionString\(\s*"(?P<name>[A-Za-z0-9_-]+)"'
-        - '(?i)\b(?:postgres(?:ql)?|mysql|mariadb|mongodb(?:\+srv)?|sqlserver|redis)://[^\s"''/]*/(?P<name>[A-Za-z0-9_-]+)'
-        - '(?i)\b(?:database|dbname|initial catalog)\s*=\s*(?P<name>[A-Za-z0-9_-]+)'
+        - '(Add\w*(DbContext|DataSource|Client|DistributedCache))\s*(<[^>]+>)?\(\s*"(?P<name>[A-Za-z0-9_\-]+)"'
+        - 'GetConnectionString\(\s*"(?P<name>[A-Za-z0-9_\-]+)"'
     self_tests:
-      - name: connecting to another service's database fails
-        profile: &two_services
-          projects:
-            - { name: orders,  path: services/orders,  type: api, service: orders }
-            - { name: billing, path: services/billing, type: api, service: billing }
-          services:
-            - { id: orders,  owns_datastores: [ordersdb],  traits: [owns_database] }
-            - { id: billing, owns_datastores: [billingdb], traits: [owns_database] }
+      - name: catalog reading the orders database fails
+        profile: { projects: [ { name: Orders.Domain, path: src/Orders.Domain, type: domain, service: orders, layer: domain }, { name: Orders.Infrastructure, path: src/Orders.Infrastructure, type: infrastructure, service: orders, layer: infrastructure }, { name: Orders.Api, path: src/Orders.Api, type: api, service: orders, layer: presentation }, { name: Orders.Worker, path: src/Orders.Worker, type: worker, service: orders, layer: presentation }, { name: Catalog.Api, path: src/Catalog.Api, type: api, service: catalog, layer: presentation }, { name: Web, path: src/Web, type: web, service: web, layer: presentation }, { name: EventLog, path: src/EventLog, type: library, layer: shared }, { name: ServiceDefaults, path: src/ServiceDefaults, type: library, layer: shared } ], services: [ { id: orders, owns_datastores: [ordersdb], traits: [owns_database] }, { id: catalog, owns_datastores: [catalogdb], traits: [owns_database] }, { id: web, owns_datastores: [] } ], layer_dependencies: { domain: [], infrastructure: ['same_service:domain', shared], presentation: ['same_service:domain', 'same_service:infrastructure', shared], shared: [shared] }, forbidden_packages_by_layer: { domain: [Microsoft.EntityFrameworkCore, Npgsql, Microsoft.AspNetCore] } }
         files:
-          services/orders/config.txt: 'url = "postgres://db.internal:5432/billingdb"'
+          src/Catalog.Api/Extensions/Extensions.cs: 'builder.AddNpgsqlDataSource("ordersdb");'
         expect: fail
-      - name: connecting to the own database passes
-        profile: *two_services
+      - name: service using own database passes
+        profile: { projects: [ { name: Orders.Domain, path: src/Orders.Domain, type: domain, service: orders, layer: domain }, { name: Orders.Infrastructure, path: src/Orders.Infrastructure, type: infrastructure, service: orders, layer: infrastructure }, { name: Orders.Api, path: src/Orders.Api, type: api, service: orders, layer: presentation }, { name: Orders.Worker, path: src/Orders.Worker, type: worker, service: orders, layer: presentation }, { name: Catalog.Api, path: src/Catalog.Api, type: api, service: catalog, layer: presentation }, { name: Web, path: src/Web, type: web, service: web, layer: presentation }, { name: EventLog, path: src/EventLog, type: library, layer: shared }, { name: ServiceDefaults, path: src/ServiceDefaults, type: library, layer: shared } ], services: [ { id: orders, owns_datastores: [ordersdb], traits: [owns_database] }, { id: catalog, owns_datastores: [catalogdb], traits: [owns_database] }, { id: web, owns_datastores: [] } ], layer_dependencies: { domain: [], infrastructure: ['same_service:domain', shared], presentation: ['same_service:domain', 'same_service:infrastructure', shared], shared: [shared] }, forbidden_packages_by_layer: { domain: [Microsoft.EntityFrameworkCore, Npgsql, Microsoft.AspNetCore] } }
         files:
-          services/orders/config.txt: 'url = "postgres://db.internal:5432/ordersdb"'
+          src/Catalog.Api/Extensions/Extensions.cs: 'builder.AddNpgsqlDbContext<CatalogContext>("catalogdb");'
         expect: pass
 
   - id: VAL-TESTS-ACCOMPANY-CHANGES
@@ -161,69 +151,561 @@ validators:
     checkpoints: [code_review, testing, ci]
     self_tests:
       - name: no judgment yields needs_review
-        rule_id: ARCH-001
+        rule_id: ARCH-004
         files: { services/orders/src/order.code: "change" }
         expect: needs_review
       - name: failing judgment yields fail
-        rule_id: ARCH-001
+        rule_id: ARCH-004
         files: { services/orders/src/order.code: "change" }
         artifacts:
           semantic_judgments:
-            - { rule_id: ARCH-001, verdict: fail, rationale: "Reaches into another service's internals", reviewer: { type: agent, id: review-agent } }
+            - { rule_id: ARCH-004, verdict: fail, rationale: "Reaches into another service's internals", reviewer: { type: agent, id: review-agent } }
         expect: fail
 
-  - id: VAL-PROJECT-LAYERS
-    name: csproj layer dependencies
+  - id: VAL-LAYER-DEPENDENCIES
+    name: Layer dependency matrix
     type: deterministic
     implementation: project_validators:layer_dependencies
-    description: ProjectReferences follow profile.layer_dependencies; every project under src/ and tests/ is classified.
+    description: Checks every ProjectReference against profile.layer_dependencies and requires every project to be classified in the profile.
     checkpoints: [pre_commit, code_review, ci]
-    params: &csproj
-      manifest_globs: ["src/**/*.csproj", "tests/**/*.csproj"]
+    params:
+      manifest_globs: ["**/*.csproj"]
       reference_patterns:
-        - 'ProjectReference\s+Include\s*=\s*"(?P<ref>[^"]+)"'
-      package_patterns:
-        - 'PackageReference\s+Include\s*=\s*"(?P<name>[^"]+)"'
+        - { regex: '<ProjectReference\s+[^>]*?Include\s*=\s*"(?P<ref>[^"]+)"', flags: [s] }
     self_tests:
-      - name: domain referencing its infrastructure fails
+      - name: domain referencing infrastructure fails
+        profile: { projects: [ { name: Orders.Domain, path: src/Orders.Domain, type: domain, service: orders, layer: domain }, { name: Orders.Infrastructure, path: src/Orders.Infrastructure, type: infrastructure, service: orders, layer: infrastructure }, { name: Orders.Api, path: src/Orders.Api, type: api, service: orders, layer: presentation }, { name: Orders.Worker, path: src/Orders.Worker, type: worker, service: orders, layer: presentation }, { name: Catalog.Api, path: src/Catalog.Api, type: api, service: catalog, layer: presentation }, { name: Web, path: src/Web, type: web, service: web, layer: presentation }, { name: EventLog, path: src/EventLog, type: library, layer: shared }, { name: ServiceDefaults, path: src/ServiceDefaults, type: library, layer: shared } ], services: [ { id: orders, owns_datastores: [ordersdb], traits: [owns_database] }, { id: catalog, owns_datastores: [catalogdb], traits: [owns_database] }, { id: web, owns_datastores: [] } ], layer_dependencies: { domain: [], infrastructure: ['same_service:domain', shared], presentation: ['same_service:domain', 'same_service:infrastructure', shared], shared: [shared] }, forbidden_packages_by_layer: { domain: [Microsoft.EntityFrameworkCore, Npgsql, Microsoft.AspNetCore] } }
         files:
-          src/Ordering.Domain/Ordering.Domain.csproj: '<Project><ItemGroup><ProjectReference Include="..\Ordering.Infrastructure\Ordering.Infrastructure.csproj" /></ItemGroup></Project>'
+          src/Orders.Domain/Orders.Domain.csproj: '<Project><ItemGroup><ProjectReference Include="..\Orders.Infrastructure\Orders.Infrastructure.csproj" /></ItemGroup></Project>'
         expect: fail
-      - name: API referencing its domain, infrastructure and shared libraries passes
+      - name: infrastructure referencing domain and shared passes
+        profile: { projects: [ { name: Orders.Domain, path: src/Orders.Domain, type: domain, service: orders, layer: domain }, { name: Orders.Infrastructure, path: src/Orders.Infrastructure, type: infrastructure, service: orders, layer: infrastructure }, { name: Orders.Api, path: src/Orders.Api, type: api, service: orders, layer: presentation }, { name: Orders.Worker, path: src/Orders.Worker, type: worker, service: orders, layer: presentation }, { name: Catalog.Api, path: src/Catalog.Api, type: api, service: catalog, layer: presentation }, { name: Web, path: src/Web, type: web, service: web, layer: presentation }, { name: EventLog, path: src/EventLog, type: library, layer: shared }, { name: ServiceDefaults, path: src/ServiceDefaults, type: library, layer: shared } ], services: [ { id: orders, owns_datastores: [ordersdb], traits: [owns_database] }, { id: catalog, owns_datastores: [catalogdb], traits: [owns_database] }, { id: web, owns_datastores: [] } ], layer_dependencies: { domain: [], infrastructure: ['same_service:domain', shared], presentation: ['same_service:domain', 'same_service:infrastructure', shared], shared: [shared] }, forbidden_packages_by_layer: { domain: [Microsoft.EntityFrameworkCore, Npgsql, Microsoft.AspNetCore] } }
         files:
-          src/Ordering.API/Ordering.API.csproj: '<Project><ItemGroup><ProjectReference Include="..\Ordering.Domain\Ordering.Domain.csproj" /><ProjectReference Include="..\Ordering.Infrastructure\Ordering.Infrastructure.csproj" /><ProjectReference Include="..\EventBusRabbitMQ\EventBusRabbitMQ.csproj" /></ItemGroup></Project>'
+          src/Orders.Infrastructure/Orders.Infrastructure.csproj: '<Project><ItemGroup><ProjectReference Include="..\Orders.Domain\Orders.Domain.csproj" /><ProjectReference Include="..\EventLog\EventLog.csproj" /></ItemGroup></Project>'
+        expect: pass
+      - name: unclassified project fails
+        profile: { projects: [ { name: Orders.Domain, path: src/Orders.Domain, type: domain, service: orders, layer: domain }, { name: Orders.Infrastructure, path: src/Orders.Infrastructure, type: infrastructure, service: orders, layer: infrastructure }, { name: Orders.Api, path: src/Orders.Api, type: api, service: orders, layer: presentation }, { name: Orders.Worker, path: src/Orders.Worker, type: worker, service: orders, layer: presentation }, { name: Catalog.Api, path: src/Catalog.Api, type: api, service: catalog, layer: presentation }, { name: Web, path: src/Web, type: web, service: web, layer: presentation }, { name: EventLog, path: src/EventLog, type: library, layer: shared }, { name: ServiceDefaults, path: src/ServiceDefaults, type: library, layer: shared } ], services: [ { id: orders, owns_datastores: [ordersdb], traits: [owns_database] }, { id: catalog, owns_datastores: [catalogdb], traits: [owns_database] }, { id: web, owns_datastores: [] } ], layer_dependencies: { domain: [], infrastructure: ['same_service:domain', shared], presentation: ['same_service:domain', 'same_service:infrastructure', shared], shared: [shared] }, forbidden_packages_by_layer: { domain: [Microsoft.EntityFrameworkCore, Npgsql, Microsoft.AspNetCore] } }
+        files:
+          src/NewThing.API/NewThing.API.csproj: '<Project Sdk="Microsoft.NET.Sdk.Web"></Project>'
+        expect: fail
+
+  - id: VAL-DOMAIN-PACKAGES
+    name: Forbidden packages per layer
+    type: deterministic
+    implementation: project_validators:forbidden_packages
+    description: Rejects persistence/transport packages (EF Core, Npgsql, ASP.NET Core, Aspire, RabbitMQ, Redis) in the domain layer.
+    checkpoints: [pre_commit, code_review, ci]
+    params:
+      manifest_globs: ["**/*.csproj"]
+      package_patterns:
+        - '(?s)<PackageReference\s+[^>]*?Include\s*=\s*"(?P<name>[^"]+)"[^>]*?>'
+      name_separators: ["."]
+    self_tests:
+      - name: EF Core in domain fails
+        profile: { projects: [ { name: Orders.Domain, path: src/Orders.Domain, type: domain, service: orders, layer: domain }, { name: Orders.Infrastructure, path: src/Orders.Infrastructure, type: infrastructure, service: orders, layer: infrastructure }, { name: Orders.Api, path: src/Orders.Api, type: api, service: orders, layer: presentation }, { name: Orders.Worker, path: src/Orders.Worker, type: worker, service: orders, layer: presentation }, { name: Catalog.Api, path: src/Catalog.Api, type: api, service: catalog, layer: presentation }, { name: Web, path: src/Web, type: web, service: web, layer: presentation }, { name: EventLog, path: src/EventLog, type: library, layer: shared }, { name: ServiceDefaults, path: src/ServiceDefaults, type: library, layer: shared } ], services: [ { id: orders, owns_datastores: [ordersdb], traits: [owns_database] }, { id: catalog, owns_datastores: [catalogdb], traits: [owns_database] }, { id: web, owns_datastores: [] } ], layer_dependencies: { domain: [], infrastructure: ['same_service:domain', shared], presentation: ['same_service:domain', 'same_service:infrastructure', shared], shared: [shared] }, forbidden_packages_by_layer: { domain: [Microsoft.EntityFrameworkCore, Npgsql, Microsoft.AspNetCore] } }
+        files:
+          src/Orders.Domain/Orders.Domain.csproj: '<Project><ItemGroup><PackageReference Include="Microsoft.EntityFrameworkCore" /></ItemGroup></Project>'
+        expect: fail
+      - name: MediatR in domain passes
+        profile: { projects: [ { name: Orders.Domain, path: src/Orders.Domain, type: domain, service: orders, layer: domain }, { name: Orders.Infrastructure, path: src/Orders.Infrastructure, type: infrastructure, service: orders, layer: infrastructure }, { name: Orders.Api, path: src/Orders.Api, type: api, service: orders, layer: presentation }, { name: Orders.Worker, path: src/Orders.Worker, type: worker, service: orders, layer: presentation }, { name: Catalog.Api, path: src/Catalog.Api, type: api, service: catalog, layer: presentation }, { name: Web, path: src/Web, type: web, service: web, layer: presentation }, { name: EventLog, path: src/EventLog, type: library, layer: shared }, { name: ServiceDefaults, path: src/ServiceDefaults, type: library, layer: shared } ], services: [ { id: orders, owns_datastores: [ordersdb], traits: [owns_database] }, { id: catalog, owns_datastores: [catalogdb], traits: [owns_database] }, { id: web, owns_datastores: [] } ], layer_dependencies: { domain: [], infrastructure: ['same_service:domain', shared], presentation: ['same_service:domain', 'same_service:infrastructure', shared], shared: [shared] }, forbidden_packages_by_layer: { domain: [Microsoft.EntityFrameworkCore, Npgsql, Microsoft.AspNetCore] } }
+        files:
+          src/Orders.Domain/Orders.Domain.csproj: '<Project><ItemGroup><PackageReference Include="MediatR" /></ItemGroup></Project>'
         expect: pass
 
   - id: VAL-SERVICE-ISOLATION
-    name: Projects do not reference another service's projects
+    name: Cross-service project references
     type: deterministic
     implementation: project_validators:service_isolation
-    description: A project of one service must not reference a project of another service; shared libraries are fine.
+    description: A project owned by one service must not reference a project owned by another service.
     checkpoints: [pre_commit, code_review, ci]
-    params: *csproj
+    params:
+      manifest_globs: ["**/*.csproj"]
+      reference_patterns:
+        - { regex: '<ProjectReference\s+[^>]*?Include\s*=\s*"(?P<ref>[^"]+)"', flags: [s] }
     self_tests:
-      - name: Basket.API referencing Ordering.Domain fails
+      - name: catalog api referencing the orders domain fails
+        profile: { projects: [ { name: Orders.Domain, path: src/Orders.Domain, type: domain, service: orders, layer: domain }, { name: Orders.Infrastructure, path: src/Orders.Infrastructure, type: infrastructure, service: orders, layer: infrastructure }, { name: Orders.Api, path: src/Orders.Api, type: api, service: orders, layer: presentation }, { name: Orders.Worker, path: src/Orders.Worker, type: worker, service: orders, layer: presentation }, { name: Catalog.Api, path: src/Catalog.Api, type: api, service: catalog, layer: presentation }, { name: Web, path: src/Web, type: web, service: web, layer: presentation }, { name: EventLog, path: src/EventLog, type: library, layer: shared }, { name: ServiceDefaults, path: src/ServiceDefaults, type: library, layer: shared } ], services: [ { id: orders, owns_datastores: [ordersdb], traits: [owns_database] }, { id: catalog, owns_datastores: [catalogdb], traits: [owns_database] }, { id: web, owns_datastores: [] } ], layer_dependencies: { domain: [], infrastructure: ['same_service:domain', shared], presentation: ['same_service:domain', 'same_service:infrastructure', shared], shared: [shared] }, forbidden_packages_by_layer: { domain: [Microsoft.EntityFrameworkCore, Npgsql, Microsoft.AspNetCore] } }
         files:
-          src/Basket.API/Basket.API.csproj: '<Project><ItemGroup><ProjectReference Include="..\Ordering.Domain\Ordering.Domain.csproj" /></ItemGroup></Project>'
+          src/Catalog.Api/Catalog.Api.csproj: '<Project><ItemGroup><ProjectReference Include="..\Orders.Domain\Orders.Domain.csproj" /></ItemGroup></Project>'
         expect: fail
-      - name: Basket.API referencing a shared library passes
+      - name: orders api referencing its own domain passes
+        profile: { projects: [ { name: Orders.Domain, path: src/Orders.Domain, type: domain, service: orders, layer: domain }, { name: Orders.Infrastructure, path: src/Orders.Infrastructure, type: infrastructure, service: orders, layer: infrastructure }, { name: Orders.Api, path: src/Orders.Api, type: api, service: orders, layer: presentation }, { name: Orders.Worker, path: src/Orders.Worker, type: worker, service: orders, layer: presentation }, { name: Catalog.Api, path: src/Catalog.Api, type: api, service: catalog, layer: presentation }, { name: Web, path: src/Web, type: web, service: web, layer: presentation }, { name: EventLog, path: src/EventLog, type: library, layer: shared }, { name: ServiceDefaults, path: src/ServiceDefaults, type: library, layer: shared } ], services: [ { id: orders, owns_datastores: [ordersdb], traits: [owns_database] }, { id: catalog, owns_datastores: [catalogdb], traits: [owns_database] }, { id: web, owns_datastores: [] } ], layer_dependencies: { domain: [], infrastructure: ['same_service:domain', shared], presentation: ['same_service:domain', 'same_service:infrastructure', shared], shared: [shared] }, forbidden_packages_by_layer: { domain: [Microsoft.EntityFrameworkCore, Npgsql, Microsoft.AspNetCore] } }
         files:
-          src/Basket.API/Basket.API.csproj: '<Project><ItemGroup><ProjectReference Include="..\EventBusRabbitMQ\EventBusRabbitMQ.csproj" /></ItemGroup></Project>'
+          src/Orders.Api/Orders.Api.csproj: '<Project><ItemGroup><ProjectReference Include="..\Orders.Domain\Orders.Domain.csproj" /><ProjectReference Include="..\ServiceDefaults\ServiceDefaults.csproj" /></ItemGroup></Project>'
         expect: pass
 
-  - id: VAL-DOMAIN-PACKAGES
-    name: The domain layer stays free of persistence and web packages
+  - id: VAL-SERVICE-DEFAULTS
+    name: Service defaults wiring
     type: deterministic
-    implementation: project_validators:forbidden_packages
-    description: Rejects the packages in profile.forbidden_packages_by_layer in domain projects.
+    implementation: text_validators:required_pattern
+    description: Service host Program.cs must call AddServiceDefaults()/AddBasicServiceDefaults() and MapDefaultEndpoints().
     checkpoints: [pre_commit, code_review, ci]
-    params: *csproj
+    params:
+      file_globs: ["**/Program.cs"]
+      require:
+        - regex: '\.Add(Basic)?ServiceDefaults\(\)'
+          message: Host does not call builder.AddServiceDefaults() (or AddBasicServiceDefaults()); telemetry, health checks, service discovery and HTTP resilience are missing.
+        - regex: '\.MapDefaultEndpoints\(\)'
+          message: Host does not call app.MapDefaultEndpoints(); health/liveness endpoints are not exposed.
     self_tests:
-      - name: EF Core in Ordering.Domain fails
+      - name: host without defaults fails
         files:
-          src/Ordering.Domain/Ordering.Domain.csproj: '<Project><ItemGroup><PackageReference Include="Microsoft.EntityFrameworkCore" /></ItemGroup></Project>'
+          src/Catalog.Api/Program.cs: "var builder = WebApplication.CreateBuilder(args);\nvar app = builder.Build();\napp.Run();\n"
         expect: fail
-      - name: MediatR in Ordering.Domain passes
+        expect_count: 2
+      - name: host with defaults passes
         files:
-          src/Ordering.Domain/Ordering.Domain.csproj: '<Project><ItemGroup><PackageReference Include="MediatR" /></ItemGroup></Project>'
+          src/Catalog.Api/Program.cs: "var builder = WebApplication.CreateBuilder(args);\nbuilder.AddServiceDefaults();\nvar app = builder.Build();\napp.MapDefaultEndpoints();\n"
+        expect: pass
+
+  - id: VAL-CPM-NO-INLINE-VERSION
+    name: Central package management
+    type: deterministic
+    implementation: text_validators:forbidden_pattern
+    description: PackageReference items must not declare Version/VersionOverride; versions live in Directory.Packages.props.
+    checkpoints: [pre_commit, code_review, ci]
+    params:
+      file_globs: ["**/*.csproj"]
+      ignore_comments: false
+      patterns:
+        - regex: '<PackageReference\s+[^>]*?\b(Version|VersionOverride)\s*=\s*"[^"]*"'
+          flags: [s]
+          message: PackageReference declares an inline Version/VersionOverride; set the version in Directory.Packages.props.
+    self_tests:
+      - name: inline version fails
+        files:
+          src/Catalog.Api/Catalog.Api.csproj: '<Project><ItemGroup><PackageReference Include="Polly" Version="8.0.0" /></ItemGroup></Project>'
+        expect: fail
+      - name: versionless reference passes
+        files:
+          src/Catalog.Api/Catalog.Api.csproj: '<Project><ItemGroup><PackageReference Include="Polly" /></ItemGroup></Project>'
+        expect: pass
+
+  - id: VAL-INTEGRATION-EVENT-CONTRACT
+    name: Integration event contract shape
+    type: deterministic
+    implementation: text_validators:forbidden_pattern
+    description: Integration events must be immutable records whose names end with 'IntegrationEvent'.
+    checkpoints: [pre_commit, code_review, ci]
+    params:
+      patterns:
+        - regex: '\bclass\s+\w+\s*(\([^)]*\))?\s*:\s*IntegrationEvent\b'
+          message: Integration events must be declared as immutable 'record' types, not classes.
+        - regex: '\brecord\s+(?!\w*IntegrationEvent\b)\w+\s*(\([^)]*\))?\s*:\s*IntegrationEvent\b'
+          message: Integration event type names must end with 'IntegrationEvent' (the name is the routing key).
+    self_tests:
+      - name: class-based event fails
+        files:
+          src/Catalog.Api/IntegrationEvents/Events/PriceChangedIntegrationEvent.cs: "public class PriceChangedIntegrationEvent : IntegrationEvent { public int Id { get; set; } }"
+        expect: fail
+      - name: misnamed record fails
+        files:
+          src/Catalog.Api/IntegrationEvents/Events/PriceChanged.cs: "public record PriceChanged(int Id) : IntegrationEvent;"
+        expect: fail
+      - name: record event passes
+        files:
+          src/Catalog.Api/IntegrationEvents/Events/PriceChangedIntegrationEvent.cs: "public record PriceChangedIntegrationEvent(int Id, decimal NewPrice) : IntegrationEvent;"
+        expect: pass
+
+  - id: VAL-API-VERSIONED
+    name: Versioned minimal API endpoints
+    type: deterministic
+    implementation: text_validators:required_pattern
+    description: Files that map minimal API endpoints must declare API versions (NewVersionedApi / HasApiVersion).
+    checkpoints: [pre_commit, code_review, ci]
+    params:
+      file_globs: ["**/Apis/**/*.cs"]   # TUNE: the endpoint files of this codebase (same as the rule's include)
+      trigger: '\.Map(Get|Post|Put|Delete|Patch|Methods)\('
+      require:
+        - regex: 'HasApiVersion\(|NewVersionedApi\('
+          message: Endpoints are mapped without an API version; use app.NewVersionedApi(...).MapGroup(...).HasApiVersion(x).
+    self_tests:
+      - name: unversioned endpoint fails
+        files:
+          src/Catalog.Api/Apis/PromoApi.cs: 'app.MapGroup("api/promo").MapGet("/", () => 1);'
+        expect: fail
+      - name: versioned endpoint passes
+        files:
+          src/Catalog.Api/Apis/PromoApi.cs: 'var api = app.MapGroup("api/promo").HasApiVersion(1.0); api.MapGet("/", () => 1);'
+        expect: pass
+
+  - id: VAL-API-WRITE-AUTH
+    name: Authorization on state-changing endpoints
+    type: deterministic
+    implementation: text_validators:required_pattern
+    description: An API project that maps POST/PUT/PATCH/DELETE endpoints must apply RequireAuthorization (group or endpoint level).
+    checkpoints: [pre_commit, code_review, ci]
+    params:
+      file_globs: ["**/Apis/**/*.cs"]   # TUNE: the endpoint files of this codebase (same as the rule's include)
+      trigger: '\.Map(Post|Put|Delete|Patch)\('
+      search_scope: project
+      project_globs: ["**/*.cs"]
+      require:
+        - regex: '\.RequireAuthorization\('
+          message: State-changing endpoints are mapped but the project never applies RequireAuthorization(); write operations are anonymous.
+    self_tests:
+      - name: anonymous write fails
+        profile: { projects: [ { name: Orders.Domain, path: src/Orders.Domain, type: domain, service: orders, layer: domain }, { name: Orders.Infrastructure, path: src/Orders.Infrastructure, type: infrastructure, service: orders, layer: infrastructure }, { name: Orders.Api, path: src/Orders.Api, type: api, service: orders, layer: presentation }, { name: Orders.Worker, path: src/Orders.Worker, type: worker, service: orders, layer: presentation }, { name: Catalog.Api, path: src/Catalog.Api, type: api, service: catalog, layer: presentation }, { name: Web, path: src/Web, type: web, service: web, layer: presentation }, { name: EventLog, path: src/EventLog, type: library, layer: shared }, { name: ServiceDefaults, path: src/ServiceDefaults, type: library, layer: shared } ], services: [ { id: orders, owns_datastores: [ordersdb], traits: [owns_database] }, { id: catalog, owns_datastores: [catalogdb], traits: [owns_database] }, { id: web, owns_datastores: [] } ], layer_dependencies: { domain: [], infrastructure: ['same_service:domain', shared], presentation: ['same_service:domain', 'same_service:infrastructure', shared], shared: [shared] }, forbidden_packages_by_layer: { domain: [Microsoft.EntityFrameworkCore, Npgsql, Microsoft.AspNetCore] } }
+        files:
+          src/Catalog.Api/Apis/CatalogApi.cs: 'api.MapPost("/items", CreateItem);'
+        expect: fail
+      - name: authorized group passes
+        profile: { projects: [ { name: Orders.Domain, path: src/Orders.Domain, type: domain, service: orders, layer: domain }, { name: Orders.Infrastructure, path: src/Orders.Infrastructure, type: infrastructure, service: orders, layer: infrastructure }, { name: Orders.Api, path: src/Orders.Api, type: api, service: orders, layer: presentation }, { name: Orders.Worker, path: src/Orders.Worker, type: worker, service: orders, layer: presentation }, { name: Catalog.Api, path: src/Catalog.Api, type: api, service: catalog, layer: presentation }, { name: Web, path: src/Web, type: web, service: web, layer: presentation }, { name: EventLog, path: src/EventLog, type: library, layer: shared }, { name: ServiceDefaults, path: src/ServiceDefaults, type: library, layer: shared } ], services: [ { id: orders, owns_datastores: [ordersdb], traits: [owns_database] }, { id: catalog, owns_datastores: [catalogdb], traits: [owns_database] }, { id: web, owns_datastores: [] } ], layer_dependencies: { domain: [], infrastructure: ['same_service:domain', shared], presentation: ['same_service:domain', 'same_service:infrastructure', shared], shared: [shared] }, forbidden_packages_by_layer: { domain: [Microsoft.EntityFrameworkCore, Npgsql, Microsoft.AspNetCore] } }
+        files:
+          src/Catalog.Api/Apis/CatalogApi.cs: 'api.MapPost("/items", CreateItem);'
+          src/Catalog.Api/Program.cs: 'app.NewVersionedApi("Catalog").MapCatalogApi().RequireAuthorization();'
+        expect: pass
+
+  - id: VAL-TOKEN-VALIDATION
+    name: Token validation hardening
+    type: deterministic
+    implementation: text_validators:forbidden_pattern
+    description: JWT validation flags (audience, issuer, lifetime, signing key, signed tokens) must not be disabled.
+    checkpoints: [pre_commit, code_review, ci]
+    params:
+      patterns:
+        - regex: '\b(ValidateAudience|ValidateIssuer|ValidateLifetime|ValidateIssuerSigningKey|RequireSignedTokens|RequireExpirationTime)\s*=\s*false\b'
+          message: Token validation is weakened; tokens issued for other audiences/issuers may be accepted.
+    self_tests:
+      - name: audience validation disabled fails
+        files:
+          src/ServiceDefaults/AuthenticationExtensions.cs: 'options.TokenValidationParameters.ValidateAudience = false;'
+        expect: fail
+      - name: audience configured passes
+        files:
+          src/ServiceDefaults/AuthenticationExtensions.cs: 'options.Audience = audience; options.TokenValidationParameters.ValidateAudience = true;'
+        expect: pass
+
+  - id: VAL-DEV-ONLY-CREDENTIALS
+    name: Development-only credentials
+    type: deterministic
+    implementation: text_validators:forbidden_pattern
+    description: Development signing credentials and similar dev-only security shortcuts must not ship in service code.
+    checkpoints: [pre_commit, code_review, ci]
+    params:
+      patterns:
+        - regex: '\.AddDeveloperSigningCredential\('
+          message: Developer signing credential in use; load signing keys from Key Vault / automatic key management.
+        - regex: 'DangerousAcceptAnyServerCertificateValidator|ServerCertificateCustomValidationCallback\s*=\s*\([^)]*\)\s*=>\s*true'
+          message: TLS certificate validation is disabled.
+    self_tests:
+      - name: developer signing credential fails
+        files:
+          src/Identity.Api/Program.cs: 'builder.Services.AddIdentityServer().AddDeveloperSigningCredential();'
+        expect: fail
+      - name: no dev credentials passes
+        files:
+          src/Identity.Api/Program.cs: 'builder.Services.AddIdentityServer().AddSigningCredential(cert);'
+        expect: pass
+
+  - id: VAL-SENSITIVE-LOGGING
+    name: Sensitive data in logs
+    type: deterministic
+    implementation: text_validators:forbidden_pattern
+    description: Logging calls must not include card data, credentials or tokens.
+    checkpoints: [pre_commit, code_review, ci]
+    params:
+      patterns:
+        - regex: '\.Log(Trace|Debug|Information|Warning|Error|Critical)?\([^;]*\b(CardNumber|CardSecurityNumber|Cvv|SecurityNumber|Password|AccessToken|RefreshToken|ClientSecret|IdToken)\b'
+          message: Log statement references sensitive data (card data / credentials / tokens).
+    self_tests:
+      - name: logging card number fails
+        files:
+          src/Orders.Api/Application/Commands/CreateOrderCommandHandler.cs: 'logger.LogInformation("Paying with {Card}", message.CardNumber);'
+        expect: fail
+      - name: logging order id passes
+        files:
+          src/Orders.Api/Application/Commands/CreateOrderCommandHandler.cs: 'logger.LogInformation("Creating order {OrderId}", order.Id);'
+        expect: pass
+
+  - id: VAL-MIGRATION-IMMUTABLE
+    name: Applied migrations are immutable
+    type: deterministic
+    implementation: data_validators:migration_immutability
+    description: Flags modification, rename, or deletion of existing EF Core migration files (the model snapshot is regenerated and allowed).
+    checkpoints: [pre_commit, code_review, ci]
+    params:
+      migration_globs: ["**/Migrations/*.cs"]
+      allow_globs: ["**/*ModelSnapshot.cs"]
+    self_tests:
+      - name: edited migration fails
+        files:
+          src/Orders.Infrastructure/Migrations/20230925222426_Initial.cs: "// edited"
+        changed: { src/Orders.Infrastructure/Migrations/20230925222426_Initial.cs: M }
+        expect: fail
+      - name: new migration and snapshot update pass
+        files:
+          src/Orders.Infrastructure/Migrations/20261109000000_AddPromotions.cs: "// new"
+          src/Orders.Infrastructure/Migrations/OrderingContextModelSnapshot.cs: "// regenerated"
+        changed:
+          src/Orders.Infrastructure/Migrations/20261109000000_AddPromotions.cs: A
+          src/Orders.Infrastructure/Migrations/OrderingContextModelSnapshot.cs: M
+        expect: pass
+
+  - id: VAL-OUTBOX-PUBLISH
+    name: Publish through the transactional outbox
+    type: deterministic
+    implementation: text_validators:forbidden_pattern
+    description: In services that own a database and publish events, IEventBus.PublishAsync may only be called from the *IntegrationEventService outbox implementation.
+    checkpoints: [pre_commit, code_review, ci]
+    params:
+      allow_files: ["**/*IntegrationEventService.cs"]
+      patterns:
+        - regex: '\.PublishAsync\('
+          message: Integration event published directly; save it to the outbox (IntegrationEventLogService) in the same transaction and publish via the *IntegrationEventService.
+    self_tests:
+      - name: direct publish in handler fails
+        files:
+          src/Catalog.Api/IntegrationEvents/EventHandling/SomeHandler.cs: 'await eventBus.PublishAsync(evt);'
+        expect: fail
+      - name: publish inside outbox service passes
+        files:
+          src/Catalog.Api/IntegrationEvents/CatalogIntegrationEventService.cs: 'await eventBus.PublishAsync(evt);'
+        expect: pass
+
+  - id: VAL-RAW-SQL-INTERPOLATION
+    name: Parameterized SQL only
+    type: deterministic
+    implementation: text_validators:forbidden_pattern
+    description: Raw SQL APIs must not be fed interpolated or concatenated strings.
+    checkpoints: [pre_commit, code_review, ci]
+    params:
+      patterns:
+        - regex: '\b(FromSqlRaw|ExecuteSqlRaw|ExecuteSqlRawAsync|SqlQueryRaw)\s*\(\s*\$@?"'
+          message: Interpolated string passed to a *Raw SQL API; use FromSql/ExecuteSql (parameterized) instead.
+        - regex: '\b(FromSqlRaw|ExecuteSqlRaw|ExecuteSqlRawAsync|SqlQueryRaw)\s*\([^;]*"\s*\+'
+          message: Concatenated SQL passed to a *Raw SQL API; use parameters.
+        - regex: 'new\s+(Npgsql|Sql)Command\(\s*\$@?"'
+          message: Interpolated SQL command text; use command parameters.
+    self_tests:
+      - name: interpolated raw sql fails
+        files:
+          src/Catalog.Api/Services/Repo.cs: 'db.Items.FromSqlRaw($"SELECT * FROM items WHERE name = ''{name}''");'
+        expect: fail
+      - name: parameterized FromSql passes
+        files:
+          src/Catalog.Api/Services/Repo.cs: 'db.Items.FromSql($"SELECT * FROM items WHERE name = {name}");'
+        expect: pass
+
+  - id: VAL-STRUCTURED-LOGGING
+    name: Structured log message templates
+    type: deterministic
+    implementation: text_validators:forbidden_pattern
+    description: ILogger calls must use message templates, not string interpolation or concatenation.
+    checkpoints: [pre_commit, code_review, ci]
+    params:
+      patterns:
+        - regex: '\.Log(Trace|Debug|Information|Warning|Error|Critical)\(\s*(?:[\w.]+\s*,\s*)?\$@?"'
+          message: Interpolated log message; use a message template with named placeholders.
+        - regex: '\.Log(Trace|Debug|Information|Warning|Error|Critical)\(\s*(?:[\w.]+\s*,\s*)?"[^"]*"\s*\+'
+          message: Concatenated log message; use a message template with named placeholders.
+    self_tests:
+      - name: interpolated log fails
+        files:
+          src/Catalog.Api/Services/X.cs: 'logger.LogInformation($"Item {id} updated");'
+        expect: fail
+      - name: template log passes
+        files:
+          src/Catalog.Api/Services/X.cs: 'logger.LogInformation("Item {ItemId} updated", id);'
+        expect: pass
+
+  - id: VAL-NO-CONSOLE-OUTPUT
+    name: No console output in services
+    type: deterministic
+    implementation: text_validators:forbidden_pattern
+    description: Server-side code must log through ILogger (exported via OpenTelemetry), never Console.
+    checkpoints: [pre_commit, code_review, ci]
+    params:
+      patterns:
+        - regex: '\bConsole\.(Write|WriteLine|Error\.Write|Error\.WriteLine|Out\.Write|Out\.WriteLine)\('
+          message: Console output bypasses structured logging and OpenTelemetry; inject ILogger<T>.
+    self_tests:
+      - name: console write fails
+        files:
+          src/Basket.Api/Grpc/BasketService.cs: 'Console.WriteLine("basket updated");'
+        expect: fail
+      - name: logger passes
+        files:
+          src/Basket.Api/Grpc/BasketService.cs: 'logger.LogDebug("Basket updated for {BuyerId}", id);'
+        expect: pass
+
+  - id: VAL-HTTPCLIENT-FACTORY
+    name: HttpClient via IHttpClientFactory
+    type: deterministic
+    implementation: text_validators:forbidden_pattern
+    description: Outbound HTTP must use typed/named clients from IHttpClientFactory so service discovery and the standard resilience handler apply.
+    checkpoints: [pre_commit, code_review, ci]
+    params:
+      patterns:
+        - regex: '\bnew\s+HttpClient\s*\('
+          message: HttpClient constructed directly; register a typed client with AddHttpClient<T>() (gets service discovery + standard resilience).
+    self_tests:
+      - name: new HttpClient fails
+        files:
+          src/Web/Services/X.cs: 'var c = new HttpClient();'
+        expect: fail
+      - name: injected typed client passes
+        files:
+          src/Web/Services/X.cs: 'public class CatalogService(HttpClient httpClient) { }'
+        expect: pass
+
+  - id: VAL-SYNC-OVER-ASYNC
+    name: No sync-over-async or thread blocking
+    type: deterministic
+    implementation: text_validators:forbidden_pattern
+    description: Blocking on tasks or sleeping threads causes thread-pool starvation under load.
+    checkpoints: [pre_commit, code_review, ci]
+    params:
+      patterns:
+        - regex: '\.GetAwaiter\(\)\s*\.GetResult\(\)'
+          message: Blocking on a Task with GetAwaiter().GetResult(); await it instead.
+        - regex: '\.Wait\(\s*\)'
+          message: Blocking Wait() call; await the operation instead.
+        - regex: '\bThread\.Sleep\('
+          message: Thread.Sleep blocks a thread; use await Task.Delay(..., cancellationToken).
+    self_tests:
+      - name: GetResult fails
+        files:
+          src/Orders.Api/Application/X.cs: 'var r = client.GetAsync(url).GetAwaiter().GetResult();'
+        expect: fail
+      - name: await passes
+        files:
+          src/Orders.Api/Application/X.cs: 'var r = await client.GetAsync(url, ct);'
+        expect: pass
+
+  - id: VAL-EMPTY-CATCH
+    name: No empty catch blocks
+    type: deterministic
+    implementation: text_validators:forbidden_pattern
+    description: Exceptions must not be silently swallowed by empty catch blocks.
+    checkpoints: [pre_commit, code_review, ci]
+    params:
+      patterns:
+        - regex: '\bcatch\s*(\([^)]*\))?\s*(when\s*\([^)]*\)\s*)?\{\s*\}'
+          message: Empty catch block swallows the exception; log, translate, or rethrow it.
+    self_tests:
+      - name: empty catch fails
+        files:
+          src/Orders.Api/Services/X.cs: "try { Send(); } catch (Exception) { }"
+        expect: fail
+      - name: logged catch passes
+        files:
+          src/Orders.Api/Services/X.cs: "try { Send(); } catch (Exception ex) { logger.LogError(ex, \"Send failed\"); throw; }"
+        expect: pass
+
+  - id: VAL-PRESERVE-STACK
+    name: Preserve stack traces when rethrowing
+    type: deterministic
+    implementation: text_validators:forbidden_pattern
+    description: "'throw ex;' resets the stack trace; use 'throw;' or wrap with an inner exception."
+    checkpoints: [pre_commit, code_review, ci]
+    params:
+      patterns:
+        - regex: '\bthrow\s+(ex|e|exc|exception|err|error)\s*;'
+          message: Rethrowing the caught variable loses the original stack trace; use 'throw;'.
+    self_tests:
+      - name: throw ex fails
+        files:
+          src/Orders.Api/Application/X.cs: "catch (Exception ex) { log(ex); throw ex; }"
+        expect: fail
+      - name: bare throw passes
+        files:
+          src/Orders.Api/Application/X.cs: "catch (Exception ex) { log(ex); throw; }"
+        expect: pass
+
+  - id: VAL-PROBLEM-DETAILS
+    name: RFC 9457 ProblemDetails for HTTP APIs
+    type: deterministic
+    implementation: text_validators:required_pattern
+    description: A project that maps minimal API endpoints must register AddProblemDetails() so errors use a consistent RFC 9457 (formerly 7807) contract.
+    checkpoints: [pre_commit, code_review, ci]
+    params:
+      file_globs: ["**/Apis/**/*.cs"]   # TUNE: the endpoint files of this codebase (same as the rule's include)
+      trigger: '\.Map(Get|Post|Put|Delete|Patch)\('
+      search_scope: project
+      project_globs: ["**/*.cs"]
+      require:
+        - regex: '\.AddProblemDetails\('
+          message: API project maps endpoints but never calls builder.Services.AddProblemDetails(); error responses are not RFC 9457 ProblemDetails.
+    self_tests:
+      - name: missing problem details fails
+        profile: { projects: [ { name: Orders.Domain, path: src/Orders.Domain, type: domain, service: orders, layer: domain }, { name: Orders.Infrastructure, path: src/Orders.Infrastructure, type: infrastructure, service: orders, layer: infrastructure }, { name: Orders.Api, path: src/Orders.Api, type: api, service: orders, layer: presentation }, { name: Orders.Worker, path: src/Orders.Worker, type: worker, service: orders, layer: presentation }, { name: Catalog.Api, path: src/Catalog.Api, type: api, service: catalog, layer: presentation }, { name: Web, path: src/Web, type: web, service: web, layer: presentation }, { name: EventLog, path: src/EventLog, type: library, layer: shared }, { name: ServiceDefaults, path: src/ServiceDefaults, type: library, layer: shared } ], services: [ { id: orders, owns_datastores: [ordersdb], traits: [owns_database] }, { id: catalog, owns_datastores: [catalogdb], traits: [owns_database] }, { id: web, owns_datastores: [] } ], layer_dependencies: { domain: [], infrastructure: ['same_service:domain', shared], presentation: ['same_service:domain', 'same_service:infrastructure', shared], shared: [shared] }, forbidden_packages_by_layer: { domain: [Microsoft.EntityFrameworkCore, Npgsql, Microsoft.AspNetCore] } }
+        files:
+          src/Orders.Api/Apis/OrdersApi.cs: 'api.MapGet("/", List);'
+        expect: fail
+      - name: problem details registered passes
+        profile: { projects: [ { name: Orders.Domain, path: src/Orders.Domain, type: domain, service: orders, layer: domain }, { name: Orders.Infrastructure, path: src/Orders.Infrastructure, type: infrastructure, service: orders, layer: infrastructure }, { name: Orders.Api, path: src/Orders.Api, type: api, service: orders, layer: presentation }, { name: Orders.Worker, path: src/Orders.Worker, type: worker, service: orders, layer: presentation }, { name: Catalog.Api, path: src/Catalog.Api, type: api, service: catalog, layer: presentation }, { name: Web, path: src/Web, type: web, service: web, layer: presentation }, { name: EventLog, path: src/EventLog, type: library, layer: shared }, { name: ServiceDefaults, path: src/ServiceDefaults, type: library, layer: shared } ], services: [ { id: orders, owns_datastores: [ordersdb], traits: [owns_database] }, { id: catalog, owns_datastores: [catalogdb], traits: [owns_database] }, { id: web, owns_datastores: [] } ], layer_dependencies: { domain: [], infrastructure: ['same_service:domain', shared], presentation: ['same_service:domain', 'same_service:infrastructure', shared], shared: [shared] }, forbidden_packages_by_layer: { domain: [Microsoft.EntityFrameworkCore, Npgsql, Microsoft.AspNetCore] } }
+        files:
+          src/Orders.Api/Apis/OrdersApi.cs: 'api.MapGet("/", List);'
+          src/Orders.Api/Program.cs: 'builder.Services.AddProblemDetails();'
+        expect: pass
+
+  - id: VAL-TEST-RESULTS
+    name: Test results are green
+    type: deterministic
+    implementation: evidence_validators:test_results
+    description: Parses TRX or JUnit results supplied as test_results evidence; fails on failures, errors, or zero executed tests.
+    checkpoints: [testing, ci]
+    self_tests:
+      - name: failing trx fails
+        files:
+          TestResults/run.trx: '<TestRun xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010"><ResultSummary outcome="Failed"><Counters total="10" executed="10" passed="9" failed="1" error="0" /></ResultSummary></TestRun>'
+        artifacts: { test_results: [TestResults/run.trx] }
+        expect: fail
+      - name: green trx passes
+        files:
+          TestResults/run.trx: '<TestRun xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010"><ResultSummary outcome="Completed"><Counters total="10" executed="10" passed="10" failed="0" error="0" /></ResultSummary></TestRun>'
+        artifacts: { test_results: [TestResults/run.trx] }
+        expect: pass
+      - name: failing junit fails
+        files:
+          TestResults/junit.xml: '<testsuites><testsuite name="s" tests="3" failures="1" errors="0" skipped="0"/></testsuites>'
+        artifacts: { test_results: [TestResults/junit.xml] }
+        expect: fail
+
+  - id: VAL-COVERAGE-THRESHOLD
+    name: Line coverage threshold
+    type: deterministic
+    implementation: evidence_validators:coverage_threshold
+    description: Parses Cobertura coverage; changed projects (or overall) must meet min_line_rate.
+    checkpoints: [testing, ci]
+    params:
+      min_line_rate: 0.7
+      exclude_project_types: [test, test_tooling]
+    self_tests:
+      - name: low coverage fails
+        files:
+          TestResults/coverage.cobertura.xml: '<coverage line-rate="0.42"><packages><package name="Orders.Api" line-rate="0.42"/></packages></coverage>'
+          src/Orders.Api/Apis/OrdersApi.cs: "// change"
+        changed: { src/Orders.Api/Apis/OrdersApi.cs: M }
+        artifacts: { coverage_reports: [TestResults/coverage.cobertura.xml] }
+        expect: fail
+      - name: adequate coverage passes
+        files:
+          TestResults/coverage.cobertura.xml: '<coverage line-rate="0.81"><packages><package name="Orders.Api" line-rate="0.81"/></packages></coverage>'
+          src/Orders.Api/Apis/OrdersApi.cs: "// change"
+        changed: { src/Orders.Api/Apis/OrdersApi.cs: M }
+        artifacts: { coverage_reports: [TestResults/coverage.cobertura.xml] }
+        expect: pass
+
+  - id: VAL-NO-UNJUSTIFIED-SKIP
+    name: No unjustified skipped tests
+    type: deterministic
+    implementation: text_validators:forbidden_pattern
+    description: Skipped/ignored tests must carry a reason (and should reference a work item).
+    checkpoints: [pre_commit, code_review, ci]
+    params:
+      patterns:
+        - regex: '\[Ignore(\(\s*\))?\]'
+          message: '[Ignore] without a reason; use [Ignore("reason + work item")] or fix the test.'
+        - regex: 'Skip\s*=\s*""'
+          message: Test skipped with an empty reason.
+    self_tests:
+      - name: bare ignore fails
+        files:
+          tests/Orders.UnitTests/X.cs: "[TestMethod]\n[Ignore]\npublic void T() {}"
+        expect: fail
+      - name: ignore with reason passes
+        files:
+          tests/Orders.UnitTests/X.cs: "[TestMethod]\n[Ignore(\"Flaky on CI - AB#123\")]\npublic void T() {}"
         expect: pass

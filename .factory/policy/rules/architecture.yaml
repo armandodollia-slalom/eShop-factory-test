@@ -4,7 +4,7 @@ category: architecture
 description: Boundaries between services, layers and generated code.
 rules:
 
-  - id: ARCH-001
+  - id: ARCH-004
     title: Changes respect service and layer boundaries
     category: architecture
     severity: high
@@ -42,7 +42,7 @@ rules:
           - Does a lower layer (for example domain) now depend on a higher one (for example presentation or infrastructure)?
           - Is a new cross-service interaction done through a published interface?
         pass_criteria: No new dependency crosses a service boundary through internals or points against the layer order.
-    patterns: []
+    patterns: [PAT-INTEGRATION-EVENT-CONTRACT, PAT-TRANSACTIONAL-OUTBOX]
     required_evidence:
       - { type: validator_output, checkpoints: [code_review], on_missing: warn }
     remediation:
@@ -53,7 +53,7 @@ rules:
     human_review_required: false
     tags: [boundaries, layering]
 
-  - id: ARCH-002
+  - id: ARCH-008
     title: Generated files are regenerated, not edited by hand
     category: architecture
     severity: medium
@@ -88,101 +88,240 @@ rules:
     human_review_required: false
     tags: [generated-code]
 
-  - id: ARCH-003
-    title: "Project references follow the layer order"
+  - id: ARCH-001
+    title: Layer dependencies point inward and the domain stays pure
     category: architecture
-    severity: high
+    severity: critical
     status: active
     version: 1.0.0
     owner: architecture
     description: >
-      A csproj references only the layers profile.layer_dependencies allows. Ordering.Domain references nothing, Ordering.Infrastructure only its domain and shared libraries, APIs, workers and web apps their own domain and infrastructure plus shared libraries. Every project is classified in the profile.
+      Project references must follow the profile's layer matrix (domain <- infrastructure <- application;
+      presentation and shared libraries depend only on shared libraries). The domain layer must not
+      reference persistence, transport or hosting packages. Every project must be classified in the profile.
     rationale: >
-      Observed in every csproj of eShop.Web.slnf (domain-driven Ordering, README services-based architecture). A reversed reference couples the domain to persistence or hosting.
+      A layered service (Domain / Infrastructure / Api projects) keeps business
+      invariants testable and independent of EF Core, RabbitMQ and ASP.NET Core. Inverted dependencies
+      erode that boundary silently; unclassified projects escape every other rule.
     applicability:
-      include: ["src/**/*.csproj", "tests/**/*.csproj"]
-      exclude: []
+      include: ["**/*.csproj"]
     checkpoints:
-      pre_commit:  { enabled: true, enforcement: warn, scope: changed }
-      code_review: { enabled: true, enforcement: warn, scope: changed }
+      pre_commit:  { enabled: true, enforcement: block, scope: changed }
+      code_review: { enabled: true, enforcement: block, scope: changed }
       testing:     { enabled: false }
-      ci:          { enabled: true, enforcement: warn, scope: all }
+      ci:          { enabled: true, enforcement: block, scope: all }
     validation:
       mode: deterministic
-      validators: [VAL-PROJECT-LAYERS]
-    patterns: []
+      validators: [VAL-LAYER-DEPENDENCIES, VAL-DOMAIN-PACKAGES]
+    patterns: [PAT-LAYERED-DDD-SERVICE]
     required_evidence:
-      - { type: validator_output, checkpoints: [pre_commit, code_review, ci], on_missing: warn }
+      - { type: validator_output, checkpoints: [pre_commit, code_review, ci], on_missing: block }
     remediation:
-      summary: Move the code to the layer that may depend on it, or invert the dependency with an interface in the domain.
+      summary: Reverse the dependency (define an interface in the inner layer, implement it outward) and classify new projects in .factory/policy/profiles/dotnet/profile.yaml.
       steps:
-        - Remove the ProjectReference that goes against the layer order.
-        - Add a new project to profile.yaml with its service and layer.
+        - Remove the offending ProjectReference/PackageReference.
+        - Define the abstraction in the domain (e.g. IOrderRepository) and implement it in infrastructure.
+        - For a new project, add it to .factory/policy/profiles/dotnet/profile.yaml with type, layer and service.
+      references: []
     human_review_required: false
-    tags: [layers, dotnet]
+    tags: [layering, ddd]
 
-  - id: ARCH-004
-    title: "Services do not reference each other's projects"
+  - id: ARCH-002
+    title: Services do not reference other services' projects
     category: architecture
-    severity: high
+    severity: critical
     status: active
     version: 1.0.0
     owner: architecture
     description: >
-      A project of one service (Basket, Catalog, Identity, Ordering, Payment, Webhooks, WebApp, WebhookClient) must not reference a project of another service. Services talk over HTTP/gRPC and RabbitMQ integration events; shared code lives in the shared libraries.
+      A project owned by one service (bounded context) must not take a ProjectReference on a project owned
+      by another service. Only projects the profile marks as shared libraries (layer: shared) may be
+      referenced across services.
     rationale: >
-      Observed in the code. No service references another today; the AppHost wires them over the network.
+      Compile-time coupling between services defeats independent deployability and leaks domain models
+      across bounded contexts. Services integrate through HTTP/gRPC APIs and integration events.
     applicability:
-      include: ["src/**/*.csproj", "tests/**/*.csproj"]
-      exclude: []
+      include: ["**/*.csproj"]
+      project_types: [api, web, worker, domain, infrastructure]
     checkpoints:
-      pre_commit:  { enabled: true, enforcement: warn, scope: changed }
-      code_review: { enabled: true, enforcement: warn, scope: changed }
+      pre_commit:  { enabled: true, enforcement: block, scope: changed }
+      code_review: { enabled: true, enforcement: block, scope: changed }
       testing:     { enabled: false }
-      ci:          { enabled: true, enforcement: warn, scope: all }
+      ci:          { enabled: true, enforcement: block, scope: all }
     validation:
       mode: deterministic
       validators: [VAL-SERVICE-ISOLATION]
-    patterns: []
+    patterns: [PAT-DATABASE-PER-SERVICE]
     required_evidence:
-      - { type: validator_output, checkpoints: [pre_commit, code_review, ci], on_missing: warn }
+      - { type: validator_output, checkpoints: [pre_commit, code_review, ci], on_missing: block }
     remediation:
-      summary: Call the other service through its API or react to its integration events; put truly shared code in a shared library.
+      summary: Replace the project reference with an API call through a typed HttpClient/gRPC client or an integration event.
       steps:
         - Remove the cross-service ProjectReference.
-        - Use an HTTP or gRPC client or an integration event instead.
+        - If data is needed synchronously, call the owning service's versioned API via a typed client.
+        - If a reaction is needed, subscribe to the owning service's integration event.
+        - If a type is genuinely shared, move it to a shared library with a versioned contract.
+      references: []
     human_review_required: false
-    tags: [services, dotnet]
+    tags: [bounded-context, coupling]
 
-  - id: ARCH-005
-    title: "The domain stays free of persistence and web frameworks"
+  - id: ARCH-003
+    title: Every service host uses ServiceDefaults
     category: architecture
     severity: high
     status: active
     version: 1.0.0
     owner: architecture
     description: >
-      Projects in the domain layer (Ordering.Domain) must not reference EF Core, Npgsql, ASP.NET Core, Aspire, Redis or RabbitMQ packages (profile.forbidden_packages_by_layer).
+      API, web and worker hosts must call builder.AddServiceDefaults() (or AddBasicServiceDefaults()) and
+      app.MapDefaultEndpoints() in Program.cs.
     rationale: >
-      Ordering.Domain references only MediatR today; persistence lives in Ordering.Infrastructure.
+      ServiceDefaults centralizes OpenTelemetry, health checks, service discovery and the standard HTTP
+      resilience handler. Hosts that skip it are invisible to the dashboard and lack resilience.
     applicability:
-      include: ["src/**/*.csproj", "tests/**/*.csproj"]
-      exclude: []
+      include: ["**/Program.cs"]
+      project_types: [api, web, worker]
     checkpoints:
-      pre_commit:  { enabled: true, enforcement: warn, scope: changed }
-      code_review: { enabled: true, enforcement: warn, scope: changed }
+      pre_commit:  { enabled: true, enforcement: block, scope: changed }
+      code_review: { enabled: true, enforcement: block, scope: changed }
       testing:     { enabled: false }
-      ci:          { enabled: true, enforcement: warn, scope: all }
+      ci:          { enabled: true, enforcement: block, scope: all }
     validation:
       mode: deterministic
-      validators: [VAL-DOMAIN-PACKAGES]
-    patterns: []
+      validators: [VAL-SERVICE-DEFAULTS]
+    patterns: [PAT-SERVICE-DEFAULTS-HOST]
     required_evidence:
-      - { type: validator_output, checkpoints: [pre_commit, code_review, ci], on_missing: warn }
+      - { type: validator_output, checkpoints: [pre_commit, code_review, ci], on_missing: block }
     remediation:
-      summary: Keep persistence and hosting in Ordering.Infrastructure or Ordering.API; expose what the domain needs as an interface.
+      summary: Reference ServiceDefaults and call AddServiceDefaults()/MapDefaultEndpoints() in Program.cs.
       steps:
-        - Remove the package from the domain project.
-        - Implement the concern in the infrastructure project behind a domain interface.
+        - Add a ProjectReference to src/ServiceDefaults.
+        - Call builder.AddServiceDefaults() immediately after CreateBuilder.
+        - Call app.MapDefaultEndpoints() after Build().
+      references: []
     human_review_required: false
-    tags: [domain, dotnet]
+    tags: [aspire, hosting]
+
+  - id: ARCH-005
+    title: New capabilities are placed in the right bounded context with sound aggregates
+    category: architecture
+    severity: high
+    status: active
+    version: 1.0.0
+    owner: architecture
+    description: >
+      New projects, aggregates, or domain models must belong to the bounded context that owns the
+      capability and data. Aggregates enforce their invariants through behavior (not public setters),
+      and cross-aggregate references are by identity.
+    rationale: >
+      Misplaced capabilities (one feature's logic split between two services) create shared
+      ownership of data and invariants. This requires human architectural judgment.
+    applicability:
+      include:
+        - "**/*.csproj"
+        - "**/*.Domain/**/*.cs"
+        - "**/Model/**/*.cs"
+        - "**/Models/**/*.cs"
+      project_types: [api, web, worker, domain, infrastructure]
+    checkpoints:
+      pre_commit:  { enabled: false, note: Semantic rules are not evaluated pre-commit. }
+      code_review: { enabled: true, enforcement: warn, scope: changed }
+      testing:     { enabled: false }
+      ci:          { enabled: true, enforcement: warn, scope: changed }
+    validation:
+      mode: semantic
+      validators: [VAL-SEMANTIC-REVIEW]
+      semantic:
+        rubric: >
+          Decide whether new or changed models live in the bounded context that owns the capability and its
+          data (see docs/architecture/services.md). For aggregates, check invariants are enforced through
+          methods, collections are encapsulated, and other aggregates are referenced by ID.
+        questions:
+          - Which bounded context owns this capability and its data? Is the code placed there?
+          - Are aggregate invariants enforced by behavior rather than public setters?
+          - Does the change introduce shared ownership of data across services?
+        pass_criteria: Correct context ownership and encapsulated aggregates, confirmed by a human architect.
+    patterns: [PAT-LAYERED-DDD-SERVICE]
+    required_evidence:
+      - { type: validator_output, checkpoints: [code_review, ci], on_missing: warn }
+      - { type: human_approval, checkpoints: [code_review], on_missing: warn, description: Architect sign-off on context placement. }
+    remediation:
+      summary: Move the capability into its owning bounded context or record the decision in an ADR with architect approval.
+      steps:
+        - Identify the owning service from docs/architecture/services.md.
+        - Move models/logic there; expose data to other contexts via APIs or events.
+        - Record significant boundary decisions as an ADR and link it in the PR.
+      references: []
+    human_review_required: true
+    tags: [ddd, bounded-context]
+
+  - id: ARCH-006
+    title: Package versions are managed centrally
+    category: architecture
+    severity: medium
+    status: active
+    version: 1.0.0
+    owner: architecture
+    description: >
+      PackageReference items must not declare Version or VersionOverride; versions are defined once in
+      Directory.Packages.props (ManagePackageVersionsCentrally=true).
+    rationale: >
+      Central package management keeps dependency versions consistent across services and makes security
+      patching a one-line change.
+    applicability:
+      include: ["**/*.csproj"]
+      exclude: ["src/ClientApp/**", "src/HybridApp/**", "tests/ClientApp.UnitTests/**"]
+      note: The .NET MAUI apps (ClientApp, HybridApp) pin workload-specific package versions outside Directory.Packages.props.
+    checkpoints:
+      pre_commit:  { enabled: true, enforcement: warn, scope: changed }
+      code_review: { enabled: true, enforcement: block, scope: changed }
+      testing:     { enabled: false }
+      ci:          { enabled: true, enforcement: block, scope: all }
+    validation:
+      mode: deterministic
+      validators: [VAL-CPM-NO-INLINE-VERSION]
+    patterns: [PAT-CENTRAL-PACKAGE-MANAGEMENT]
+    required_evidence:
+      - { type: validator_output, checkpoints: [pre_commit, code_review, ci], on_missing: block }
+    remediation:
+      summary: Remove the Version attribute and add/update a PackageVersion entry in Directory.Packages.props.
+      steps:
+        - Delete Version="..." from the PackageReference.
+        - Add <PackageVersion Include="Name" Version="x.y.z" /> to Directory.Packages.props if missing.
+      references: []
+    human_review_required: false
+    tags: [dependencies, supply-chain]
+
+  - id: ARCH-007
+    title: Integration events are immutable, conventionally named records
+    category: architecture
+    severity: high
+    status: active
+    version: 1.0.0
+    owner: architecture
+    description: >
+      Types deriving from IntegrationEvent must be records whose names end with 'IntegrationEvent'.
+    rationale: >
+      RabbitMQEventBus routes by CLR type name, so the name is the wire contract. Mutable class-based
+      events invite in-place mutation after publication and break replay/outbox semantics.
+    applicability:
+      include: ["**/*.cs"]
+    checkpoints:
+      pre_commit:  { enabled: true, enforcement: block, scope: changed }
+      code_review: { enabled: true, enforcement: block, scope: changed }
+      testing:     { enabled: false }
+      ci:          { enabled: true, enforcement: block, scope: all }
+    validation:
+      mode: deterministic
+      validators: [VAL-INTEGRATION-EVENT-CONTRACT]
+    patterns: [PAT-INTEGRATION-EVENT-CONTRACT]
+    required_evidence:
+      - { type: validator_output, checkpoints: [pre_commit, code_review, ci], on_missing: block }
+    remediation:
+      summary: "Declare the event as 'public record <Name>IntegrationEvent(...) : IntegrationEvent;'."
+      steps:
+        - Convert the class to a positional record with init-only data.
+        - Rename to end with IntegrationEvent and update every subscriber (name is the routing key).
+      references: []
+    human_review_required: false
+    tags: [events, contracts]

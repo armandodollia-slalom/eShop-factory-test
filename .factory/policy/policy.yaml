@@ -17,6 +17,9 @@ categories:
   - { id: security,     prefix: SEC,  file: rules/security.yaml }
   - { id: data,         prefix: DATA, file: rules/data.yaml }
   - { id: testing,      prefix: TEST, file: rules/testing.yaml }
+  - { id: observability, prefix: OBS, file: rules/observability.yaml }
+  - { id: resiliency, prefix: RES, file: rules/resiliency.yaml }
+  - { id: error_handling, prefix: ERR, file: rules/error-handling.yaml }
 
 checkpoints:
   pre_commit:

@@ -1,6 +1,7 @@
 # Profile of eShop (dotnet/eShop): read from README.md ("services-based architecture"), the solution
 # (eShop.slnx / eShop.Web.slnf), each csproj's ProjectReferences and the AppHost's resource graph
-# (src/eShop.AppHost/AppHost.cs). Drafted by the author-architecture-policy skill; a person approves it.
+# (src/eShop.AppHost/AppHost.cs). Drafted by the author-architecture-policy skill with the dotnet pack's
+# policy library vocabulary (packs/dotnet/policy/README.md); a person approves it.
 kind: Profile
 schema_version: 1
 id: default
@@ -21,7 +22,6 @@ global_exclude:
   - "**/obj/**"
   - "**/node_modules/**"
   - "**/wwwroot/lib/**"
-  - "**/Migrations/**"
   - "artifacts/**"
 
 projects:
@@ -29,8 +29,8 @@ projects:
   - { name: Catalog.API,            path: src/Catalog.API,            type: api,     service: catalog,       layer: presentation }
   - { name: Basket.API,             path: src/Basket.API,             type: api,     service: basket,        layer: presentation }
   - { name: Ordering.API,           path: src/Ordering.API,           type: api,     service: ordering,      layer: presentation }
-  - { name: Ordering.Domain,        path: src/Ordering.Domain,        type: library, service: ordering,      layer: domain }
-  - { name: Ordering.Infrastructure, path: src/Ordering.Infrastructure, type: library, service: ordering,   layer: infrastructure }
+  - { name: Ordering.Domain,        path: src/Ordering.Domain,        type: domain,  service: ordering,      layer: domain }
+  - { name: Ordering.Infrastructure, path: src/Ordering.Infrastructure, type: infrastructure, service: ordering,   layer: infrastructure }
   - { name: OrderProcessor,         path: src/OrderProcessor,         type: worker,  service: ordering,      layer: presentation }
   - { name: PaymentProcessor,       path: src/PaymentProcessor,       type: worker,  service: payment,       layer: presentation }
   - { name: Webhooks.API,           path: src/Webhooks.API,           type: api,     service: webhooks,      layer: presentation }

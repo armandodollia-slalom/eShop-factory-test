@@ -4,7 +4,7 @@ category: api
 description: Contracts other code depends on.
 rules:
 
-  - id: API-001
+  - id: API-003
     title: Public API changes are compatible or versioned, and tested
     category: api
     severity: high
@@ -43,7 +43,7 @@ rules:
           - If so, is the old behaviour still served under the existing version?
           - Is there a test in the change set that exercises the changed contract?
         pass_criteria: Existing callers keep working, and the changed contract is covered by a test in the same change.
-    patterns: []
+    patterns: [PAT-INTEGRATION-EVENT-CONTRACT, PAT-VERSIONED-MINIMAL-API]
     required_evidence:
       - { type: validator_output, checkpoints: [code_review], on_missing: warn }
     remediation:
@@ -53,3 +53,126 @@ rules:
         - Add or update a contract-level test in the same change.
     human_review_required: false
     tags: [compatibility, contracts]
+
+  - id: API-001
+    title: HTTP endpoints are versioned
+    category: api
+    severity: high
+    status: active
+    version: 1.0.0
+    owner: architecture
+    description: >
+      Minimal API endpoint files (Apis/*.cs) that map routes must belong to a versioned route group
+      (NewVersionedApi / HasApiVersion / MapToApiVersion) using Asp.Versioning.
+    rationale: >
+      Consumers (web front ends, mobile clients, external subscribers) deploy independently. Versioned
+      endpoints let services evolve contracts without breaking existing clients.
+    applicability:
+      # TUNE: where this codebase maps its endpoints (minimal API files); "**/Apis/**/*.cs" is one common layout.
+      include: ["**/Apis/**/*.cs"]
+      project_types: [api]
+    checkpoints:
+      pre_commit:  { enabled: true, enforcement: block, scope: changed }
+      code_review: { enabled: true, enforcement: block, scope: changed }
+      testing:     { enabled: false }
+      ci:          { enabled: true, enforcement: block, scope: all }
+    validation:
+      mode: deterministic
+      validators: [VAL-API-VERSIONED]
+    patterns: [PAT-VERSIONED-MINIMAL-API]
+    required_evidence:
+      - { type: validator_output, checkpoints: [pre_commit, code_review, ci], on_missing: block }
+    remediation:
+      summary: Map endpoints on a group created with app.NewVersionedApi(...).MapGroup(...).HasApiVersion(x.y).
+      steps:
+        - Create the group with NewVersionedApi("Name") and HasApiVersion for each supported version.
+        - Map routes on the group, using MapToApiVersion for version-specific handlers.
+        - Register AddApiVersioning() in the service's Extensions.
+      references: []
+    human_review_required: false
+    tags: [versioning, contracts]
+
+  - id: API-002
+    title: State-changing endpoints require authorization
+    category: api
+    severity: critical
+    status: active
+    version: 1.0.0
+    owner: architecture
+    description: >
+      Projects that map POST/PUT/PATCH/DELETE endpoints must apply RequireAuthorization (group- or
+      route-level) or [Authorize]; anonymous access must be explicit and justified via the exception register.
+    rationale: >
+      An anonymous write endpoint lets anyone change data and trigger the events that follow from it
+      across the platform.
+    applicability:
+      # TUNE: where this codebase maps its endpoints (minimal API files); "**/Apis/**/*.cs" is one common layout.
+      include: ["**/Apis/**/*.cs", "**/Program.cs"]
+      project_types: [api]
+    checkpoints:
+      pre_commit:  { enabled: true, enforcement: block, scope: changed }
+      code_review: { enabled: true, enforcement: block, scope: changed }
+      testing:     { enabled: false }
+      ci:          { enabled: true, enforcement: block, scope: all }
+    validation:
+      mode: deterministic
+      validators: [VAL-API-WRITE-AUTH]
+    patterns: [PAT-ENDPOINT-AUTHORIZATION]
+    required_evidence:
+      - { type: validator_output, checkpoints: [pre_commit, code_review, ci], on_missing: block }
+    remediation:
+      summary: Apply RequireAuthorization() with a scope/role policy to the route group or write routes.
+      steps:
+        - Call builder.AddDefaultAuthentication() in the service.
+        - Add .RequireAuthorization() (or a named policy) to the versioned group or the write routes.
+        - If reads must stay anonymous, split read and write groups and use AllowAnonymous on reads only.
+      references: []
+    human_review_required: false
+    tags: [authorization, owasp-api1]
+
+  - id: API-004
+    title: Non-idempotent operations are made idempotent
+    category: api
+    severity: medium
+    status: active
+    version: 1.0.0
+    owner: architecture
+    description: >
+      Commands that create resources or trigger side effects (orders, payments, notifications) accept a client
+      request ID (x-requestid) and are deduplicated (e.g. IdentifiedCommand + RequestManager).
+    rationale: >
+      Clients and gateways retry. Without idempotency, retries create duplicate orders and charges.
+    applicability:
+      # TUNE: where this codebase maps its endpoints (minimal API files); "**/Apis/**/*.cs" is one common layout.
+      include: ["**/Apis/**/*.cs", "**/Application/Commands/**/*.cs"]
+      project_types: [api]
+    checkpoints:
+      pre_commit:  { enabled: false, note: Semantic rules are not evaluated pre-commit. }
+      code_review: { enabled: true, enforcement: warn, scope: changed }
+      testing:     { enabled: false }
+      ci:          { enabled: true, enforcement: advisory, scope: changed }
+    validation:
+      mode: semantic
+      validators: [VAL-SEMANTIC-REVIEW]
+      semantic:
+        rubric: >
+          For each new or changed POST/PUT/PATCH/DELETE operation, determine whether a retried request could
+          cause a duplicate side effect. Pass when the operation is naturally idempotent or uses a request ID
+          with deduplication (IdentifiedCommand/RequestManager or equivalent).
+        questions:
+          - Can a retry of this request create a duplicate resource or side effect?
+          - Is a request ID required and validated (x-requestid)?
+          - Is deduplication persisted transactionally with the change?
+        pass_criteria: Every side-effecting operation is idempotent under retry.
+    patterns: [PAT-IDEMPOTENT-COMMAND]
+    required_evidence:
+      - { type: validator_output, checkpoints: [code_review, ci], on_missing: warn }
+    remediation:
+      summary: Require an x-requestid header and wrap the command in IdentifiedCommand handled through RequestManager.
+      steps:
+        - Accept [FromHeader(Name = "x-requestid")] Guid requestId and reject Guid.Empty.
+        - Send new IdentifiedCommand<TCommand, TResult>(command, requestId).
+        - Ensure the request record is stored in the same transaction as the change.
+      references: []
+    human_review_required: false
+    tags: [idempotency, retries]
