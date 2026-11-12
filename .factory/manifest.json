@@ -108,7 +108,7 @@
     },
     ".factory/.gitignore": {
       "kind": "file",
-      "sha": "f04e66416307c7e6"
+      "sha": "05204448c2adab82"
     },
     ".factory/bin/factory": {
       "kind": "file",
@@ -120,7 +120,7 @@
     },
     ".factory/bin/factory.mjs": {
       "kind": "file",
-      "sha": "d30da47d8b017055"
+      "sha": "0c1a40c717cb6737"
     },
     ".factory/githooks/post-commit": {
       "kind": "file",
