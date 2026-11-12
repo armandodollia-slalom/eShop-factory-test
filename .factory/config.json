@@ -376,6 +376,13 @@
           "src/Webhooks.API/IntegrationEvents/**"
         ]
       }
+    },
+    "ui": {
+      "teststackCmd": [
+        "node",
+        ".factory/bin/factory.mjs",
+        "teststack"
+      ]
     }
   },
   "precheck": {
