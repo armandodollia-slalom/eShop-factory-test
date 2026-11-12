@@ -122,6 +122,10 @@
       "kind": "file",
       "sha": "0c1a40c717cb6737"
     },
+    ".factory/githooks/post-checkout": {
+      "kind": "file",
+      "sha": "6e0d457addf5b870"
+    },
     ".factory/githooks/post-commit": {
       "kind": "file",
       "sha": "6f925b1ad73d0e1a"
@@ -129,6 +133,10 @@
     ".factory/githooks/post-merge": {
       "kind": "file",
       "sha": "8381f8cc9f4734fe"
+    },
+    ".factory/githooks/post-rewrite": {
+      "kind": "file",
+      "sha": "f1bd060652aff767"
     },
     ".factory/githooks/pre-push": {
       "kind": "file",
