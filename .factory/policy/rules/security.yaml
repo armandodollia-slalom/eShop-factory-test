@@ -1,0 +1,41 @@
+kind: RuleSet
+schema_version: 1
+category: security
+description: Secrets and sensitive data.
+rules:
+
+  - id: SEC-001
+    title: No secrets in source code or committed configuration
+    category: security
+    severity: critical
+    status: active
+    version: 1.0.0
+    owner: architecture
+    description: >
+      Credentials, private keys, tokens and connection passwords must not be committed. They are injected at
+      run time from the environment or a secret store.
+    rationale: >
+      A secret in version control is exposed to everyone with repository access, in every clone, forever.
+    applicability:
+      include: ["**/*"]
+      # Narrow this to where a quoted literal is expected, for example test fixtures with fake values.
+      exclude: ["**/*.lock", "**/*.md"]
+    checkpoints:
+      pre_commit:  { enabled: true, enforcement: block, scope: changed }
+      code_review: { enabled: true, enforcement: block, scope: changed }
+      testing:     { enabled: false }
+      ci:          { enabled: true, enforcement: block, scope: all }
+    validation:
+      mode: deterministic
+      validators: [VAL-SECRET-SCAN]
+    patterns: [PAT-SECRETS-CONFIGURATION]
+    required_evidence:
+      - { type: validator_output, checkpoints: [pre_commit, code_review, ci], on_missing: block }
+    remediation:
+      summary: Remove the secret, rotate it, and load it from the environment or a secret store.
+      steps:
+        - Rotate the exposed credential; history keeps it.
+        - Read the value from the environment or the platform's secret store.
+        - Commit only placeholders, never working values.
+    human_review_required: false
+    tags: [secrets]

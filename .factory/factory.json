@@ -1,0 +1,19 @@
+{
+  "version": "0.1.0",
+  "source": "https://github.com/armandodollia-slalom/ai-app-factory.git",
+  "tools": [
+    "claude",
+    "codex",
+    "gemini",
+    "cursor",
+    "copilot"
+  ],
+  "features": {
+    "lsp": true,
+    "graphify": true,
+    "ci": true,
+    "agentFiles": true,
+    "gitHooks": true,
+    "demoVideo": true
+  }
+}

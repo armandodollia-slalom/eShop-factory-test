@@ -1,0 +1,13 @@
+# The base scenario: loaded before every other scenario, and alone by `factory teststack reset`.
+# Only lookup data every test needs and that the EF migrations do not insert. Ordering's card types come from
+# OrderingContextSeed (src/Ordering.API/Infrastructure/OrderingContextSeed.cs), which the test stack turns off
+# (Seeding__Disabled); checkout needs them.
+description: Lookup data every scenario needs (ordering card types).
+
+postgres:
+  orderingdb:
+    - table: ordering.cardtypes
+      rows:
+        - { Id: 1, Name: Amex }
+        - { Id: 2, Name: Visa }
+        - { Id: 3, Name: MasterCard }

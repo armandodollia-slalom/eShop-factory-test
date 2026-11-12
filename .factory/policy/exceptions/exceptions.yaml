@@ -1,0 +1,19 @@
+# Exception register: the only way to waive an architecture finding. Inline suppressions are not supported.
+# Every exception names one rule and path globs, is approved by a role allowed for the rule's severity
+# (policy.yaml exceptions.approver_roles_by_severity) and expires (max policy.yaml exceptions.max_duration_days).
+#
+#   - id: EXC-0001
+#     rule_id: SEC-001
+#     scope: { paths: ["services/legacy/**"] }
+#     justification: Why the rule cannot be met today.
+#     risk: medium                       # low | medium | high | critical
+#     compensating_controls: [What limits the risk meanwhile.]
+#     requested_by: team-name
+#     approved_by: person-or-board
+#     approver_role: tech-lead
+#     ticket: link-or-id
+#     created: "2026-01-01"
+#     expires: "2026-03-31"
+kind: ExceptionRegister
+schema_version: 1
+exceptions: []

@@ -1,0 +1,15 @@
+# What eShop's own seeders produce, exported from a stack started once with SEEDING_DISABLED=false
+# (pg_dump --data-only --column-inserts): the demo catalog of CatalogContextSeed (13 brands, 8 types, 101 items)
+# and the two users of Identity.API/UsersSeed.cs with their stored ASP.NET Identity hashes.
+#
+# Test users (clear text of the stored hashes, from UsersSeed.cs):
+#   alice / Pass123$   (AliceSmith@email.com, Id 50ddac7e-9b69-4d68-a91b-25100ef2e403)
+#   bob   / Pass123$   (BobSmith@email.com, Id bc8b0071-21af-41ab-b1d2-15c4efc368df)
+# Empty baskets, no orders, no webhook subscriptions.
+description: The demo catalog and the seeded users alice and bob (password Pass123$).
+
+postgres:
+  catalogdb:
+    - sql: catalogdb.sql
+  identitydb:
+    - sql: identitydb.sql

@@ -1,0 +1,39 @@
+kind: RuleSet
+schema_version: 1
+category: testing
+description: Tests travel with the code they cover.
+rules:
+
+  - id: TEST-001
+    title: Source changes are accompanied by tests
+    category: testing
+    severity: medium
+    status: active
+    version: 1.0.0
+    owner: architecture
+    description: >
+      A change under a source tree that has mapped tests (profile test_mapping) includes a change under at
+      least one of its test trees.
+    rationale: Untested changes are the leading source of regressions.
+    applicability:
+      include: ["**/*"]
+      exclude: ["**/*.md"]
+      note: Takes effect once the profile has test_mapping entries.
+    checkpoints:
+      pre_commit:  { enabled: false, note: Partial commits are allowed; enforced at review. }
+      code_review: { enabled: true, enforcement: warn, scope: changed }
+      testing:     { enabled: true, enforcement: warn, scope: changed }
+      ci:          { enabled: true, enforcement: warn, scope: changed }
+    validation:
+      mode: deterministic
+      validators: [VAL-TESTS-ACCOMPANY-CHANGES]
+    patterns: []
+    required_evidence:
+      - { type: validator_output, checkpoints: [code_review, testing, ci], on_missing: warn }
+      - { type: change_set, checkpoints: [code_review, testing, ci], on_missing: warn }
+    remediation:
+      summary: Add or update a test in the mapped test tree (profile test_mapping).
+      steps:
+        - Cover the changed behaviour with a test in one of the mapped test trees.
+    human_review_required: false
+    tags: [tests]

@@ -1,0 +1,94 @@
+# Profile of eShop (dotnet/eShop): read from README.md ("services-based architecture"), the solution
+# (eShop.slnx / eShop.Web.slnf), each csproj's ProjectReferences and the AppHost's resource graph
+# (src/eShop.AppHost/AppHost.cs). Drafted by the author-architecture-policy skill; a person approves it.
+kind: Profile
+schema_version: 1
+id: default
+language: csharp
+description: >
+  .NET microservices composed by an Aspire AppHost. Identity, Catalog, Basket, Ordering (API, domain,
+  infrastructure, order processor), Payment and Webhooks are services that talk over HTTP/gRPC and RabbitMQ
+  integration events; each owns its datastore (Postgres databases identitydb, catalogdb, orderingdb,
+  webhooksdb; Redis for Basket). WebApp and WebhookClient are Blazor/Razor front ends. EventBus,
+  EventBusRabbitMQ, IntegrationEventLogEF, ServiceDefaults and WebAppComponents are shared libraries.
+source_extensions: [".cs", ".razor", ".cshtml", ".csproj", ".json"]
+comment_prefixes: ["//", "/*", "*", "///"]
+project_manifests: ["src/**/*.csproj", "tests/**/*.csproj"]
+global_exclude:
+  - ".factory/**"
+  - "graphify-out/**"
+  - "**/bin/**"
+  - "**/obj/**"
+  - "**/node_modules/**"
+  - "**/wwwroot/lib/**"
+  - "**/Migrations/**"
+  - "artifacts/**"
+
+projects:
+  - { name: Identity.API,           path: src/Identity.API,           type: api,     service: identity,      layer: presentation }
+  - { name: Catalog.API,            path: src/Catalog.API,            type: api,     service: catalog,       layer: presentation }
+  - { name: Basket.API,             path: src/Basket.API,             type: api,     service: basket,        layer: presentation }
+  - { name: Ordering.API,           path: src/Ordering.API,           type: api,     service: ordering,      layer: presentation }
+  - { name: Ordering.Domain,        path: src/Ordering.Domain,        type: library, service: ordering,      layer: domain }
+  - { name: Ordering.Infrastructure, path: src/Ordering.Infrastructure, type: library, service: ordering,   layer: infrastructure }
+  - { name: OrderProcessor,         path: src/OrderProcessor,         type: worker,  service: ordering,      layer: presentation }
+  - { name: PaymentProcessor,       path: src/PaymentProcessor,       type: worker,  service: payment,       layer: presentation }
+  - { name: Webhooks.API,           path: src/Webhooks.API,           type: api,     service: webhooks,      layer: presentation }
+  - { name: WebApp,                 path: src/WebApp,                 type: web,     service: webapp,        layer: presentation }
+  - { name: WebhookClient,          path: src/WebhookClient,          type: web,     service: webhookclient, layer: presentation }
+  - { name: EventBus,               path: src/EventBus,               type: library, layer: shared }
+  - { name: EventBusRabbitMQ,       path: src/EventBusRabbitMQ,       type: library, layer: shared }
+  - { name: IntegrationEventLogEF,  path: src/IntegrationEventLogEF,  type: library, layer: shared }
+  - { name: eShop.ServiceDefaults,  path: src/eShop.ServiceDefaults,  type: library, layer: shared }
+  - { name: WebAppComponents,       path: src/WebAppComponents,       type: library, layer: shared }
+  - { name: eShop.AppHost,          path: src/eShop.AppHost,          type: host,    layer: host }
+  - { name: ClientApp,              path: src/ClientApp,              type: client,  layer: client }
+  - { name: HybridApp,              path: src/HybridApp,              type: client,  layer: client }
+  - { name: Application.UnitTests,  path: tests/Application.UnitTests,  type: test, layer: test }
+  - { name: Basket.UnitTests,       path: tests/Basket.UnitTests,       type: test, layer: test }
+  - { name: Basket.FunctionalTests, path: tests/Basket.FunctionalTests, type: test, layer: test }
+  - { name: Catalog.FunctionalTests, path: tests/Catalog.FunctionalTests, type: test, layer: test }
+  - { name: ClientApp.UnitTests,    path: tests/ClientApp.UnitTests,    type: test, layer: test }
+  - { name: Ordering.UnitTests,     path: tests/Ordering.UnitTests,     type: test, layer: test }
+  - { name: Ordering.FunctionalTests, path: tests/Ordering.FunctionalTests, type: test, layer: test }
+  - { name: Webhooks.FunctionalTests, path: tests/Webhooks.FunctionalTests, type: test, layer: test }
+  - { name: eShop.AppHost.UnitTests, path: tests/eShop.AppHost.UnitTests, type: test, layer: test }
+
+services:
+  - { id: identity,      owns_datastores: [identitydb], traits: [owns_database, exposes_http_api] }
+  - { id: catalog,       owns_datastores: [catalogdb],  traits: [owns_database, exposes_http_api, publishes_events, consumes_events] }
+  - { id: basket,        owns_datastores: [redis],      traits: [owns_database, exposes_grpc_api, consumes_events] }
+  - { id: ordering,      owns_datastores: [orderingdb], traits: [owns_database, exposes_http_api, publishes_events, consumes_events] }
+  - { id: payment,       owns_datastores: [],           traits: [consumes_events, publishes_events] }
+  - { id: webhooks,      owns_datastores: [webhooksdb], traits: [owns_database, exposes_http_api, consumes_events] }
+  - { id: webapp,        owns_datastores: [],           traits: [web_frontend, consumes_events] }
+  - { id: webhookclient, owns_datastores: [],           traits: [web_frontend] }
+
+# The RabbitMQ broker is shared through EventBusRabbitMQ.
+shared_datastore_names: [eventbus]
+
+# The direction that holds today in every csproj: domain references nothing; infrastructure its own domain;
+# a service's API/worker/web its own domain and infrastructure; everything may use the shared libraries.
+layer_dependencies:
+  domain: []
+  infrastructure: ["same_service:domain", "shared"]
+  presentation: ["same_service:domain", "same_service:infrastructure", "shared"]
+  shared: ["shared"]
+  host: ["*"]
+  client: ["shared"]
+  test: ["*"]
+
+# Ordering.Domain is persistence- and web-free (README: DDD domain model).
+forbidden_packages_by_layer:
+  domain: [Microsoft.EntityFrameworkCore, Npgsql, Microsoft.AspNetCore, Aspire, StackExchange.Redis, RabbitMQ]
+
+test_mapping:
+  - { source: src/Basket.API,              tests: ["tests/Basket.UnitTests/**", "tests/Basket.FunctionalTests/**"] }
+  - { source: src/Catalog.API,             tests: ["tests/Catalog.FunctionalTests/**", "tests/Application.UnitTests/**"] }
+  - { source: src/Ordering.API,            tests: ["tests/Ordering.UnitTests/**", "tests/Ordering.FunctionalTests/**"] }
+  - { source: src/Ordering.Domain,         tests: ["tests/Ordering.UnitTests/**"] }
+  - { source: src/Ordering.Infrastructure, tests: ["tests/Ordering.UnitTests/**", "tests/Ordering.FunctionalTests/**"] }
+  - { source: src/Webhooks.API,            tests: ["tests/Webhooks.FunctionalTests/**", "tests/Application.UnitTests/**"] }
+  - { source: src/Identity.API,            tests: ["tests/Application.UnitTests/**"] }
+  - { source: src/OrderProcessor,          tests: ["tests/Application.UnitTests/**"] }
+  - { source: src/PaymentProcessor,        tests: ["tests/Application.UnitTests/**"] }

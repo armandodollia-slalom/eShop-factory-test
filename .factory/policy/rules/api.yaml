@@ -1,0 +1,55 @@
+kind: RuleSet
+schema_version: 1
+category: api
+description: Contracts other code depends on.
+rules:
+
+  - id: API-001
+    title: Public API changes are compatible or versioned, and tested
+    category: api
+    severity: high
+    status: active
+    version: 1.0.0
+    owner: architecture
+    description: >
+      A change to something callers outside the project depend on (an HTTP or RPC endpoint, an event or
+      message schema, an exported library symbol, a CLI flag) is either backward compatible or published as
+      a new version, and comes with a test that exercises the changed contract.
+    rationale: >
+      Callers cannot be updated in the same commit. An incompatible change without a version breaks them at
+      run time, and an untested contract change breaks them silently.
+    applicability:
+      include: ["**/*"]
+      exclude: ["**/*.md"]
+      # Applies only inside projects of these types: list the profile's project types that publish a contract.
+      project_types: [api, library]
+    checkpoints:
+      pre_commit:  { enabled: false, note: Semantic rules are not evaluated pre-commit. }
+      code_review: { enabled: true, enforcement: warn, scope: changed }
+      testing:     { enabled: false }
+      ci:          { enabled: false }
+    validation:
+      mode: semantic
+      validators: [VAL-SEMANTIC-REVIEW]
+      semantic:
+        rubric: >
+          Decide whether the change alters a public contract. If it does not, answer not_applicable. If it
+          does, pass only when existing callers keep working (additive change, or old and new version both
+          served) and the change set includes a test of the new or changed behaviour. Fail when a field,
+          parameter, route, symbol or status is removed, renamed or changes meaning without a new version,
+          or when the contract change has no test.
+        questions:
+          - Does the change remove, rename or change the meaning of anything an outside caller uses?
+          - If so, is the old behaviour still served under the existing version?
+          - Is there a test in the change set that exercises the changed contract?
+        pass_criteria: Existing callers keep working, and the changed contract is covered by a test in the same change.
+    patterns: []
+    required_evidence:
+      - { type: validator_output, checkpoints: [code_review], on_missing: warn }
+    remediation:
+      summary: Make the change additive or introduce a new version, and add a test for the changed contract.
+      steps:
+        - Keep the existing field, route or symbol and add the new one beside it, or add a new version.
+        - Add or update a contract-level test in the same change.
+    human_review_required: false
+    tags: [compatibility, contracts]

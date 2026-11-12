@@ -1,0 +1,188 @@
+kind: RuleSet
+schema_version: 1
+category: architecture
+description: Boundaries between services, layers and generated code.
+rules:
+
+  - id: ARCH-001
+    title: Changes respect service and layer boundaries
+    category: architecture
+    severity: high
+    status: active
+    version: 1.0.0
+    owner: architecture
+    description: >
+      Code depends only on what its layer may depend on (profile layer_dependencies) and reaches another
+      service only through that service's published interface (its API, its events, its client library),
+      never through its internals.
+    rationale: >
+      Boundaries are what let a service change, deploy and fail on its own. One shortcut across them couples
+      two teams' release cycles.
+    applicability:
+      include: ["**/*"]
+      exclude: ["**/*.md"]
+      note: Narrow `include` to the source trees once the profile lists the projects.
+    checkpoints:
+      pre_commit:  { enabled: false, note: Semantic rules are not evaluated pre-commit. }
+      code_review: { enabled: true, enforcement: warn, scope: changed }
+      testing:     { enabled: false }
+      ci:          { enabled: false }
+    validation:
+      mode: semantic
+      validators: [VAL-SEMANTIC-REVIEW]
+      semantic:
+        rubric: >
+          Using the profile (projects, services, layers, layer_dependencies), judge whether the change keeps
+          dependencies pointing the allowed way. Pass when every new import, call or reference stays inside
+          the service or goes through another service's published interface, and inner layers do not depend
+          on outer ones. Fail when the change imports another service's internal module, shares its data
+          model or storage, or makes an inner layer depend on an outer one.
+        questions:
+          - Does the change add a dependency from one service on another service's internals?
+          - Does a lower layer (for example domain) now depend on a higher one (for example presentation or infrastructure)?
+          - Is a new cross-service interaction done through a published interface?
+        pass_criteria: No new dependency crosses a service boundary through internals or points against the layer order.
+    patterns: []
+    required_evidence:
+      - { type: validator_output, checkpoints: [code_review], on_missing: warn }
+    remediation:
+      summary: Depend on the other service's published interface, or invert the dependency behind an interface owned by the inner layer.
+      steps:
+        - Replace the internal import with a call to the owning service's API, event or client library.
+        - For a layer violation, define the interface in the inner layer and implement it in the outer one.
+    human_review_required: false
+    tags: [boundaries, layering]
+
+  - id: ARCH-002
+    title: Generated files are regenerated, not edited by hand
+    category: architecture
+    severity: medium
+    status: active
+    version: 1.0.0
+    owner: architecture
+    description: >
+      A file that carries a generated-code marker is produced by a tool. Change its source (schema, template,
+      model) or the generator and regenerate it; do not edit the output.
+    rationale: >
+      A hand edit to generated output disappears on the next regeneration and makes the output disagree with
+      its source in the meantime.
+    applicability:
+      include: ["**/*"]
+      exclude: ["**/*.md"]
+    checkpoints:
+      pre_commit:  { enabled: true, enforcement: warn, scope: changed }
+      code_review: { enabled: true, enforcement: warn, scope: changed, note: A regenerated file also trips this; the warning asks the author to confirm it was regenerated. }
+      testing:     { enabled: false }
+      ci:          { enabled: false, note: Only changes matter; a full scan would list every generated file. }
+    validation:
+      mode: deterministic
+      validators: [VAL-GENERATED-MARKER]
+    patterns: []
+    required_evidence:
+      - { type: validator_output, checkpoints: [pre_commit, code_review], on_missing: warn }
+    remediation:
+      summary: Revert the hand edit, change the generator input and regenerate the file.
+      steps:
+        - Find the generator and its input (the marker line usually names it).
+        - Change the input, run the generator and commit both.
+    human_review_required: false
+    tags: [generated-code]
+
+  - id: ARCH-003
+    title: "Project references follow the layer order"
+    category: architecture
+    severity: high
+    status: active
+    version: 1.0.0
+    owner: architecture
+    description: >
+      A csproj references only the layers profile.layer_dependencies allows. Ordering.Domain references nothing, Ordering.Infrastructure only its domain and shared libraries, APIs, workers and web apps their own domain and infrastructure plus shared libraries. Every project is classified in the profile.
+    rationale: >
+      Observed in every csproj of eShop.Web.slnf (domain-driven Ordering, README services-based architecture). A reversed reference couples the domain to persistence or hosting.
+    applicability:
+      include: ["src/**/*.csproj", "tests/**/*.csproj"]
+      exclude: []
+    checkpoints:
+      pre_commit:  { enabled: true, enforcement: warn, scope: changed }
+      code_review: { enabled: true, enforcement: warn, scope: changed }
+      testing:     { enabled: false }
+      ci:          { enabled: true, enforcement: warn, scope: all }
+    validation:
+      mode: deterministic
+      validators: [VAL-PROJECT-LAYERS]
+    patterns: []
+    required_evidence:
+      - { type: validator_output, checkpoints: [pre_commit, code_review, ci], on_missing: warn }
+    remediation:
+      summary: Move the code to the layer that may depend on it, or invert the dependency with an interface in the domain.
+      steps:
+        - Remove the ProjectReference that goes against the layer order.
+        - Add a new project to profile.yaml with its service and layer.
+    human_review_required: false
+    tags: [layers, dotnet]
+
+  - id: ARCH-004
+    title: "Services do not reference each other's projects"
+    category: architecture
+    severity: high
+    status: active
+    version: 1.0.0
+    owner: architecture
+    description: >
+      A project of one service (Basket, Catalog, Identity, Ordering, Payment, Webhooks, WebApp, WebhookClient) must not reference a project of another service. Services talk over HTTP/gRPC and RabbitMQ integration events; shared code lives in the shared libraries.
+    rationale: >
+      Observed in the code. No service references another today; the AppHost wires them over the network.
+    applicability:
+      include: ["src/**/*.csproj", "tests/**/*.csproj"]
+      exclude: []
+    checkpoints:
+      pre_commit:  { enabled: true, enforcement: warn, scope: changed }
+      code_review: { enabled: true, enforcement: warn, scope: changed }
+      testing:     { enabled: false }
+      ci:          { enabled: true, enforcement: warn, scope: all }
+    validation:
+      mode: deterministic
+      validators: [VAL-SERVICE-ISOLATION]
+    patterns: []
+    required_evidence:
+      - { type: validator_output, checkpoints: [pre_commit, code_review, ci], on_missing: warn }
+    remediation:
+      summary: Call the other service through its API or react to its integration events; put truly shared code in a shared library.
+      steps:
+        - Remove the cross-service ProjectReference.
+        - Use an HTTP or gRPC client or an integration event instead.
+    human_review_required: false
+    tags: [services, dotnet]
+
+  - id: ARCH-005
+    title: "The domain stays free of persistence and web frameworks"
+    category: architecture
+    severity: high
+    status: active
+    version: 1.0.0
+    owner: architecture
+    description: >
+      Projects in the domain layer (Ordering.Domain) must not reference EF Core, Npgsql, ASP.NET Core, Aspire, Redis or RabbitMQ packages (profile.forbidden_packages_by_layer).
+    rationale: >
+      Ordering.Domain references only MediatR today; persistence lives in Ordering.Infrastructure.
+    applicability:
+      include: ["src/**/*.csproj", "tests/**/*.csproj"]
+      exclude: []
+    checkpoints:
+      pre_commit:  { enabled: true, enforcement: warn, scope: changed }
+      code_review: { enabled: true, enforcement: warn, scope: changed }
+      testing:     { enabled: false }
+      ci:          { enabled: true, enforcement: warn, scope: all }
+    validation:
+      mode: deterministic
+      validators: [VAL-DOMAIN-PACKAGES]
+    patterns: []
+    required_evidence:
+      - { type: validator_output, checkpoints: [pre_commit, code_review, ci], on_missing: warn }
+    remediation:
+      summary: Keep persistence and hosting in Ordering.Infrastructure or Ordering.API; expose what the domain needs as an interface.
+      steps:
+        - Remove the package from the domain project.
+        - Implement the concern in the infrastructure project behind a domain interface.
+    human_review_required: false
+    tags: [domain, dotnet]

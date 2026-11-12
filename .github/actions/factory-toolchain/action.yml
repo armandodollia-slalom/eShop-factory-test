@@ -1,0 +1,19 @@
+name: Toolchain for the factory's jobs
+description: >
+  Installs what eShop needs to build and run its test stack on a CI runner: the .NET SDK from global.json,
+  the npm packages (Playwright) and Chromium. The factory's workflows call it before they start the stack.
+  This file is yours: `factory init` wrote it once and never touches it again.
+runs:
+  using: composite
+  steps:
+  - uses: actions/setup-dotnet@v4
+    with:
+      global-json-file: global.json
+  - uses: actions/setup-node@v4
+    with:
+      node-version: 20.x
+  - shell: bash
+    run: |
+      dotnet restore eShop.Web.slnf -v q
+      npm ci
+      npx playwright install --with-deps chromium

@@ -1,0 +1,79 @@
+# Architecture policy of this repository. Content only: the engine that evaluates it is the factory's
+# architecture-policy/ (hooks/arch.py, agents/arch_review.py). This directory is <repo>/.factory/policy.
+# Draft and extend it with the author-architecture-policy skill; check it with `arch.py selfcheck`.
+# Relative paths are relative to this directory, except history.ledger.path (relative to the repository).
+kind: PolicyManifest
+schema_version: 1
+name: eshop-architecture-policy
+version: 0.1.0
+owner: architecture             # the team or role that approves changes to this policy
+profile_file: profile.yaml      # what the codebase looks like: projects, services, layers, datastores
+
+# One file per category. A rule ID is <prefix>-<NNN> and lives in its category's file. Add categories freely
+# (for example observability/OBS, resiliency/RES); the engine has no fixed list.
+categories:
+  - { id: architecture, prefix: ARCH, file: rules/architecture.yaml }
+  - { id: api,          prefix: API,  file: rules/api.yaml }
+  - { id: security,     prefix: SEC,  file: rules/security.yaml }
+  - { id: data,         prefix: DATA, file: rules/data.yaml }
+  - { id: testing,      prefix: TEST, file: rules/testing.yaml }
+
+checkpoints:
+  pre_commit:
+    description: Fast, deterministic-only gate on staged files. Semantic rules are skipped.
+    allow_semantic: false
+    default_scope: changed
+  code_review:
+    description: Review of a change. Deterministic validators plus semantic review requests for the reviewer.
+    allow_semantic: true
+    default_scope: changed
+  testing:
+    description: Test stage. Consumes test-result and coverage evidence.
+    allow_semantic: true
+    default_scope: changed
+  ci:
+    description: CI gate. Deterministic validators over the full repository.
+    allow_semantic: true
+    default_scope: all
+
+decision:
+  precedence: [BLOCK, WARN, PASS]
+  validator_error: fail_closed
+  unresolved_semantic_outcome: WARN
+  exit_codes: { PASS: 0, WARN: 0, BLOCK: 1, ERROR: 2, WARN_STRICT: 3 }
+
+# The exception register is the only way to waive a finding: one rule, path globs, an approver, an end date.
+exceptions:
+  file: exceptions/exceptions.yaml
+  max_duration_days: 90
+  expiry_warning_days: 14
+  approver_roles_by_severity:
+    critical: [architecture-board]
+    high: [architecture-board, tech-lead]
+    medium: [architecture-board, tech-lead]
+    low: [architecture-board, tech-lead]
+
+# Evidence bundles of each run (gitignored by evidence/.gitignore). The evidence types are the engine's defaults;
+# add evidence/evidence-types.yaml and `types_file: evidence/evidence-types.yaml` here to change where test
+# results and coverage reports are discovered.
+evidence:
+  output_dir: evidence/runs
+  retain_runs: 50
+
+# Every run and its BLOCK/WARN/WAIVED findings are recorded: a local sqlite store (gitignored) and one JSON file
+# per agent run under the repository's .factory/metrics/arch-history, committed with the work so the whole team's
+# denials feed each agent's lessons.
+history:
+  enabled: true
+  store: sqlite
+  path: evidence/history/architecture-history.sqlite
+  retention_days: 365
+  record_outcomes: [BLOCK, WARN, WAIVED]
+  ledger:
+    enabled: true
+    path: .factory/metrics/arch-history
+    exclude_callers: [git-pre-commit, ci, selfcheck, unspecified, unittest]
+
+# Validators are the engine's implementations (module:function), configured for this codebase in the registry.
+validators:
+  registry: validators/registry.yaml

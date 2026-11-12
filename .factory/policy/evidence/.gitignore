@@ -1,0 +1,3 @@
+# Evidence bundles and the local failure history are generated per run; keep them out of source control.
+runs/
+history/

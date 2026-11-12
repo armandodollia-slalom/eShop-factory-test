@@ -1,0 +1,63 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "name": "fv-session-context",
+            "type": "command",
+            "command": "node \"$GEMINI_PROJECT_DIR/.factory/bin/factory.mjs\" gemini-adapter SessionStart -- node .factory/bin/factory.mjs hook session-start",
+            "timeout": 30000
+          }
+        ]
+      }
+    ],
+    "AfterAgent": [
+      {
+        "hooks": [
+          {
+            "name": "fv-architecture-review",
+            "type": "command",
+            "command": "node \"$GEMINI_PROJECT_DIR/.factory/bin/factory.mjs\" gemini-adapter Stop -- node .factory/bin/factory.mjs hook stop",
+            "timeout": 1800000
+          }
+        ]
+      }
+    ],
+    "BeforeTool": [
+      {
+        "hooks": [
+          {
+            "name": "pipeline-story-guard",
+            "type": "command",
+            "command": "node \"$GEMINI_PROJECT_DIR/.factory/bin/factory.mjs\" gemini-adapter PreToolUse -- node .factory/bin/factory.mjs hook pre-tool",
+            "timeout": 10000
+          }
+        ]
+      },
+      {
+        "matcher": "search_file_content|grep_search|glob|run_shell_command",
+        "hooks": [
+          {
+            "name": "graphify-guard-search",
+            "type": "command",
+            "command": "node \"$GEMINI_PROJECT_DIR/.factory/bin/factory.mjs\" gemini-adapter PreToolUse -- graphify hook-guard search --strict",
+            "timeout": 10000
+          }
+        ]
+      },
+      {
+        "matcher": "read_file|read_many_files|list_directory",
+        "hooks": [
+          {
+            "name": "graphify-guard-read",
+            "type": "command",
+            "command": "node \"$GEMINI_PROJECT_DIR/.factory/bin/factory.mjs\" gemini-adapter PreToolUse -- graphify hook-guard read --strict",
+            "timeout": 10000
+          }
+        ]
+      }
+    ]
+  }
+}
