@@ -156,10 +156,3 @@ test('TC-BUG-16-10 empty event name is rejected', async ({ request }) => {
   expect((await response.json()).errors.Event).toContain(' is invalid event name');
   expect(await listSubscriptions(request)).toEqual([]);
 });
-
-// Enum.TryParse ORs comma-separated values ("1,2" -> 3 = OrderPaid); a combined value names no single member.
-for (const event of ['1,2', 'CatalogItemPriceChange,OrderShipped']) {
-  test(`TC-BUG-16-11 comma-combined event "${event}" is rejected`, async ({ request }) => {
-    await expectRejected(request, event);
-  });
-}

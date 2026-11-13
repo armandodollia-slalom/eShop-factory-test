@@ -6,10 +6,10 @@ plan-sha: 1f0b02b0c784
 verified-score: 10
 verified-at: "2026-11-13T20:17:33.849Z"
 verified-by: test-planner@a978a288/27d172f2
-automation-sha: 7a54139a4698
+automation-sha: 803a506359d4
 automation-plan-sha: 1f0b02b0c784
 automation-score: 10
-automation-verified-at: "2026-11-13T20:38:48.635Z"
+automation-verified-at: "2026-11-13T20:59:46.001Z"
 ---
 # Test plan: BUG-16 Webhooks.API accepts numeric event names outside the allowed list
 

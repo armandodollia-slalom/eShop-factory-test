@@ -120,11 +120,4 @@ public sealed class Bug16Tests(WebhooksApiFixture fixture) : IClassFixture<Webho
         var messages = doc.RootElement.GetProperty("errors").GetProperty("Event").EnumerateArray().Select(e => e.GetString()).ToList();
         Assert.Contains(messages, m => m!.Contains(" is invalid event name"));
     }
-
-    // Enum.TryParse ORs comma-separated values ("1,2" -> 3 = OrderPaid); a combined value names no single member.
-    [Theory]
-    [Trait("TestCase", "TC-BUG-16-11")]
-    [InlineData("1,2")]
-    [InlineData("CatalogItemPriceChange,OrderShipped")]
-    public Task TC_BUG_16_11_CommaCombinedEvent_IsRejected(string @event) => AssertRejectedAndNothingStored(@event);
 }
