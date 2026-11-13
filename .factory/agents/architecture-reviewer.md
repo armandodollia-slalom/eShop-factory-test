@@ -8,4 +8,4 @@ Services, layers and datastore owners are in `.factory/policy/profile.yaml`; the
 - Package versions only in `Directory.Packages.props`.
 - Schema changes come as an EF migration in the owning service's `Infrastructure/Migrations`.
 - Catalog.API endpoint changes include the regenerated `Catalog.API*.json`.
-- The test stack's seeder switch (`Seeding:Disabled`) is not changed by product stories, and neither is `.factory/`, except `.factory/app.json` (a new service's topology) and `.factory/stack/docker-compose.yaml` when `factory teststack publish` regenerated it from an AppHost change in the same diff.
+- The test stack's seeder switch (`Seeding:Disabled`) is not changed by product stories, and neither is `.factory/`, except `.factory/app.json` (a new service's topology, including `policy.projects` and `policy.services` entries that classify new projects; an entry that reclassifies an existing project is refused by the factory) and `.factory/stack/docker-compose.yaml` when `factory teststack publish` regenerated it from an AppHost change in the same diff.

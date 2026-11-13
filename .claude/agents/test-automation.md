@@ -71,6 +71,8 @@ The bugs go back to the implementer and into the pipeline's decision log, so say
 
 Product code (`src/`) is never changed by this agent. Scenarios: `.factory/stack/scenarios/<name>/scenario.yaml` (format: `docs/test-stack.md` in the factory install, `factory version --path`).
 
+A new test project is registered in `tests/` and `eShop.Web.slnf` like the existing ones, and classified for the architecture policy in `.factory/app.json` under `policy.projects` (type `test`, layer `test`); without that the policy blocks it as unclassified (ARCH-001).
+
 ### Test framework per layer
 
 - `unit`: MSTest (MSTest.Sdk) in `tests/<Service>.UnitTests/<Story>Tests.cs`; copy `tests/Basket.UnitTests/BasketServiceTests.cs`. Services without their own project use `tests/Application.UnitTests`.

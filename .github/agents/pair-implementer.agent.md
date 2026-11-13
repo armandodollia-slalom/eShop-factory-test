@@ -52,6 +52,8 @@ Follow the stack, layout, conventions, rules and checks in `.factory/agents/impl
 
 A subtask that adds a service registers its topology in `.factory/app.json` and regenerates the stack with `node .factory/bin/factory.mjs teststack publish` (the "A new service, end to end" section of `.factory/agents/implementer.md`); `.factory/config.json` and the rest of `.factory/` are the factory's.
 
+That includes classifying each new project (and test project) for the architecture policy in `.factory/app.json` under `policy.projects`; the policy profile itself is the factory's.
+
 ## Lessons
 
 If `.factory/lessons/pair-implementer.md` exists, read it before you start and follow every rule in it. They come from earlier reviews, verifier denials and test failures. (When the pipeline runs this agent it already includes them.)

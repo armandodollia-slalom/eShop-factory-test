@@ -8,7 +8,7 @@
     },
     ".claude/agents/architecture-reviewer.md": {
       "kind": "file",
-      "sha": "f971a33a5f87acc7"
+      "sha": "449ad1fc86dc254e"
     },
     ".claude/agents/bug-triage.md": {
       "kind": "file",
@@ -24,7 +24,7 @@
     },
     ".claude/agents/pair-implementer.md": {
       "kind": "file",
-      "sha": "d8d4667350bc2879"
+      "sha": "99b5f43d0842350f"
     },
     ".claude/agents/pair-ui-verifier.md": {
       "kind": "file",
@@ -80,7 +80,7 @@
     },
     ".claude/agents/test-automation.md": {
       "kind": "file",
-      "sha": "33957a9d33ad3905"
+      "sha": "68f91ba62dcc8229"
     },
     ".claude/agents/test-plan-verifier.md": {
       "kind": "file",
@@ -168,7 +168,7 @@
     },
     ".github/agents/architecture-reviewer.agent.md": {
       "kind": "file",
-      "sha": "e8a5944104704a2c"
+      "sha": "220aef7f4e8ac2e0"
     },
     ".github/agents/bug-triage.agent.md": {
       "kind": "file",
@@ -184,7 +184,7 @@
     },
     ".github/agents/pair-implementer.agent.md": {
       "kind": "file",
-      "sha": "bdec964941935ae0"
+      "sha": "7954546cdeedea76"
     },
     ".github/agents/pair-ui-verifier.agent.md": {
       "kind": "file",
@@ -240,7 +240,7 @@
     },
     ".github/agents/test-automation.agent.md": {
       "kind": "file",
-      "sha": "33957a9d33ad3905"
+      "sha": "68f91ba62dcc8229"
     },
     ".github/agents/test-plan-verifier.agent.md": {
       "kind": "file",
