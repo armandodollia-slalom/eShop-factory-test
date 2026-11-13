@@ -26,6 +26,9 @@ jobs:
       run: factory check
     - name: Configured models are allowed (agent.allowedModels)
       run: factory models check
+    - name: "Toolchain (yours: .github/actions/factory-toolchain), for a stack published from the application"
+      if: hashFiles('.factory/stack/**') != '' && hashFiles('.github/actions/factory-toolchain/action.yml') != ''
+      uses: ./.github/actions/factory-toolchain
     - name: Test stack scenarios parse, and the stack matches the application
       if: hashFiles('.factory/stack/**') != ''
       run: |

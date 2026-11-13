@@ -159,7 +159,7 @@ The .NET SDK is in `~/.dotnet` (put it on `PATH`: `export PATH=$HOME/.dotnet:$PA
 - Product code: `src/<Service>` (one project per service; Ordering is split into `Ordering.API`, `Ordering.Domain`, `Ordering.Infrastructure`, `OrderProcessor`). Shared libraries: `src/EventBus*`, `src/IntegrationEventLogEF`, `src/eShop.ServiceDefaults`, `src/WebAppComponents`; `src/Shared` holds source files linked into several projects.
 - Tests: `tests/<Service>.UnitTests` (MSTest), `tests/<Service>.FunctionalTests` (xUnit v3), `tests/Application.UnitTests` (MSTest, several services), `e2e/` (Playwright).
 - Not built here: `src/ClientApp`, `src/HybridApp` (.NET MAUI). Do not change them.
-- Test stack: `.factory/stack/` (compose file, scenarios); its config is in `.factory/config.json`.
+- Test stack: `.factory/stack/` (scenarios, and `docker-compose.yaml`, generated from the AppHost by `factory teststack publish`; never edit it by hand). Its topology (services, images, ports, URLs, readiness, test-only overrides) is in `.factory/app.json`, which you may edit; `.factory/config.json` and the rest of `.factory/` are the factory's.
 
 ### Conventions: which example to follow
 
@@ -183,7 +183,7 @@ The .NET SDK is in `~/.dotnet` (put it on `PATH`: `export PATH=$HOME/.dotnet:$PA
 
 ### A new service, end to end
 
-Register it in every place, in one subtask: `src/eShop.AppHost/AppHost.cs` (`AddDotnetProject`, `WithReference` to its database and the event bus, `Identity__Url` if it validates tokens); `src/Identity.API/Configuration/Config.cs` when it needs a scope or a client; `eShop.Web.slnf`; the test stack (`.factory/stack/docker-compose.yaml` service with `${<NAME>_IMAGE}` and a host port variable, `stack.services.<name>` with its `project` and `image`, `stack.ports`, `teststack.services` readiness URL in `.factory/config.json`). `node .factory/bin/factory.mjs teststack drift` must pass afterwards; it compares the AppHost with the stack.
+Register it in every place, in one subtask: `src/eShop.AppHost/AppHost.cs` (`AddDotnetProject`, `WithReference` to its database and the event bus, `Identity__Url` if it validates tokens); `src/Identity.API/Configuration/Config.cs` when it needs a scope or a client; `eShop.Web.slnf`; and the test stack, in `.factory/app.json`: `stack.services.<name>` (`project`, `image: { env: <NAME>_IMAGE, name }`), a `stack.ports` entry and its `stack.publishOverrides.ports.services` mapping if the browser or a test reaches it, `stack.urls`, and its `teststack.services` readiness URL; add a `publishOverrides.services` entry (with its reason) only for what the test stack must do differently, such as the identity URL or seeding off. Then run `node .factory/bin/factory.mjs teststack publish` (it regenerates `.factory/stack/docker-compose.yaml` from the AppHost) and `node .factory/bin/factory.mjs teststack drift`, which must report `"check":"clean"`.
 
 ### Time, UI, optional features
 

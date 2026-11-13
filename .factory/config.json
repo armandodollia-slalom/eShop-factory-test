@@ -178,6 +178,31 @@
         "node",
         "{packs}/typescript/lint/eslint.mjs",
         "{files}"
+      ],
+      ".tsx": [
+        "node",
+        "{packs}/typescript/lint/eslint.mjs",
+        "{files}"
+      ],
+      ".js": [
+        "node",
+        "{packs}/typescript/lint/eslint.mjs",
+        "{files}"
+      ],
+      ".mjs": [
+        "node",
+        "{packs}/typescript/lint/eslint.mjs",
+        "{files}"
+      ],
+      ".cjs": [
+        "node",
+        "{packs}/typescript/lint/eslint.mjs",
+        "{files}"
+      ],
+      ".jsx": [
+        "node",
+        "{packs}/typescript/lint/eslint.mjs",
+        "{files}"
       ]
     },
     "fix": {
@@ -194,6 +219,36 @@
         "{files}"
       ],
       ".ts": [
+        "node",
+        "{packs}/typescript/lint/eslint.mjs",
+        "--fix",
+        "{files}"
+      ],
+      ".tsx": [
+        "node",
+        "{packs}/typescript/lint/eslint.mjs",
+        "--fix",
+        "{files}"
+      ],
+      ".js": [
+        "node",
+        "{packs}/typescript/lint/eslint.mjs",
+        "--fix",
+        "{files}"
+      ],
+      ".mjs": [
+        "node",
+        "{packs}/typescript/lint/eslint.mjs",
+        "--fix",
+        "{files}"
+      ],
+      ".cjs": [
+        "node",
+        "{packs}/typescript/lint/eslint.mjs",
+        "--fix",
+        "{files}"
+      ],
+      ".jsx": [
         "node",
         "{packs}/typescript/lint/eslint.mjs",
         "--fix",
@@ -251,17 +306,13 @@
         "global.json",
         "nuget.config"
       ]
-    }
+    },
+    "publish": "node {packs}/dotnet/stack/aspire-publish.mjs --out {out}"
   },
   "teststack": {
     "commands": {
       "hash-password": "pack:dotnet/stack/hash-password.mjs",
       "drift": "pack:dotnet/stack/apphost-drift.mjs"
-    },
-    "drift": {
-      "ignore": [
-        "mobile-bff"
-      ]
     }
   },
   "prVideo": {
