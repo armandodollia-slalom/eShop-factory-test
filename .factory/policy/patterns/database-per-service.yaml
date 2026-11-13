@@ -10,7 +10,7 @@ rules:
 - DATA-002
 - DATA-004
 guidance:
-- Declare owned datastores in .factory/policy/profiles/dotnet/profile.yaml (owns_datastores).
+- Owned datastores are declared per service (owns_datastores) in {profile_file}; a new service declares its own in {topology_file} under policy.services.
 - Use Aspire AddNpgsqlDbContext<T>("<owneddb>") only for owned databases.
 - Use LINQ or parameterized FromSql/SqlQuery; never concatenate SQL.
 - Build local read models from integration events instead of cross-database joins.

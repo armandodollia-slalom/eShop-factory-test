@@ -2,7 +2,7 @@ import { execFileSync } from 'child_process';
 
 /**
  * The test stack slot the specs run against, as the factory describes it: host ports and URLs come from the
- * `stack` section of .factory/config.json (`stack.ports`, `stack.urls`), shifted for the slot in
+ * `stack` section of .factory/app.json (`stack.ports`, `stack.urls`), shifted for the slot in
  * TESTSTACK_SLOT (0 unless a run leased an isolated copy). Specs that build their URLs from here run on any
  * slot, so several stories can be verified in parallel; a spec with a literal slot-0 port stays on slot 0.
  */
