@@ -96,6 +96,11 @@ public abstract class IdentifiedCommandHandler<T, R> : IRequestHandler<Identifie
 
                 return result;
             }
+            catch (OrderingDomainException)
+            {
+                // A business rule violation is the caller's to report, not a processing failure.
+                throw;
+            }
             catch
             {
                 return default;

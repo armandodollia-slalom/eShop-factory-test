@@ -19,7 +19,7 @@ public static class OrdersApi
         return api;
     }
 
-    public static async Task<Results<Ok, BadRequest<string>, ProblemHttpResult>> CancelOrderAsync(
+    public static async Task<Results<Ok, BadRequest<string>, NotFound<ProblemDetails>, Conflict<ProblemDetails>, ProblemHttpResult>> CancelOrderAsync(
         [FromHeader(Name = "x-requestid")] Guid requestId,
         CancelOrderCommand command,
         [AsParameters] OrderServices services)
@@ -38,17 +38,30 @@ public static class OrdersApi
             requestCancelOrder.Command.OrderNumber,
             requestCancelOrder);
 
-        var commandResult = await services.Mediator.Send(requestCancelOrder);
+        bool commandResult;
+        try
+        {
+            commandResult = await services.Mediator.Send(requestCancelOrder);
+        }
+        catch (OrderingDomainException ex)
+        {
+            return InvalidStatusChange(ex);
+        }
 
         if (!commandResult)
         {
+            if (!await OrderExistsAsync(command.OrderNumber, services.Queries))
+            {
+                return OrderNotFound(command.OrderNumber);
+            }
+
             return TypedResults.Problem(detail: "Cancel order failed to process.", statusCode: 500);
         }
 
         return TypedResults.Ok();
     }
 
-    public static async Task<Results<Ok, BadRequest<string>, ProblemHttpResult>> ShipOrderAsync(
+    public static async Task<Results<Ok, BadRequest<string>, NotFound<ProblemDetails>, Conflict<ProblemDetails>, ProblemHttpResult>> ShipOrderAsync(
         [FromHeader(Name = "x-requestid")] Guid requestId,
         ShipOrderCommand command,
         [AsParameters] OrderServices services)
@@ -67,14 +80,57 @@ public static class OrdersApi
             requestShipOrder.Command.OrderNumber,
             requestShipOrder);
 
-        var commandResult = await services.Mediator.Send(requestShipOrder);
+        bool commandResult;
+        try
+        {
+            commandResult = await services.Mediator.Send(requestShipOrder);
+        }
+        catch (OrderingDomainException ex)
+        {
+            return InvalidStatusChange(ex);
+        }
 
         if (!commandResult)
         {
+            if (!await OrderExistsAsync(command.OrderNumber, services.Queries))
+            {
+                return OrderNotFound(command.OrderNumber);
+            }
+
             return TypedResults.Problem(detail: "Ship order failed to process.", statusCode: 500);
         }
 
         return TypedResults.Ok();
+    }
+
+    private static Conflict<ProblemDetails> InvalidStatusChange(OrderingDomainException ex) =>
+        TypedResults.Conflict(new ProblemDetails
+        {
+            Title = "Invalid order status change",
+            Detail = ex.Message,
+            Status = StatusCodes.Status409Conflict
+        });
+
+    private static NotFound<ProblemDetails> OrderNotFound(int orderNumber) =>
+        TypedResults.NotFound(new ProblemDetails
+        {
+            Title = "Order not found",
+            Detail = $"Order {orderNumber} does not exist.",
+            Status = StatusCodes.Status404NotFound
+        });
+
+    // The command reports a missing order and an unexpected failure the same way, so look the order up to tell them apart.
+    private static async Task<bool> OrderExistsAsync(int orderNumber, IOrderQueries queries)
+    {
+        try
+        {
+            await queries.GetOrderAsync(orderNumber);
+            return true;
+        }
+        catch (KeyNotFoundException)
+        {
+            return false;
+        }
     }
 
     public static async Task<Results<Ok<Order>, NotFound>> GetOrderAsync(int orderId, [AsParameters] OrderServices services)
@@ -120,9 +176,9 @@ public static class OrdersApi
         CreateOrderRequest request,
         [AsParameters] OrderServices services)
     {
-        
+
         //mask the credit card number
-        
+
         services.Logger.LogInformation(
             "Sending command: {CommandName} - {IdProperty}: {CommandId}",
             request.GetGenericTypeName(),
@@ -152,7 +208,15 @@ public static class OrdersApi
                 requestCreateOrder.Id,
                 requestCreateOrder);
 
-            var result = await services.Mediator.Send(requestCreateOrder);
+            bool result;
+            try
+            {
+                result = await services.Mediator.Send(requestCreateOrder);
+            }
+            catch (OrderingDomainException)
+            {
+                result = false;
+            }
 
             if (result)
             {
