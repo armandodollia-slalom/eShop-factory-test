@@ -1,0 +1,4 @@
+# BUG-10: invalid order status changes. The functional cases seed their orders directly through the
+# OrderingContext (the default scenario has no orders), so this scenario only extends default.
+description: Default data for BUG-10 (order status transition errors); orders are seeded by the functional tests.
+extends: default
