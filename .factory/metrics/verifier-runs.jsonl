@@ -12,3 +12,5 @@
 {"ts":"2026-11-13T23:17:48.085Z","stage":"automation","story":"BUG-18","round":1,"agent_prompt_ver":"170ddf68","verifier_ver":"ddb8bf01","cli":"claude","score":9,"passed":true,"gaps":1}
 {"ts":"2026-11-13T23:35:57.732Z","stage":"automation","story":"BUG-17","round":1,"agent_prompt_ver":"170ddf68","verifier_ver":"ddb8bf01","cli":"claude","score":10,"passed":true,"gaps":0}
 {"ts":"2026-11-13T23:40:47.227Z","stage":"automation","story":"BUG-18","round":1,"agent_prompt_ver":"170ddf68","verifier_ver":"ddb8bf01","cli":"claude","score":10,"passed":true,"gaps":0}
+{"ts":"2026-11-13T23:51:54.559Z","stage":"automation","story":"BUG-17","round":1,"agent_prompt_ver":"170ddf68","verifier_ver":"ddb8bf01","cli":"claude","score":10,"passed":true,"gaps":0}
+{"ts":"2026-11-13T23:56:31.929Z","stage":"automation","story":"BUG-18","round":1,"agent_prompt_ver":"170ddf68","verifier_ver":"ddb8bf01","cli":"claude","score":10,"passed":true,"gaps":0}

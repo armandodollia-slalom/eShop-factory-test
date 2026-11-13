@@ -9,7 +9,7 @@ verified-by: test-planner@a978a288/27d172f2
 automation-sha: c3b8dc2bf32b
 automation-plan-sha: dccdd7aa9876
 automation-score: 10
-automation-verified-at: "2026-11-13T23:35:57.757Z"
+automation-verified-at: "2026-11-13T23:51:54.577Z"
 ---
 # Test plan: BUG-17 [BE - Catalog.API] - Creating a catalog item without a name returns 500
 
