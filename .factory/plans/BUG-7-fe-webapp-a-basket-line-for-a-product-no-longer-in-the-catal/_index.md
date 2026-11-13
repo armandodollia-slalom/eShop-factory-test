@@ -13,7 +13,7 @@ automation-verified-at: "2026-11-13T07:46:03.888Z"
 ---
 # Test plan: BUG-7 [FE - WebApp] - A basket line for a product no longer in the catalog breaks every page
 
-Scope: a user whose Redis basket holds a line for a product that is not in the catalog (`99999`) must still be able to use every page; the missing line is dropped or flagged and the rest of the basket is shown. All cases are `e2e` (the story's test is a Playwright test on the test stack) and need a new test stack scenario `basket-edge` that `extends: default`, adds users `oscar` (only 99999), `olive` (99999 plus product 99 x2) and seeds `bob` with a two-line valid basket; each case uses its own user so seeded baskets never overlap, and `alice` stays empty. Spec file: `e2e/teststack/basket-cart.spec.ts`.
+Scope: a user whose Redis basket holds a line for a product that is not in the catalog (`99999`) must still be able to use every page; the missing line is dropped or flagged and the rest of the basket is shown. All cases are `e2e` (the story's test is a Playwright test on the test stack) and need a new test stack scenario `bug-7` that `extends: default`, adds users `oscar` (only 99999), `olive` (99999 plus product 99 x2) and seeds `bob` with a two-line valid basket; each case uses its own user so seeded baskets never overlap, and `alice` stays empty. Spec file: `e2e/teststack/basket-cart.spec.ts`.
 
 | ID | Title | Type | Layer | Covers |
 | --- | --- | --- | --- | --- |

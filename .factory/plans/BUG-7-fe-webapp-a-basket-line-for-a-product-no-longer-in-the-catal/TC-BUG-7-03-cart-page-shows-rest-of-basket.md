@@ -15,7 +15,7 @@ priority: P1
 
 ## Preconditions
 
-- Test stack running; scenario `basket-edge` (new, `extends: default`) loaded. It adds the users and Redis baskets named in this case (each case uses its own user, so the seeded baskets do not overlap).
+- Test stack running; scenario `bug-7` (new, `extends: default`) loaded. It adds the users and Redis baskets named in this case (each case uses its own user, so the seeded baskets do not overlap).
 - User `olive` (password `Pass123$`), Redis basket (mixed): product 99999 x1 and product 99 (Adventurer GPS Watch) x2.
 
 ## Steps

@@ -39,7 +39,7 @@ test('TC-BUG-7-01 home page renders and the cart menu ignores a basket line for 
     await expect(cart).toHaveAttribute('aria-label', 'Shopping bag');
     await expect(page.locator('.cart-button-count')).toHaveCount(0);
     await expect(page.locator('header').first()).not.toContainText('99999');
-    await demo.highlight(cart, 'no count for the missing product');
+    await demo.highlight(cart, 'no count shown');
   });
   await test.step('Another page (a catalog item) renders too', async () => {
     await page.locator('a[href^="item/"]').first().click();
