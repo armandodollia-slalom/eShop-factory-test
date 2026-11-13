@@ -1,5 +1,5 @@
 {
-  "version": "0.2.2",
+  "version": "0.2.3",
   "source": "https://github.com/armandodollia-slalom/ai-app-factory.git",
   "tools": [
     "claude",
@@ -15,5 +15,8 @@
     "agentFiles": true,
     "gitHooks": true,
     "demoVideo": true
-  }
+  },
+  "owners": [
+    "@armandodollia-slalom"
+  ]
 }

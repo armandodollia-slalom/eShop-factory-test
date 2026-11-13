@@ -26,13 +26,13 @@ Each round:
 
 ## What to do
 
-1. Work out the target: a PR number (`--pr 42`), a story (`--story PROMO-8`), or the current branch. Videos may be passed with `--videos <file|dir|url>` (repeatable); otherwise the loop uses video links in the PR body and `test-results/**`.
+1. Work out the target: a PR number (`--pr 42`), a story (`--story SHOP-8`), or the current branch. Videos may be passed with `--videos <file|dir|url>` (repeatable); otherwise the loop uses video links in the PR body and `test-results/**`.
 2. If the loop should fix findings, make sure the PR head branch is checked out with a clean tree. Use `--no-fix` for a report-only check (as CI does).
 3. Run it from the repository root, for example:
 
    ```bash
    factory pr-check run --pr 42
-   factory pr-check run --story PROMO-8 --videos test-results
+   factory pr-check run --story SHOP-8 --videos test-results
    factory pr-check run --pr 42 --no-fix --comment
    ```
 

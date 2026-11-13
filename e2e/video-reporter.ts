@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import type { FullConfig, Reporter, Suite, TestCase, TestResult } from '@playwright/test/reporter';
+import type { FullConfig, Reporter, TestCase, TestResult } from '@playwright/test/reporter';
 
 /**
  * Copies every test's video (`use.video` in playwright.config.ts) to a stable, readable path:
@@ -50,7 +50,7 @@ export default class VideoReporter implements Reporter {
   private rootDir = process.cwd();
   private startedAt = new Date().toISOString();
 
-  onBegin(config: FullConfig, _suite: Suite) {
+  onBegin(config: FullConfig) {
     this.rootDir = config.rootDir;
     this.startedAt = new Date().toISOString();
     fs.rmSync(PREVIOUS_DIR, { recursive: true, force: true });
