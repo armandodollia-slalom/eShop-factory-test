@@ -62,7 +62,7 @@ public sealed class OrderingApiTests : IClassFixture<OrderingApiFixture>
         var s = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         // Assert
-        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     [Fact]
@@ -91,7 +91,7 @@ public sealed class OrderingApiTests : IClassFixture<OrderingApiFixture>
         var response = await _httpClient.PutAsync("api/orders/ship", content, TestContext.Current.CancellationToken);
 
         // Assert
-        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     [Fact]
