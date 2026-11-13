@@ -1,0 +1,21 @@
+# BUG-10: invalid order status changes on PUT /api/orders/cancel and /ship return a client error.
+# Alice (default scenario, Id 50ddac7e-9b69-4d68-a91b-25100ef2e403) owns one order in each status the cases need.
+extends: default
+description: The default data plus four orders of alice - Shipped (5), Paid (6), Submitted (7, 8).
+
+postgres:
+  orderingdb:
+    - table: ordering.buyers
+      rows:
+        # alice as an Ordering buyer
+        - { Id: 1, IdentityGuid: 50ddac7e-9b69-4d68-a91b-25100ef2e403, Name: alice }
+    - table: ordering.orders
+      rows:
+        # 5: Shipped - cancel and ship are both invalid transitions
+        - { Id: 5, BuyerId: 1, OrderStatus: Shipped, OrderDate: 2026-11-01T10:00:00Z, Description: The order was shipped., Address_Street: 1 Main St, Address_City: Redmond, Address_State: WA, Address_Country: USA, Address_ZipCode: "98052" }
+        # 6: Paid - can be shipped (200), cannot be cancelled
+        - { Id: 6, BuyerId: 1, OrderStatus: Paid, OrderDate: 2026-11-01T10:00:00Z, Description: Paid., Address_Street: 1 Main St, Address_City: Redmond, Address_State: WA, Address_Country: USA, Address_ZipCode: "98052" }
+        # 7: Submitted - cannot be shipped (409), left untouched by the cases
+        - { Id: 7, BuyerId: 1, OrderStatus: Submitted, OrderDate: 2026-11-01T10:00:00Z, Description: Submitted., Address_Street: 1 Main St, Address_City: Redmond, Address_State: WA, Address_Country: USA, Address_ZipCode: "98052" }
+        # 8: Submitted - can be cancelled (200)
+        - { Id: 8, BuyerId: 1, OrderStatus: Submitted, OrderDate: 2026-11-01T10:00:00Z, Description: Submitted., Address_Street: 1 Main St, Address_City: Redmond, Address_State: WA, Address_Country: USA, Address_ZipCode: "98052" }

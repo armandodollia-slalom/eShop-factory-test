@@ -39,6 +39,9 @@ public sealed class OrderingApiFixture : WebApplicationFactory<Program>, IAsyncL
         builder.ConfigureServices(services =>
         {
             services.AddSingleton<IStartupFilter>(new AutoAuthorizeStartupFilter());
+            // No event bus runs in this fixture, and the event log resolves event types from the entry assembly
+            // (the test host here), so publishing integration events would fail every status change that succeeds.
+            services.AddScoped<eShop.Ordering.API.Application.IntegrationEvents.IOrderingIntegrationEventService, NoOpIntegrationEventService>();
         });
         return base.CreateHost(builder);
     }
@@ -61,6 +64,13 @@ public sealed class OrderingApiFixture : WebApplicationFactory<Program>, IAsyncL
     {
         await _app.StartAsync();
         _postgresConnectionString = await Postgres.Resource.GetConnectionStringAsync();
+    }
+
+    private sealed class NoOpIntegrationEventService : eShop.Ordering.API.Application.IntegrationEvents.IOrderingIntegrationEventService
+    {
+        public Task PublishEventsThroughEventBusAsync(Guid transactionId) => Task.CompletedTask;
+
+        public Task AddAndSaveEventAsync(eShop.EventBus.Events.IntegrationEvent evt) => Task.CompletedTask;
     }
 
     private class AutoAuthorizeStartupFilter : IStartupFilter
