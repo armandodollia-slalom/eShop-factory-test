@@ -4,7 +4,17 @@ using eShop.AppHost;
 var builder = DistributedApplication.CreateBuilder(args);
 
 builder.AddForwardedHeaders();
-builder.AddAzureContainerAppEnvironment("aca");
+// Test stack hook (factory teststack publish): TestStack=true publishes the same resource graph as a Docker
+// Compose file for the factory's test stack instead of the Azure Container Apps environment.
+var isTestStack = builder.Configuration["TestStack"] == "true";
+if (isTestStack)
+{
+    builder.AddDockerComposeEnvironment("teststack");
+}
+else
+{
+    builder.AddAzureContainerAppEnvironment("aca");
+}
 
 var redis = builder.AddRedis("redis");
 var rabbitMq = builder.AddRabbitMQ("eventbus")
@@ -19,7 +29,7 @@ var identityDb = postgres.AddDatabase("identitydb");
 var orderDb = postgres.AddDatabase("orderingdb");
 var webhooksDb = postgres.AddDatabase("webhooksdb");
 
-var launchProfileName = ShouldUseHttpForEndpoints() ? "http" : "https";
+var launchProfileName = ShouldUseHttpForEndpoints() || isTestStack ? "http" : "https";
 
 // Services
 var identityApi = builder.AddDotnetProject("identity-api", "../Identity.API", o => o.LaunchProfileName = launchProfileName)

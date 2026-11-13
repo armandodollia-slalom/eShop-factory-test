@@ -362,7 +362,112 @@
       "global.json",
       "nuget.config",
       ".factory/stack/docker-compose.yaml"
-    ]
+    ],
+    "publishOverrides": {
+      "name": "eshop-factory-test-teststack",
+      "parameters": {
+        "*_PORT": {
+          "value": "8080",
+          "why": "SDK-published ASP.NET Core images listen on 8080 in the container; Aspire leaves the container port to the deployment"
+        }
+      },
+      "ports": {
+        "why": "each slot publishes its services on its own host ports (stack.ports), so the browser, the scenario loader and several slots reach them side by side",
+        "services": {
+          "webapp": "webapp",
+          "identity-api": "identity",
+          "catalog-api": "catalog",
+          "basket-api": "basket",
+          "ordering-api": "ordering",
+          "webhooks-api": "webhooks",
+          "webhooksclient": "webhooksclient",
+          "postgres": "postgres",
+          "redis": "redis",
+          "eventbus": "eventbus"
+        }
+      },
+      "services": [
+        {
+          "services": "*",
+          "set": {
+            "restart": "unless-stopped",
+            "extra_hosts": {
+              "host.docker.internal": "host-gateway"
+            }
+          },
+          "why": "containers reach the Docker host as host.docker.internal (the identity issuer the browser also uses), and a crashed container comes back while a test run waits"
+        },
+        {
+          "services": [
+            "basket-api",
+            "ordering-api",
+            "webhooks-api"
+          ],
+          "env": {
+            "Identity__Url": "http://host.docker.internal:${IDENTITY_API_HOST_PORT:-28081}"
+          },
+          "why": "OIDC: the token issuer must be the same URL for the browser and the services, so identity is reached through the Docker host, not its container name"
+        },
+        {
+          "services": [
+            "webapp",
+            "webhooksclient"
+          ],
+          "env": {
+            "IdentityUrl": "http://host.docker.internal:${IDENTITY_API_HOST_PORT:-28081}"
+          },
+          "why": "OIDC: the token issuer must be the same URL for the browser and the services, so identity is reached through the Docker host, not its container name"
+        },
+        {
+          "services": [
+            "identity-api"
+          ],
+          "env": {
+            "WebAppClient": "http://localhost:${WEBAPP_HOST_PORT:-28080}",
+            "WebhooksWebClient": "http://localhost:${WEBHOOKSCLIENT_HOST_PORT:-28086}"
+          },
+          "why": "the redirect URIs identity accepts are the URLs the test browser opens (the slot host ports), not container names"
+        },
+        {
+          "services": [
+            "webapp"
+          ],
+          "env": {
+            "CallBackUrl": "http://localhost:${WEBAPP_HOST_PORT:-28080}"
+          },
+          "why": "the OIDC callback is the URL the test browser opens (the slot host port)"
+        },
+        {
+          "services": [
+            "webhooksclient"
+          ],
+          "env": {
+            "CallBackUrl": "http://localhost:${WEBHOOKSCLIENT_HOST_PORT:-28086}"
+          },
+          "why": "the OIDC callback is the URL the test browser opens (the slot host port)"
+        },
+        {
+          "services": [
+            "webhooksclient"
+          ],
+          "addEnv": {
+            "WebhookClientOptions__SelfUrl": "http://webhooksclient:8080/"
+          },
+          "why": "webhooks-api calls the client back inside the compose network; without it the client registers the browser URL, which the API cannot reach"
+        },
+        {
+          "services": [
+            "identity-api",
+            "catalog-api",
+            "ordering-api"
+          ],
+          "addEnv": {
+            "Seeding__Disabled": "${SEEDING_DISABLED:-true}"
+          },
+          "why": "scenario files own the test data: migrations run, the built-in seed is skipped (src/Shared/MigrateDbContextExtensions.cs)"
+        }
+      ]
+    }
   },
   "teststack": {
     "services": [
@@ -477,26 +582,6 @@
       "postgres",
       "redis",
       "eventbus"
-    ],
-    "drift": {
-      "overrides": {
-        "*": {
-          "ASPNETCORE_FORWARDEDHEADERS_ENABLED": "the AppHost sets it on every project through AddForwardedHeaders() (an eventing hook in Extensions.cs the drift parser does not read)",
-          "ASPNETCORE_HTTP_PORTS": "SDK-published images listen on 8080 in the container; Aspire assigns ports at run time, the stack maps them per slot"
-        },
-        "identity-api": {
-          "Seeding__Disabled": "scenario files own the test data: migrations run, the built-in seed is skipped (src/Shared/MigrateDbContextExtensions.cs)"
-        },
-        "catalog-api": {
-          "Seeding__Disabled": "scenario files own the test data: migrations run, the built-in seed is skipped (src/Shared/MigrateDbContextExtensions.cs)"
-        },
-        "ordering-api": {
-          "Seeding__Disabled": "scenario files own the test data: migrations run, the built-in seed is skipped (src/Shared/MigrateDbContextExtensions.cs)"
-        },
-        "webhooksclient": {
-          "WebhookClientOptions__SelfUrl": "webhooks-api calls back the client inside the compose network (http://webhooksclient:8080/); under Aspire the browser base URL is reachable from the API"
-        }
-      }
-    }
+    ]
   }
 }
