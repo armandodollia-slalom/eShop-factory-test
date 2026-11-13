@@ -160,6 +160,24 @@
     text-underline-offset: 2px;
 }
 
+.brand-mates {
+    margin-top: 4rem;
+}
+
+.brand-mates-heading {
+    margin: 0 0 1.5rem;
+    color: var(--color-ink);
+    font-size: var(--text-xl, 1.5rem);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.brand-mates-items {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 2rem 1.5rem;
+}
+
 .item-notfound {
     color: var(--color-ink-2);
     font-size: var(--text-lg);
@@ -173,6 +191,16 @@
 
     .item-buy {
         position: static;
+    }
+
+    .brand-mates-items {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media only screen and (max-width: 480px) {
+    .brand-mates-items {
+        grid-template-columns: 1fr;
     }
 }
 
