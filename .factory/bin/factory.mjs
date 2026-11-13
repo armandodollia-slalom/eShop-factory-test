@@ -56,5 +56,28 @@ if (!engine) {
   // A hook must never break an agent's turn or a git command because of a missing install.
   process.exit(hook ? 0 : 127);
 }
+// The engine found must be the version this repository pins: a run on another version is not reproducible
+// (the pin is what CI and every other machine run). An explicit FACTORY_HOME is a deliberate choice (development):
+// it is used with a warning. An engine found implicitly (a dev dependency or an `npm link`) at another version is
+// refused for commands, and only warned about for hooks, which must never fail.
+const engineVersion = (() => {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(engine, 'package.json'), 'utf8')).version;
+  } catch {
+    return null;
+  }
+})();
+if (pin.version && engineVersion && engineVersion !== String(pin.version)) {
+  const hook = args[0] === 'hook' || args[0] === 'git-hook' || (args[0] === 'lsp' && args[1] === 'hook');
+  const explicit = Boolean(process.env.FACTORY_HOME) && path.resolve(process.env.FACTORY_HOME) === path.resolve(engine);
+  const what = `factory: the engine at ${engine} is version ${engineVersion}, but this repository pins ${pin.version}`;
+  const fix = `install the pinned one (factory upgrade ${pin.version} --install), or set FACTORY_HOME to an engine on purpose (FACTORY_ALLOW_UNPINNED=1 runs this one anyway)`;
+  if (explicit || hook || process.env.FACTORY_ALLOW_UNPINNED === '1') {
+    if (!hook || !explicit) console.error(`${what} (${explicit ? 'FACTORY_HOME' : hook ? 'a hook still runs' : 'FACTORY_ALLOW_UNPINNED=1'}).`);
+  } else {
+    console.error(`${what}: ${fix}.`);
+    process.exit(1);
+  }
+}
 const result = spawnSync(process.execPath, [path.join(engine, 'bin', 'factory.mjs'), ...args], { stdio: 'inherit', env: { ...process.env, FACTORY_HOME: engine } });
 process.exit(result.status ?? (result.signal ? 1 : 0));
