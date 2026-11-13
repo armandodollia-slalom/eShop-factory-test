@@ -1,0 +1,1 @@
+{"nodes": [{"id": "claude_agents_bug_triage", "label": "bug-triage agent", "file_type": "document", "source_file": ".claude/agents/bug-triage.md", "source_location": null, "rationale": "Agent only rates Impact, Complexity and Fix risk; the harness computes severity and auto-merge so ratings must be calibrated.", "_origin": "semantic"}], "edges": [], "hyperedges": []}

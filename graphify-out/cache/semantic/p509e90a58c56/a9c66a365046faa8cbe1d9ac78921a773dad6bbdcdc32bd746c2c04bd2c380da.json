@@ -1,0 +1,1 @@
+{"nodes": [{"id": "claude_agents_escalation_questions", "label": "escalation-questions agent", "file_type": "document", "source_file": ".claude/agents/escalation-questions.md", "source_location": null, "rationale": "Agents never ask questions mid-run; this is the only place human decisions are requested.", "_origin": "semantic"}], "edges": [], "hyperedges": []}
