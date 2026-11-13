@@ -19,7 +19,7 @@ public static class OrdersApi
         return api;
     }
 
-    public static async Task<Results<Ok, BadRequest<string>, ProblemHttpResult>> CancelOrderAsync(
+    public static async Task<Results<Ok, BadRequest<string>, NotFound, ProblemHttpResult>> CancelOrderAsync(
         [FromHeader(Name = "x-requestid")] Guid requestId,
         CancelOrderCommand command,
         [AsParameters] OrderServices services)
@@ -38,17 +38,30 @@ public static class OrdersApi
             requestCancelOrder.Command.OrderNumber,
             requestCancelOrder);
 
-        var commandResult = await services.Mediator.Send(requestCancelOrder);
+        bool commandResult;
+        try
+        {
+            commandResult = await services.Mediator.Send(requestCancelOrder);
+        }
+        catch (OrderingDomainException ex)
+        {
+            return OrderRuleViolation(ex);
+        }
 
         if (!commandResult)
         {
+            if (!await OrderExistsAsync(command.OrderNumber, services))
+            {
+                return TypedResults.NotFound();
+            }
+
             return TypedResults.Problem(detail: "Cancel order failed to process.", statusCode: 500);
         }
 
         return TypedResults.Ok();
     }
 
-    public static async Task<Results<Ok, BadRequest<string>, ProblemHttpResult>> ShipOrderAsync(
+    public static async Task<Results<Ok, BadRequest<string>, NotFound, ProblemHttpResult>> ShipOrderAsync(
         [FromHeader(Name = "x-requestid")] Guid requestId,
         ShipOrderCommand command,
         [AsParameters] OrderServices services)
@@ -67,14 +80,47 @@ public static class OrdersApi
             requestShipOrder.Command.OrderNumber,
             requestShipOrder);
 
-        var commandResult = await services.Mediator.Send(requestShipOrder);
+        bool commandResult;
+        try
+        {
+            commandResult = await services.Mediator.Send(requestShipOrder);
+        }
+        catch (OrderingDomainException ex)
+        {
+            return OrderRuleViolation(ex);
+        }
 
         if (!commandResult)
         {
+            if (!await OrderExistsAsync(command.OrderNumber, services))
+            {
+                return TypedResults.NotFound();
+            }
+
             return TypedResults.Problem(detail: "Ship order failed to process.", statusCode: 500);
         }
 
         return TypedResults.Ok();
+    }
+
+    private static ProblemHttpResult OrderRuleViolation(OrderingDomainException exception) =>
+        exception.InnerException is ValidationException validation
+            ? TypedResults.Problem(
+                detail: string.Join(" ", validation.Errors.Select(error => error.ErrorMessage)),
+                statusCode: StatusCodes.Status400BadRequest)
+            : TypedResults.Problem(detail: exception.Message, statusCode: StatusCodes.Status409Conflict);
+
+    private static async Task<bool> OrderExistsAsync(int orderNumber, OrderServices services)
+    {
+        try
+        {
+            await services.Queries.GetOrderAsync(orderNumber);
+            return true;
+        }
+        catch (KeyNotFoundException)
+        {
+            return false;
+        }
     }
 
     public static async Task<Results<Ok<Order>, NotFound>> GetOrderAsync(int orderId, [AsParameters] OrderServices services)
