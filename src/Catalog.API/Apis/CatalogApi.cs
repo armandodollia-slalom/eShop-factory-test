@@ -49,6 +49,11 @@ public static class CatalogApi
             .WithSummary("Get catalog item picture")
             .WithDescription("Get the picture for a catalog item")
             .WithTags("Items");
+        api.MapGet("/items/{id:int}/brand-mates", GetBrandMates)
+            .WithName("GetItemBrandMates")
+            .WithSummary("Get other items of the same brand")
+            .WithDescription("Get the other catalog items of the same brand as the specified item, ordered by name.")
+            .WithTags("Items");
 
         api.MapGet("/items/facets", GetCatalogFacets)
             .WithName("GetCatalogFacets")
@@ -234,6 +239,45 @@ public static class CatalogApi
         }
 
         return TypedResults.Ok(item);
+    }
+
+    private const int DefaultBrandMatesCount = 4;
+    private const int MaxBrandMatesCount = 12;
+
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
+    public static async Task<Results<Ok<List<CatalogItem>>, NotFound, BadRequest<ProblemDetails>>> GetBrandMates(
+        [AsParameters] CatalogServices services,
+        [Description("The catalog item id")] int id,
+        [Description("The maximum number of items to return, from 1 to 12")] int count = DefaultBrandMatesCount)
+    {
+        if (count < 1 || count > MaxBrandMatesCount)
+        {
+            return TypedResults.BadRequest<ProblemDetails>(new()
+            {
+                Detail = $"Count must be between 1 and {MaxBrandMatesCount}"
+            });
+        }
+
+        var brandId = await services.Context.CatalogItems
+            .Where(ci => ci.Id == id)
+            .Select(ci => (int?)ci.CatalogBrandId)
+            .SingleOrDefaultAsync();
+
+        if (brandId is null)
+        {
+            return TypedResults.NotFound();
+        }
+
+        // The "C" collation compares names by code point, which is the ordinal order.
+        var items = await services.Context.CatalogItems
+            .Include(ci => ci.CatalogBrand)
+            .Where(ci => ci.CatalogBrandId == brandId && ci.Id != id)
+            .OrderBy(ci => EF.Functions.Collate(ci.Name, "C"))
+            .ThenBy(ci => ci.Id)
+            .Take(count)
+            .ToListAsync();
+
+        return TypedResults.Ok(items);
     }
 
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
