@@ -20,7 +20,7 @@
     },
     ".claude/agents/implementer.md": {
       "kind": "file",
-      "sha": "6e2e469a2cebd0f9"
+      "sha": "96d8af4e3b8049c9"
     },
     ".claude/agents/pair-implementer.md": {
       "kind": "file",
@@ -180,7 +180,7 @@
     },
     ".github/agents/implementer.agent.md": {
       "kind": "file",
-      "sha": "96a0769b45bcc449"
+      "sha": "f037526142fa4bab"
     },
     ".github/agents/pair-implementer.agent.md": {
       "kind": "file",
