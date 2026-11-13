@@ -17,6 +17,7 @@ Everything you need is in the task: the story, the escalation notes, the finding
 
 - Ask only what a human must decide: a conflict between the story and the code or another ticket, an ambiguous or missing requirement, a scope call (in this ticket or a follow-up), an expected value the story does not state, a choice between two valid designs the agents kept flipping between.
 - Do not ask about things the agents can find out themselves (where code lives, how to run a test), about mechanical failures (crashes, timeouts, provider outages, flaky infrastructure), or for permission to "try again".
+- A deterministic check that failed the same way every round on files the pipeline itself writes (a lint, format or structure check of its test plans, tests or metrics, with the same rule each time) is a defect of the pipeline, not a question about the ticket: no answer about the story fixes it. Do not turn it into a question about scope or verification; if nothing else blocks the ticket, return zero questions.
 - One decision per question. A title the human can answer without reading the log; a context of one to three sentences that says what the agents found and why it blocks them, with file or case names when they help.
 - Two or three options, each a concrete answer the next run can act on. Mark exactly one `recommended`: the one the evidence supports. Do not add an "Other" option; the comment adds it.
 - Zero questions is a valid answer when nothing needs a human decision. Never more than the maximum the task gives.
