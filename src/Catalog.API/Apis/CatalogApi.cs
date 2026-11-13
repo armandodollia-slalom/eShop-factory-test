@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -68,7 +68,7 @@ public static class CatalogApi
             .WithDescription("Search the catalog for items related to the specified text")
             .WithTags("Search");
 
-                // Routes for resolving catalog items using AI.
+        // Routes for resolving catalog items using AI.
         v2.MapGet("/items/withsemanticrelevance", GetItemsBySemanticRelevance)
             .WithName("GetRelevantItems-V2")
             .WithSummary("Search catalog for relevant items")
@@ -88,14 +88,14 @@ public static class CatalogApi
             .WithTags("Brands");
         api.MapGet("/catalogtypes",
             [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
-            async (CatalogContext context) => await context.CatalogTypes.OrderBy(x => x.Type).ToListAsync())
+        async (CatalogContext context) => await context.CatalogTypes.OrderBy(x => x.Type).ToListAsync())
             .WithName("ListItemTypes")
             .WithSummary("List catalog item types")
             .WithDescription("Get a list of the types of catalog items")
             .WithTags("Types");
         api.MapGet("/catalogbrands",
             [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
-            async (CatalogContext context) => await context.CatalogBrands.OrderBy(x => x.Brand).ToListAsync())
+        async (CatalogContext context) => await context.CatalogBrands.OrderBy(x => x.Brand).ToListAsync())
             .WithName("ListItemBrands")
             .WithSummary("List catalog item brands")
             .WithDescription("Get a list of the brands of catalog items")
@@ -226,7 +226,8 @@ public static class CatalogApi
     {
         if (id <= 0)
         {
-            return TypedResults.BadRequest<ProblemDetails>(new (){
+            return TypedResults.BadRequest<ProblemDetails>(new()
+            {
                 Detail = "Id is not valid"
             });
         }
@@ -245,17 +246,16 @@ public static class CatalogApi
     private const int MaxBrandMatesCount = 12;
 
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
-    public static async Task<Results<Ok<List<CatalogItem>>, NotFound, BadRequest<ProblemDetails>>> GetBrandMates(
+    public static async Task<Results<Ok<List<CatalogItem>>, NotFound, ProblemHttpResult>> GetBrandMates(
         [AsParameters] CatalogServices services,
         [Description("The catalog item id")] int id,
         [Description("The maximum number of items to return, from 1 to 12")] int count = DefaultBrandMatesCount)
     {
         if (count < 1 || count > MaxBrandMatesCount)
         {
-            return TypedResults.BadRequest<ProblemDetails>(new()
-            {
-                Detail = $"Count must be between 1 and {MaxBrandMatesCount}"
-            });
+            return TypedResults.Problem(
+                detail: $"Count must be between 1 and {MaxBrandMatesCount}",
+                statusCode: StatusCodes.Status400BadRequest);
         }
 
         var brandId = await services.Context.CatalogItems
@@ -407,7 +407,8 @@ public static class CatalogApi
     {
         if (productToUpdate?.Id == null)
         {
-            return TypedResults.BadRequest<ProblemDetails>(new (){
+            return TypedResults.BadRequest<ProblemDetails>(new()
+            {
                 Detail = "Item id must be provided in the request body."
             });
         }
@@ -424,7 +425,8 @@ public static class CatalogApi
 
         if (catalogItem == null)
         {
-            return TypedResults.NotFound<ProblemDetails>(new (){
+            return TypedResults.NotFound<ProblemDetails>(new()
+            {
                 Detail = $"Item with id {id} not found."
             });
         }
