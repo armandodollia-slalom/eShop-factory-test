@@ -96,8 +96,10 @@ public abstract class IdentifiedCommandHandler<T, R> : IRequestHandler<Identifie
 
                 return result;
             }
-            catch
+            catch (Exception ex) when (ex is not OrderingDomainException)
             {
+                // Domain rule violations propagate so the API can map them to a client error;
+                // any other failure is reported as an unsuccessful command.
                 return default;
             }
         }
