@@ -500,5 +500,7 @@ graphify-out/*
 !graphify-out/cache/
 graphify-out/cache/*
 !graphify-out/cache/semantic/
+# a graph built below the root (`graphify update <dir>`) is never committed
+*/**/graphify-out/
 *.graphify-bak
 # <<< factory

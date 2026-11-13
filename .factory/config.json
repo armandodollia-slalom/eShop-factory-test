@@ -330,7 +330,11 @@
         "src/*/Apis/**/*.cs"
       ],
       "openapi": [
-        "src/Catalog.API/Catalog.API.json"
+        "src/Catalog.API/Catalog.API.json",
+        "http://localhost:{port:catalog}/openapi/v1.json",
+        "http://localhost:{port:catalog}/openapi/v2.json",
+        "http://localhost:{port:ordering}/openapi/v1.json",
+        "http://localhost:{port:webhooks}/openapi/v1.json"
       ]
     }
   },
