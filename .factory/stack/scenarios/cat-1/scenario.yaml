@@ -1,0 +1,8 @@
+# CAT-1 "More from this brand": catalog rows with exact brand-mate situations the demo catalog lacks
+# (it has no single-item brand). Adds only catalog data on top of the demo catalog.
+description: Demo catalog plus brands for CAT-1 (seven-item, one-item and two-item brands).
+extends: default
+
+postgres:
+  catalogdb:
+    - sql: catalogdb.sql

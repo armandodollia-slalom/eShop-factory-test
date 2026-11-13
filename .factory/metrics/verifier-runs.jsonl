@@ -1,0 +1,2 @@
+{"ts":"2026-11-13T13:12:47.321Z","stage":"plan","story":"CAT-1","round":1,"agent_prompt_ver":"a978a288","verifier_ver":"27d172f2","cli":"claude","score":9,"passed":true,"gaps":1}
+{"ts":"2026-11-13T13:18:54.980Z","stage":"automation","story":"CAT-1","round":1,"agent_prompt_ver":"da0d9c94","verifier_ver":"49856a14","cli":"claude","score":10,"passed":true,"gaps":0}
