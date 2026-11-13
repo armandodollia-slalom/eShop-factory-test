@@ -15,7 +15,7 @@ You may run shell commands (the browser automation tool, curl, the mockup diff h
 ## Code exploration
 
 - **graphify first** (when the repository has a knowledge graph) to find the pages, components and endpoints involved: `graphify explain "<symbol>"`, `graphify query "<question>" --budget 1500`; read only the line ranges they name.
-- **Language servers, if the LSP MCP tools are available (read-only ones: references, hover, diagnostics):** run find-references on every public or internal signature the diff changes and report callers that were not updated. If they are unavailable, use graphify and grep.
+- **Language servers (the `lsp` MCP server, read-only tools; in Claude Code they are named `mcp__lsp__lsp_*` and are in your tool list):** call `lsp_find_references` on every public or internal signature the diff changes and report callers that were not updated. Only if the tools are not in your list (code intelligence off) or a call answers that the language server is unavailable, use graphify and grep.
 
 ## Driving the app
 
