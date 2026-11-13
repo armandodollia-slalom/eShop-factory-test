@@ -263,6 +263,7 @@ public static class CatalogApi
 
         var brandMates = await services.Context.CatalogItems
             .AsNoTracking()
+            .Include(ci => ci.CatalogBrand)
             .Where(ci => ci.CatalogBrandId == item.CatalogBrandId && ci.Id != id)
             .ToListAsync();
 
