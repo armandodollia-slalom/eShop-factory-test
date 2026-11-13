@@ -458,7 +458,8 @@ public static class CatalogApi
     }
 
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
-    public static async Task<Results<Created, ValidationProblem>> CreateItem(
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
+    public static async Task<Results<Created, ValidationProblem, Conflict<ProblemDetails>>> CreateItem(
         [AsParameters] CatalogServices services,
         CatalogItem product)
     {
@@ -468,6 +469,15 @@ public static class CatalogApi
             return TypedResults.ValidationProblem(new Dictionary<string, string[]>
             {
                 [nameof(CatalogItem.Name)] = ["The Name field is required."]
+            });
+        }
+
+        // The id is the primary key; creating over an existing item would violate it.
+        if (product.Id > 0 && await services.Context.CatalogItems.AnyAsync(i => i.Id == product.Id))
+        {
+            return TypedResults.Conflict<ProblemDetails>(new()
+            {
+                Detail = $"A catalog item with id {product.Id} already exists."
             });
         }
 
