@@ -6,6 +6,10 @@ plan-sha: 4a547299f454
 verified-score: 9
 verified-at: "2026-11-13T16:17:44.201Z"
 verified-by: test-planner@a978a288/27d172f2
+automation-sha: 6fd3dc1ed50e
+automation-plan-sha: 4a547299f454
+automation-score: 9
+automation-verified-at: "2026-11-13T16:37:03.099Z"
 ---
 # Test plan: CAT-1 [FE - WebApp, BE - Catalog.API] More from this brand on the product page
 
