@@ -19,7 +19,8 @@ public class WebhookSubscriptionRequest : IValidatableObject
             yield return new ValidationResult("Url is not valid", new[] { nameof(Url) });
         }
 
-        var isOk = Enum.TryParse(Event, ignoreCase: true, result: out WebhookType whtype);
+        // Enum.TryParse also accepts numeric and comma-combined values, so only the defined names are allowed.
+        var isOk = Enum.GetNames<WebhookType>().Contains(Event, StringComparer.OrdinalIgnoreCase);
         if (!isOk)
         {
             yield return new ValidationResult($"{Event} is invalid event name", new[] { nameof(Event) });
