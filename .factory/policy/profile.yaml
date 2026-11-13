@@ -60,7 +60,8 @@ projects:
 # How a project this list does not have is classified, from the project itself (the engine reads its manifest):
 # exactly one convention must fit, or a person extends this profile. selfcheck proves every project above gets
 # the same class from these conventions as from its entry. Written from the existing projects by the
-# author-architecture-policy skill.
+# author-architecture-policy skill. `content`: what a project's code must (true) or must not (false) do for its
+# class (endpoint mappings, routes under /api); a project whose code contradicts its class goes to a person.
 classification:
   # The first segment of a project's name gives its service, for the classes that belong to one.
   service_names:
@@ -75,14 +76,14 @@ classification:
     WebhookClient: webhookclient
   conventions:
     - { type: test,           layer: test,           match: { roots: ["tests/*"], test_project: true } }
-    - { type: host,           layer: host,           match: { roots: ["src/*"], sdk: ["Aspire.AppHost.Sdk"] } }
+    - { type: host,           layer: host,           content: { maps_endpoints: false }, match: { roots: ["src/*"], sdk: ["Aspire.AppHost.Sdk"] } }
     - { type: client,         layer: client,         match: { roots: ["src/*"], properties: { UseMaui: "true" } } }
-    - { type: api,            layer: presentation,   service: required, traits: [exposes_http_api], match: { roots: ["src/*"], sdk: ["Microsoft.NET.Sdk.Web"], name: ["*.API"] } }
-    - { type: worker,         layer: presentation,   service: required, match: { roots: ["src/*"], sdk: ["Microsoft.NET.Sdk.Worker", "Microsoft.NET.Sdk.Web"], name: ["*Processor"] } }
-    - { type: web,            layer: presentation,   service: required, traits: [web_frontend], match: { roots: ["src/*"], sdk: ["Microsoft.NET.Sdk.Web"], not_name: ["*.API", "*Processor"] } }
-    - { type: domain,         layer: domain,         service: required, match: { roots: ["src/*"], sdk: ["Microsoft.NET.Sdk"], name: ["*.Domain"] } }
-    - { type: infrastructure, layer: infrastructure, service: required, match: { roots: ["src/*"], sdk: ["Microsoft.NET.Sdk"], name: ["*.Infrastructure"] } }
-    - { type: library,        layer: shared,         match: { roots: ["src/*"], sdk: ["Microsoft.NET.Sdk", "Microsoft.NET.Sdk.Razor"], output_type: Library, test_project: false, not_name: ["*.Domain", "*.Infrastructure", "*.API", "*Processor"], properties_absent: [UseMaui] } }
+    - { type: api,            layer: presentation,   service: required, traits: [exposes_http_api], content: { maps_endpoints: true }, match: { roots: ["src/*"], sdk: ["Microsoft.NET.Sdk.Web"], name: ["*.API"] } }
+    - { type: worker,         layer: presentation,   service: required, content: { maps_endpoints: false }, match: { roots: ["src/*"], sdk: ["Microsoft.NET.Sdk.Worker", "Microsoft.NET.Sdk.Web"], name: ["*Processor"] } }
+    - { type: web,            layer: presentation,   service: required, traits: [web_frontend], content: { maps_api_routes: false }, match: { roots: ["src/*"], sdk: ["Microsoft.NET.Sdk.Web"], not_name: ["*.API", "*Processor"] } }
+    - { type: domain,         layer: domain,         service: required, content: { maps_endpoints: false }, match: { roots: ["src/*"], sdk: ["Microsoft.NET.Sdk"], name: ["*.Domain"] } }
+    - { type: infrastructure, layer: infrastructure, service: required, content: { maps_endpoints: false }, match: { roots: ["src/*"], sdk: ["Microsoft.NET.Sdk"], name: ["*.Infrastructure"] } }
+    - { type: library,        layer: shared,         content: { maps_api_routes: false }, match: { roots: ["src/*"], sdk: ["Microsoft.NET.Sdk", "Microsoft.NET.Sdk.Razor"], output_type: Library, test_project: false, not_name: ["*.Domain", "*.Infrastructure", "*.API", "*Processor"], properties_absent: [UseMaui] } }
 
 services:
   - { id: identity,      owns_datastores: [identitydb], traits: [owns_database, exposes_http_api] }
