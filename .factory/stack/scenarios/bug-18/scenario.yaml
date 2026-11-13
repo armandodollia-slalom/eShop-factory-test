@@ -1,0 +1,2 @@
+description: Demo catalog (101 items, item 1 exists) for BUG-18 duplicate-id create; ids 5000/5001 are free and 0/omitted are generated.
+extends: default
