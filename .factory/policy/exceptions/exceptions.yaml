@@ -19,8 +19,8 @@ schema_version: 1
 exceptions:
 
 # Proposals from the author-architecture-policy dry run (2026-11-12): true violations already in upstream
-# dotnet/eShop. approved_by is empty on purpose: an exception takes effect only once a person in
-# approver_role signs it (policy.yaml exceptions). Until then these findings block at ci and on changed files.
+# dotnet/eShop. Approved as written by the repository owner on 2026-11-12, acting as architecture board and
+# tech lead (owner decision, factory dogfood), to match the same exceptions signed in the reference pipeline.
 
   - id: EXC-0001
     rule_id: API-002
@@ -29,9 +29,9 @@ exceptions:
     risk: critical
     compensating_controls: [Catalog.API is reachable only inside the Aspire/test-stack network in this deployment.]
     requested_by: factory-onboarding
-    approved_by: ""
+    approved_by: "architecture-board (Armando Dollia)"
     approver_role: architecture-board
-    ticket: ""
+    ticket: "owner decision 2026-11-12, factory dogfood"
     created: "2026-11-12"
     expires: "2027-02-10"
 
@@ -42,9 +42,9 @@ exceptions:
     risk: critical
     compensating_controls: [Single trusted issuer (Identity.API).]
     requested_by: factory-onboarding
-    approved_by: ""
+    approved_by: "architecture-board (Armando Dollia)"
     approver_role: architecture-board
-    ticket: ""
+    ticket: "owner decision 2026-11-12, factory dogfood"
     created: "2026-11-12"
     expires: "2027-02-10"
 
@@ -55,9 +55,9 @@ exceptions:
     risk: high
     compensating_controls: [Development and test deployments only.]
     requested_by: factory-onboarding
-    approved_by: ""
+    approved_by: "architecture-board (Armando Dollia)"
     approver_role: architecture-board
-    ticket: ""
+    ticket: "owner decision 2026-11-12, factory dogfood"
     created: "2026-11-12"
     expires: "2027-02-10"
 
@@ -68,9 +68,9 @@ exceptions:
     risk: high
     compensating_controls: [The values are the public sample secrets of the reference application.]
     requested_by: factory-onboarding
-    approved_by: ""
+    approved_by: "architecture-board (Armando Dollia)"
     approver_role: architecture-board
-    ticket: ""
+    ticket: "owner decision 2026-11-12, factory dogfood"
     created: "2026-11-12"
     expires: "2027-02-10"
 
@@ -81,8 +81,8 @@ exceptions:
     risk: medium
     compensating_controls: [The event is re-derived from order state on the next grace-period pass.]
     requested_by: factory-onboarding
-    approved_by: ""
+    approved_by: "tech-lead (Armando Dollia)"
     approver_role: tech-lead
-    ticket: ""
+    ticket: "owner decision 2026-11-12, factory dogfood"
     created: "2026-11-12"
     expires: "2027-02-10"

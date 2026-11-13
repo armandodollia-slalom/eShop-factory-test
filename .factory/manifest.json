@@ -20,7 +20,7 @@
     },
     ".claude/agents/implementer.md": {
       "kind": "file",
-      "sha": "f42f7eb631a710df"
+      "sha": "c769091424f0b47f"
     },
     ".claude/agents/pair-implementer.md": {
       "kind": "file",
@@ -68,7 +68,7 @@
     },
     ".claude/agents/pr-check.md": {
       "kind": "file",
-      "sha": "40b2d03d6f56a111"
+      "sha": "2fd261b61a0864bf"
     },
     ".claude/agents/retro.md": {
       "kind": "file",
@@ -80,7 +80,7 @@
     },
     ".claude/agents/test-automation.md": {
       "kind": "file",
-      "sha": "854d1b2dd40cf874"
+      "sha": "7c2147fd48812f32"
     },
     ".claude/agents/test-plan-verifier.md": {
       "kind": "file",
@@ -88,7 +88,7 @@
     },
     ".claude/agents/test-planner.md": {
       "kind": "file",
-      "sha": "ba09e5c2f614b088"
+      "sha": "f82adf6e6f4e1dbb"
     },
     ".claude/settings.json": {
       "kind": "json",
@@ -180,7 +180,7 @@
     },
     ".github/agents/implementer.agent.md": {
       "kind": "file",
-      "sha": "411ddeef428a338a"
+      "sha": "5144cbdab6b50d11"
     },
     ".github/agents/pair-implementer.agent.md": {
       "kind": "file",
@@ -228,7 +228,7 @@
     },
     ".github/agents/pr-check.agent.md": {
       "kind": "file",
-      "sha": "56e27a8e90469ab5"
+      "sha": "2e7aad39cc8fb87b"
     },
     ".github/agents/retro.agent.md": {
       "kind": "file",
@@ -240,7 +240,7 @@
     },
     ".github/agents/test-automation.agent.md": {
       "kind": "file",
-      "sha": "854d1b2dd40cf874"
+      "sha": "7c2147fd48812f32"
     },
     ".github/agents/test-plan-verifier.agent.md": {
       "kind": "file",
@@ -248,7 +248,11 @@
     },
     ".github/agents/test-planner.agent.md": {
       "kind": "file",
-      "sha": "ba09e5c2f614b088"
+      "sha": "f82adf6e6f4e1dbb"
+    },
+    ".github/CODEOWNERS": {
+      "kind": "block",
+      "sha": "491c2ed3a8792a43"
     },
     ".github/workflows/factory-board-epic-assign.yml": {
       "kind": "file",
@@ -272,7 +276,7 @@
     },
     ".github/workflows/factory-pr-check.yml": {
       "kind": "file",
-      "sha": "46f51c48a828ce96"
+      "sha": "1e9f7341f65096da"
     },
     ".github/workflows/factory-pr-demo-video.yml": {
       "kind": "file",

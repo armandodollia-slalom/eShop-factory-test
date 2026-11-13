@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- wraps Playwright's generic test, step and request APIs, whose types are generic over any */
 import { test as base, expect, APIRequestContext, APIResponse, Browser, BrowserContext, BrowserContextOptions, Page, TestInfo, TestType, Video } from '@playwright/test';
 
 /**
@@ -194,6 +195,8 @@ export const test = withStepKeyframes(base.extend<{ _recordManualContexts: void 
   ],
 
   _recordManualContexts: [
+    // Playwright requires the fixtures argument to be destructured, even when no fixture is used.
+    // eslint-disable-next-line no-empty-pattern
     async ({}, use, testInfo) => {
       const contexts: BrowserContext[] = [];
       const videos: (Video | null)[] = [];

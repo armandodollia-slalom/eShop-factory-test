@@ -18,235 +18,6 @@
     "toolPaths": [
       "~/.dotnet",
       "~/.dotnet/tools"
-    ],
-    "services": [
-      {
-        "name": "basket-api",
-        "kind": "backend",
-        "paths": [
-          "src/Basket.API/**"
-        ],
-        "dependsOn": [
-          "eshop-servicedefaults",
-          "eventbusrabbitmq"
-        ],
-        "unitTests": "tests/Basket.UnitTests"
-      },
-      {
-        "name": "catalog-api",
-        "kind": "backend",
-        "paths": [
-          "src/Catalog.API/**"
-        ],
-        "dependsOn": [
-          "eventbusrabbitmq",
-          "integrationeventlogef",
-          "eshop-servicedefaults"
-        ],
-        "unitTests": "tests/Application.UnitTests"
-      },
-      {
-        "name": "clientapp",
-        "kind": "frontend",
-        "paths": [
-          "src/ClientApp/**"
-        ],
-        "note": ".NET MAUI: not in eShop.Web.slnf; built by the upstream MAUI workflow only"
-      },
-      {
-        "name": "eventbus",
-        "kind": "library",
-        "paths": [
-          "src/EventBus/**"
-        ]
-      },
-      {
-        "name": "eventbusrabbitmq",
-        "kind": "library",
-        "paths": [
-          "src/EventBusRabbitMQ/**"
-        ],
-        "dependsOn": [
-          "eventbus"
-        ]
-      },
-      {
-        "name": "hybridapp",
-        "kind": "frontend",
-        "paths": [
-          "src/HybridApp/**"
-        ],
-        "dependsOn": [
-          "webappcomponents"
-        ],
-        "note": ".NET MAUI: not in eShop.Web.slnf; built by the upstream MAUI workflow only"
-      },
-      {
-        "name": "identity-api",
-        "kind": "frontend",
-        "paths": [
-          "src/Identity.API/**"
-        ],
-        "dependsOn": [
-          "eshop-servicedefaults"
-        ],
-        "unitTests": "tests/Application.UnitTests"
-      },
-      {
-        "name": "integrationeventlogef",
-        "kind": "library",
-        "paths": [
-          "src/IntegrationEventLogEF/**"
-        ],
-        "dependsOn": [
-          "eventbus"
-        ]
-      },
-      {
-        "name": "orderprocessor",
-        "kind": "worker",
-        "paths": [
-          "src/OrderProcessor/**"
-        ],
-        "dependsOn": [
-          "eshop-servicedefaults",
-          "eventbusrabbitmq"
-        ],
-        "unitTests": "tests/Application.UnitTests"
-      },
-      {
-        "name": "ordering-api",
-        "kind": "backend",
-        "paths": [
-          "src/Ordering.API/**"
-        ],
-        "dependsOn": [
-          "eventbusrabbitmq",
-          "integrationeventlogef",
-          "eshop-servicedefaults",
-          "ordering-domain",
-          "ordering-infrastructure"
-        ],
-        "unitTests": "tests/Ordering.UnitTests"
-      },
-      {
-        "name": "ordering-domain",
-        "kind": "library",
-        "paths": [
-          "src/Ordering.Domain/**"
-        ],
-        "unitTests": "tests/Ordering.UnitTests"
-      },
-      {
-        "name": "ordering-infrastructure",
-        "kind": "library",
-        "paths": [
-          "src/Ordering.Infrastructure/**"
-        ],
-        "dependsOn": [
-          "integrationeventlogef",
-          "ordering-domain"
-        ],
-        "unitTests": "tests/Ordering.UnitTests"
-      },
-      {
-        "name": "paymentprocessor",
-        "kind": "worker",
-        "paths": [
-          "src/PaymentProcessor/**"
-        ],
-        "dependsOn": [
-          "eshop-servicedefaults",
-          "eventbusrabbitmq"
-        ],
-        "unitTests": "tests/Application.UnitTests"
-      },
-      {
-        "name": "webapp",
-        "kind": "frontend",
-        "paths": [
-          "src/WebApp/**"
-        ],
-        "dependsOn": [
-          "eshop-servicedefaults",
-          "eventbusrabbitmq",
-          "webappcomponents"
-        ]
-      },
-      {
-        "name": "webappcomponents",
-        "kind": "library",
-        "paths": [
-          "src/WebAppComponents/**"
-        ],
-        "ui": true
-      },
-      {
-        "name": "webhookclient",
-        "kind": "frontend",
-        "paths": [
-          "src/WebhookClient/**"
-        ],
-        "dependsOn": [
-          "eshop-servicedefaults"
-        ],
-        "unitTests": "tests/Application.UnitTests"
-      },
-      {
-        "name": "webhooks-api",
-        "kind": "backend",
-        "paths": [
-          "src/Webhooks.API/**"
-        ],
-        "dependsOn": [
-          "eventbusrabbitmq",
-          "integrationeventlogef",
-          "eshop-servicedefaults"
-        ],
-        "unitTests": "tests/Application.UnitTests"
-      },
-      {
-        "name": "eshop-apphost",
-        "kind": "host",
-        "paths": [
-          "src/eShop.AppHost/**"
-        ],
-        "unitTests": "tests/eShop.AppHost.UnitTests"
-      },
-      {
-        "name": "eshop-servicedefaults",
-        "kind": "library",
-        "paths": [
-          "src/eShop.ServiceDefaults/**"
-        ]
-      },
-      {
-        "name": "shared",
-        "kind": "library",
-        "paths": [
-          "src/Shared/**"
-        ],
-        "shared": true,
-        "note": "src/Shared: sources linked into several services (Compile Include)"
-      }
-    ],
-    "frontendPaths": [
-      "src/WebApp/**",
-      "src/WebAppComponents/**",
-      "src/WebhookClient/**",
-      "src/Identity.API/Views/**",
-      "src/Identity.API/wwwroot/**"
-    ],
-    "testRoots": [
-      "tests/Application.UnitTests",
-      "tests/Basket.FunctionalTests",
-      "tests/Basket.UnitTests",
-      "tests/Catalog.FunctionalTests",
-      "tests/Ordering.FunctionalTests",
-      "tests/Ordering.UnitTests",
-      "tests/Webhooks.FunctionalTests",
-      "tests/eShop.AppHost.UnitTests",
-      "e2e"
     ]
   },
   "lsp": {
@@ -335,7 +106,7 @@
     ]
   },
   "implement": {
-    "prepareCmd": "dotnet restore eShop.Web.slnf -v q && npm ci",
+    "prepareCmd": "dotnet tool restore && dotnet restore eShop.Web.slnf -v q && npm ci",
     "checks": [
       {
         "name": "build",
@@ -402,6 +173,11 @@
       ".md": [
         "node_modules/.bin/markdownlint",
         "{files}"
+      ],
+      ".ts": [
+        "node",
+        "{packs}/typescript/lint/eslint.mjs",
+        "{files}"
       ]
     },
     "fix": {
@@ -414,6 +190,12 @@
       ],
       ".md": [
         "node_modules/.bin/markdownlint",
+        "--fix",
+        "{files}"
+      ],
+      ".ts": [
+        "node",
+        "{packs}/typescript/lint/eslint.mjs",
         "--fix",
         "{files}"
       ]
@@ -457,137 +239,7 @@
   ],
   "stack": {
     "resolver": "pack:dotnet/stack/services.mjs",
-    "rebuildAll": [
-      "Directory.Build.props",
-      "Directory.Build.targets",
-      "Directory.Packages.props",
-      "global.json",
-      "nuget.config",
-      ".factory/stack/docker-compose.yaml"
-    ],
     "composeFile": ".factory/stack/docker-compose.yaml",
-    "ports": {
-      "webapp": {
-        "base": 28080,
-        "env": "WEBAPP_HOST_PORT"
-      },
-      "identity": {
-        "base": 28081,
-        "env": "IDENTITY_API_HOST_PORT"
-      },
-      "catalog": {
-        "base": 28082,
-        "env": "CATALOG_API_HOST_PORT"
-      },
-      "basket": {
-        "base": 28083,
-        "env": "BASKET_API_HOST_PORT"
-      },
-      "ordering": {
-        "base": 28084,
-        "env": "ORDERING_API_HOST_PORT"
-      },
-      "webhooks": {
-        "base": 28085,
-        "env": "WEBHOOKS_API_HOST_PORT"
-      },
-      "webhooksclient": {
-        "base": 28086,
-        "env": "WEBHOOKSCLIENT_HOST_PORT"
-      },
-      "postgres": {
-        "base": 28432,
-        "env": "POSTGRES_HOST_PORT"
-      },
-      "redis": {
-        "base": 28379,
-        "env": "REDIS_HOST_PORT"
-      },
-      "eventbus": {
-        "base": 28672,
-        "env": "EVENTBUS_HOST_PORT"
-      }
-    },
-    "urls": {
-      "webapp": "http://localhost:{port:webapp}",
-      "identity": "http://host.docker.internal:{port:identity}",
-      "catalog": "http://localhost:{port:catalog}",
-      "basket": "http://localhost:{port:basket}",
-      "ordering": "http://localhost:{port:ordering}",
-      "webhooks": "http://localhost:{port:webhooks}",
-      "webhooksclient": "http://localhost:{port:webhooksclient}"
-    },
-    "baseUrl": "webapp",
-    "env": {
-      "POSTGRES_PASSWORD": "teststack-postgres",
-      "REDIS_PASSWORD": "teststack-redis",
-      "EVENTBUS_PASSWORD": "teststack-eventbus"
-    },
-    "services": {
-      "identity-api": {
-        "project": "src/Identity.API/Identity.API.csproj",
-        "image": {
-          "env": "IDENTITY_API_IMAGE",
-          "name": "eshop-factory-test/identity-api"
-        }
-      },
-      "basket-api": {
-        "project": "src/Basket.API/Basket.API.csproj",
-        "image": {
-          "env": "BASKET_API_IMAGE",
-          "name": "eshop-factory-test/basket-api"
-        }
-      },
-      "catalog-api": {
-        "project": "src/Catalog.API/Catalog.API.csproj",
-        "image": {
-          "env": "CATALOG_API_IMAGE",
-          "name": "eshop-factory-test/catalog-api"
-        }
-      },
-      "ordering-api": {
-        "project": "src/Ordering.API/Ordering.API.csproj",
-        "image": {
-          "env": "ORDERING_API_IMAGE",
-          "name": "eshop-factory-test/ordering-api"
-        }
-      },
-      "order-processor": {
-        "project": "src/OrderProcessor/OrderProcessor.csproj",
-        "image": {
-          "env": "ORDER_PROCESSOR_IMAGE",
-          "name": "eshop-factory-test/order-processor"
-        }
-      },
-      "payment-processor": {
-        "project": "src/PaymentProcessor/PaymentProcessor.csproj",
-        "image": {
-          "env": "PAYMENT_PROCESSOR_IMAGE",
-          "name": "eshop-factory-test/payment-processor"
-        }
-      },
-      "webhooks-api": {
-        "project": "src/Webhooks.API/Webhooks.API.csproj",
-        "image": {
-          "env": "WEBHOOKS_API_IMAGE",
-          "name": "eshop-factory-test/webhooks-api"
-        }
-      },
-      "webhooksclient": {
-        "project": "src/WebhookClient/WebhookClient.csproj",
-        "image": {
-          "env": "WEBHOOKSCLIENT_IMAGE",
-          "name": "eshop-factory-test/webhooksclient"
-        }
-      },
-      "webapp": {
-        "project": "src/WebApp/WebApp.csproj",
-        "image": {
-          "env": "WEBAPP_IMAGE",
-          "name": "eshop-factory-test/webapp"
-        }
-      }
-    },
     "build": {
       "all": "node {packs}/dotnet/stack/publish-container.mjs --all",
       "service": "node {packs}/dotnet/stack/publish-container.mjs {service}",
@@ -602,119 +254,6 @@
     }
   },
   "teststack": {
-    "stores": {
-      "postgres": {
-        "type": "postgres",
-        "service": "postgres",
-        "passwordEnv": "POSTGRES_PASSWORD",
-        "databases": [
-          "identitydb",
-          "catalogdb",
-          "orderingdb",
-          "webhooksdb"
-        ],
-        "preserveTables": [
-          "__EFMigrationsHistory"
-        ],
-        "migrationsReady": {
-          "table": "__EFMigrationsHistory",
-          "column": "MigrationId"
-        }
-      },
-      "redis": {
-        "type": "redis",
-        "service": "redis",
-        "passwordEnv": "REDIS_PASSWORD"
-      },
-      "eventbus": {
-        "type": "rabbitmq",
-        "service": "eventbus",
-        "queues": [
-          "Basket",
-          "Catalog",
-          "Ordering",
-          "OrderProcessor",
-          "PaymentProcessor",
-          "Webhooks",
-          "Ordering.webapp"
-        ]
-      }
-    },
-    "infrastructureServices": [
-      "postgres",
-      "redis",
-      "eventbus"
-    ],
-    "services": [
-      {
-        "name": "identity-api",
-        "url": "http://localhost:{port:identity}/.well-known/openid-configuration",
-        "databases": [
-          "identitydb"
-        ]
-      },
-      {
-        "name": "catalog-api",
-        "url": "http://localhost:{port:catalog}/api/catalog/items?api-version=1.0",
-        "databases": [
-          "catalogdb"
-        ],
-        "queues": [
-          "Catalog"
-        ]
-      },
-      {
-        "name": "basket-api",
-        "url": "http://localhost:{port:basket}/",
-        "http2": true,
-        "queues": [
-          "Basket"
-        ]
-      },
-      {
-        "name": "ordering-api",
-        "url": "http://localhost:{port:ordering}/api/orders?api-version=1.0",
-        "databases": [
-          "orderingdb"
-        ],
-        "queues": [
-          "Ordering"
-        ]
-      },
-      {
-        "name": "order-processor",
-        "queues": [
-          "OrderProcessor"
-        ]
-      },
-      {
-        "name": "payment-processor",
-        "queues": [
-          "PaymentProcessor"
-        ]
-      },
-      {
-        "name": "webhooks-api",
-        "url": "http://localhost:{port:webhooks}/api/webhooks?api-version=1.0",
-        "databases": [
-          "webhooksdb"
-        ],
-        "queues": [
-          "Webhooks"
-        ]
-      },
-      {
-        "name": "webhooksclient",
-        "url": "http://localhost:{port:webhooksclient}/"
-      },
-      {
-        "name": "webapp",
-        "url": "http://localhost:{port:webapp}/",
-        "queues": [
-          "Ordering.webapp"
-        ]
-      }
-    ],
     "commands": {
       "hash-password": "pack:dotnet/stack/hash-password.mjs",
       "drift": "pack:dotnet/stack/apphost-drift.mjs"

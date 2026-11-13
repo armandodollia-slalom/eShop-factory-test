@@ -26,7 +26,7 @@ Write only inside the plan directory named in the task:
 
 ```markdown
 ---
-id: TC-PROMO-3-07
+id: TC-SHOP-3-07
 title: Expired coupon is reported as Invalid/Expired and not applied
 type: sad
 sad-path: validation
@@ -35,7 +35,7 @@ covers: ["Outputs: coupon.reason Expired", "Algorithm step 1"]
 priority: P1
 ---
 
-# TC-PROMO-3-07: Expired coupon is reported as Invalid/Expired and not applied
+# TC-SHOP-3-07: Expired coupon is reported as Invalid/Expired and not applied
 
 ## Why
 

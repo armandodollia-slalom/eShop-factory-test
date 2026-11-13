@@ -16,7 +16,7 @@ on:
         type: number
         required: true
       story:
-        description: Story key, when the PR doesn't name it (for example PROMO-3)
+        description: Story key, when the PR doesn't name it (for example SHOP-3)
         type: string
         required: false
 

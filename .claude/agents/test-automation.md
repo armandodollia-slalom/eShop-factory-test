@@ -24,7 +24,7 @@ The **Project context** section at the end of these instructions, when present, 
 ## Tests
 
 - Write each case's test at the case's `layer` (`e2e`, `functional` or `unit`), with the test framework, location and file naming the Project context gives for that layer.
-- **Case id.** Every test's name contains its case id, written the way the Project context says for that framework: in the test title where titles are free text (`TC-PROMO-3-07 expired coupon is reported as Invalid/Expired`), or in the function or method name with dashes as underscores (`TC_PROMO_3_07_…`) where they are identifiers.
+- **Case id.** Every test's name contains its case id, written the way the Project context says for that framework: in the test title where titles are free text (`TC-SHOP-3-07 expired coupon is reported as Invalid/Expired`), or in the function or method name with dashes as underscores (`TC_PROMO_3_07_…`) where they are identifiers.
 - **Story tag.** Every test file for the story carries the story key and every test its case id, using the tagging convention the Project context gives for that framework (an attribute, annotation, marker, tag or naming rule the test runner can filter on). Never add a shim to make another framework's tag compile.
 - **e2e tests** load the scenario before they run (the Project context names the helper).
 - One test per case (a case with several equivalent inputs may use a parameterized test or a loop over data, but still exactly one id). Never put an id on a test that does not implement that case.
