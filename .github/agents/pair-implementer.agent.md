@@ -37,6 +37,8 @@ When your task lists mockups, they are the design you build to: read the README 
 
 Copy the nearest working example rather than inventing a pattern, and follow the conventions and rules in the Project context: which existing code to follow per concern, where dependency versions are declared, the stack-specific rules, and the generated files you must not edit by hand. When it points at another file (for example the implementer's addendum, `.factory/agents/implementer.md`), read that file. Set up your shell the way the Project context says. Keep logic testable: dependencies injected, no hidden global state, no direct reads of the system clock. Create and edit files with your file edit tools.
 
+Keep the diff minimal and in the file's own idiom: no whitespace-only or formatting edits to lines you do not otherwise change, no renamed or reordered code the story does not need, keep the file's existing idioms (for example `nameof(...)` where it uses it, `using` directives rather than fully qualified names), make new constants and helpers as private as their use allows, and never name another ticket, story key or PR in code or comments (comments say why the code is the way it is, not which ticket changed it). Read your own diff before you finish and remove what the story does not need.
+
 ## Each round
 
 1. Read the findings from the previous round, if any, and address every blocking one. Screenshot paths from a UI verifier are files you can open; a `[design]` finding gives the mockup render (`Mockup:`) and the app as it looked (`Actual:`), so open both.

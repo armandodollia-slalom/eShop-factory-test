@@ -76,6 +76,7 @@ Follow existing conventions — copy the nearest working example rather than inv
 
 Rules:
 - Implement exactly the story's acceptance criteria. No extra features; list nice-to-haves in the report instead.
+- Keep the diff minimal and in the file's own idiom: no whitespace-only or formatting edits to lines you do not otherwise change, no renamed or reordered code the story does not need, keep the file's existing idioms (for example `nameof(...)` where it uses it, `using` directives rather than fully qualified names), make new constants and helpers as private as their use allows, and never name another ticket, story key or PR in code or comments (comments say why the code is the way it is, not which ticket changed it). Read your own diff before you finish and remove what the story does not need.
 - Keep each acceptance criterion traceable to the code that implements it — `test-automation` works from that mapping.
 - Keep logic testable: pure functions or domain methods for rules and math, dependencies injected, no hidden global state and no direct reads of the system clock (inject a clock; the Project context names the abstraction to use).
 - Declare dependencies and their versions where the repository already does (the Project context names the manifest); never pin a version anywhere else.
