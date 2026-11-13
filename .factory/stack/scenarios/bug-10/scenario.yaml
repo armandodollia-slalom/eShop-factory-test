@@ -1,0 +1,24 @@
+# BUG-10: orders in fixed states for the cancel/ship status-change cases (alice and bob come from `default`).
+description: Orders 5-10 in Shipped, Paid, Submitted, Shipped, AwaitingValidation and Paid status.
+extends: default
+
+postgres:
+  orderingdb:
+    # Buyer of every order below: alice. The cancel/ship domain event handlers read the order's buyer.
+    - table: ordering.buyers
+      rows:
+        - { Id: 1, IdentityGuid: 50ddac7e-9b69-4d68-a91b-25100ef2e403, Name: alice }
+    - table: ordering.orders
+      rows:
+        # 5: Shipped - cancel must be rejected (TC-BUG-10-01, 07, 08); never changed by any case
+        - { Id: 5, OrderDate: 2026-01-05T10:00:00Z, BuyerId: 1, OrderStatus: Shipped, Description: The order was shipped., Address_Street: 1 Main St, Address_City: Redmond, Address_State: WA, Address_Country: USA, Address_ZipCode: "98052" }
+        # 6: Paid - cancel must be rejected (TC-BUG-10-02)
+        - { Id: 6, OrderDate: 2026-01-06T10:00:00Z, BuyerId: 1, OrderStatus: Paid, Description: Paid., Address_Street: 1 Main St, Address_City: Redmond, Address_State: WA, Address_Country: USA, Address_ZipCode: "98052" }
+        # 7: Submitted - ship must be rejected (TC-BUG-10-03)
+        - { Id: 7, OrderDate: 2026-01-07T10:00:00Z, BuyerId: 1, OrderStatus: Submitted, Description: Submitted., Address_Street: 1 Main St, Address_City: Redmond, Address_State: WA, Address_Country: USA, Address_ZipCode: "98052" }
+        # 8: Shipped - ship again must be rejected (TC-BUG-10-04)
+        - { Id: 8, OrderDate: 2026-01-08T10:00:00Z, BuyerId: 1, OrderStatus: Shipped, Description: The order was shipped., Address_Street: 1 Main St, Address_City: Redmond, Address_State: WA, Address_Country: USA, Address_ZipCode: "98052" }
+        # 9: AwaitingValidation - cancel succeeds (TC-BUG-10-11)
+        - { Id: 9, OrderDate: 2026-01-09T10:00:00Z, BuyerId: 1, OrderStatus: AwaitingValidation, Description: Awaiting validation., Address_Street: 1 Main St, Address_City: Redmond, Address_State: WA, Address_Country: USA, Address_ZipCode: "98052" }
+        # 10: Paid - ship succeeds (TC-BUG-10-12)
+        - { Id: 10, OrderDate: 2026-01-10T10:00:00Z, BuyerId: 1, OrderStatus: Paid, Description: Paid., Address_Street: 1 Main St, Address_City: Redmond, Address_State: WA, Address_Country: USA, Address_ZipCode: "98052" }
