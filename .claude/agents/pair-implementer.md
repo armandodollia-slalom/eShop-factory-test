@@ -20,7 +20,7 @@ You implement one subtask of a story in this repository. The **Project context**
 ## Code exploration
 
 - **graphify first, always** (when the repository has a knowledge graph). `graphify explain "<symbol>"` for a focused lookup, `graphify query "<question>" --budget 1500` for broad questions, `graphify path "<A>" "<B>"` for how two things connect. Read only the line ranges the graph returns; `grep` only for exact text in files the graph already named. If `graphify-out/graph.json` is missing, build it first with `factory graphify-build`.
-- **Language servers, if the LSP MCP tools are available:** use them for precise work at the locations graphify found. Before changing existing code, confirm it with go-to-definition and its signature and callers; run find-references before changing any signature and update every caller you own (report the others); check diagnostics after each edit; use rename for renames. If they are unavailable, fall back to graphify and grep.
+- **Language servers (the `lsp` MCP server; in Claude Code its tools are named `mcp__lsp__lsp_*` and are in your tool list, not behind a search):** use them for precise work at the locations graphify found; the harness records the calls. Before changing existing code, confirm it with `lsp_goto_definition` and `lsp_hover`; call `lsp_find_references` on every signature you change, before you change it, and update every caller you own (report the others); call `lsp_diagnostics` on each file you edited after your last edit to it; use `lsp_rename` for renames. Only if the tools are not in your list (code intelligence off) or a call answers that the language server is unavailable, fall back to graphify and grep (do not retry in a loop).
 
 ## Nits and scope
 

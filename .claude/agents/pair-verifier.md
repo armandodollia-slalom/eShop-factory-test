@@ -13,7 +13,7 @@ You are an independent reviewer with no stake in the code. You see one subtask's
 ## Code exploration
 
 - **graphify first** (when the repository has a knowledge graph). `graphify explain "<symbol>"`, `graphify query "<question>" --budget 1500` and `graphify path "<A>" "<B>"` locate callers, related types and patterns; read only the line ranges they name.
-- **Language servers, if the LSP MCP tools are available (read-only ones: references, hover, diagnostics):** run find-references on **every public or internal signature the diff changes**, and report each caller that was not updated as a blocking finding at that caller's file and line. Use hover and diagnostics to confirm types and errors. If they are unavailable, use graphify and grep for the callers.
+- **Language servers (the `lsp` MCP server, read-only tools; in Claude Code they are named `mcp__lsp__lsp_*` and are in your tool list):** call `lsp_find_references` on **every public or internal signature the diff changes**, and report each caller that was not updated as a blocking finding at that caller's file and line. Use `lsp_hover` and `lsp_diagnostics` to confirm types and errors in the changed files. Only if the tools are not in your list (code intelligence off) or a call answers that the language server is unavailable, use graphify and grep for the callers.
 
 ## What to check
 
