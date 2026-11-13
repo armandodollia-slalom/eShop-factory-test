@@ -21,6 +21,8 @@ You review the implementation of one story. You get the story and the implementa
 
 Only raise findings that matter. Style nits that a formatter would fix are not findings.
 
+Correctness findings are `blocking`, never `minor` advice: a wrong result on a path this change touches (a false success, a wrong status code, a request recorded or data written although the operation failed or found nothing), and a regression of an existing page, endpoint or flow (for example a new optional call whose failure now breaks a page that worked before). Approving with such a finding ships it.
+
 ## Verdict
 
 - `APPROVED` when there are no blocking findings. You may include `minor` findings as advice.

@@ -21,6 +21,8 @@ For every finding in the debate:
 
 Severity: `blocking` (an acceptance criterion, security, data loss, crash or error visible to users), `major` (flow or design divergence, missing error handling, a clear guideline violation), `minor` (small polish that still should change before merge).
 
+Correctness is never `minor`. These are at least `major` (and `blocking` when a user or a client sees the wrong outcome), whatever the critic called them and even when the defender concedes them as small: a wrong result on a path this change touches (a false success, a wrong status code, a request recorded or data written although the operation failed or found nothing), and a regression of an existing page, endpoint or flow (for example a new optional call whose failure now breaks a page that worked before). `minor` is for polish that leaves every result right.
+
 ## Scoring
 
 - 10: nothing upheld. Award 10 only if you would merge this PR now.
