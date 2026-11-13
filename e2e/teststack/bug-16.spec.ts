@@ -51,7 +51,7 @@ async function signInAsAlice(): Promise<string> {
       maxRedirects: 0,
     });
     expect(login.status()).toBe(302);
-    const callback = await ctx.get(local(new URL(login.headers()['location'], IDENTITY()).toString()),{ maxRedirects: 0 });
+    const callback = await ctx.get(local(new URL(login.headers()['location'], IDENTITY()).toString()), { maxRedirects: 0 });
     const redirect = callback.headers()['location'];
     const token = new URLSearchParams(redirect.split('#')[1]).get('access_token');
     expect(token, `access_token in ${redirect}`).toBeTruthy();
@@ -103,18 +103,11 @@ async function expectRejected(request: APIRequestContext, event: string) {
 }
 
 test('TC-BUG-16-01 numeric event name 99 outside WebhookType is rejected with 400', async ({ request }) => {
-  const response = await test.step('POST /api/webhooks with event "99"', () => post(request, '99'));
-  expect(response.status()).toBe(400);
-  expect(response.headers()['location']).toBeUndefined();
-  expect((await response.json()).errors.Event).toEqual(['99 is invalid event name']);
+  await expectRejected(request, '99');
 });
 
 test('TC-BUG-16-02 rejected numeric event does not store a subscription', async ({ request }) => {
-  const response = await test.step('POST with event "99"', () => post(request, '99'));
-  expect(response.status()).toBe(400);
-  await test.step('GET /api/webhooks shows no subscription', async () => {
-    expect(await listSubscriptions(request)).toEqual([]);
-  });
+  await expectRejected(request, '99');
 });
 
 test('TC-BUG-16-03 event "0" is rejected', async ({ request }) => {
@@ -163,3 +156,10 @@ test('TC-BUG-16-10 empty event name is rejected', async ({ request }) => {
   expect((await response.json()).errors.Event).toContain(' is invalid event name');
   expect(await listSubscriptions(request)).toEqual([]);
 });
+
+// Enum.TryParse ORs comma-separated values ("1,2" -> 3 = OrderPaid); a combined value names no single member.
+for (const event of ['1,2', 'CatalogItemPriceChange,OrderShipped']) {
+  test(`TC-BUG-16-11 comma-combined event "${event}" is rejected`, async ({ request }) => {
+    await expectRejected(request, event);
+  });
+}

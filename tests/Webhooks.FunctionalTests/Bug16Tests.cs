@@ -61,16 +61,7 @@ public sealed class Bug16Tests(WebhooksApiFixture fixture) : IClassFixture<Webho
 
     [Fact]
     [Trait("TestCase", "TC-BUG-16-02")]
-    public async Task TC_BUG_16_02_RejectedNumericEventIsNotStored()
-    {
-        using var client = CreateClient(NewUser());
-        var response = await client.PostAsJsonAsync("/api/webhooks/", Body("99"), TestContext.Current.CancellationToken);
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        var listResponse = await client.GetAsync("/api/webhooks/", TestContext.Current.CancellationToken);
-        Assert.Equal(HttpStatusCode.OK, listResponse.StatusCode);
-        var list = await listResponse.Content.ReadFromJsonAsync<List<WebhookSubscription>>(TestContext.Current.CancellationToken);
-        Assert.Empty(list!);
-    }
+    public Task TC_BUG_16_02_RejectedNumericEventIsNotStored() => AssertRejectedAndNothingStored("99");
 
     [Fact]
     [Trait("TestCase", "TC-BUG-16-03")]
@@ -129,4 +120,11 @@ public sealed class Bug16Tests(WebhooksApiFixture fixture) : IClassFixture<Webho
         var messages = doc.RootElement.GetProperty("errors").GetProperty("Event").EnumerateArray().Select(e => e.GetString()).ToList();
         Assert.Contains(messages, m => m!.Contains(" is invalid event name"));
     }
+
+    // Enum.TryParse ORs comma-separated values ("1,2" -> 3 = OrderPaid); a combined value names no single member.
+    [Theory]
+    [Trait("TestCase", "TC-BUG-16-11")]
+    [InlineData("1,2")]
+    [InlineData("CatalogItemPriceChange,OrderShipped")]
+    public Task TC_BUG_16_11_CommaCombinedEvent_IsRejected(string @event) => AssertRejectedAndNothingStored(@event);
 }

@@ -20,8 +20,9 @@ public class WebhookSubscriptionRequest : IValidatableObject
         }
 
         var isOk = Enum.TryParse(Event, ignoreCase: true, result: out WebhookType whtype);
-        // Enum.TryParse accepts any numeric string, so a value outside WebhookType must be rejected too.
-        if (!isOk || !Enum.IsDefined(whtype))
+        // Enum.TryParse accepts any numeric string and ORs comma-separated values ("1,2" -> OrderPaid),
+        // so only a single value naming a defined WebhookType member is valid.
+        if (!isOk || Event.Contains(',') || !Enum.IsDefined(whtype))
         {
             yield return new ValidationResult($"{Event} is invalid event name", new[] { nameof(Event) });
         }
