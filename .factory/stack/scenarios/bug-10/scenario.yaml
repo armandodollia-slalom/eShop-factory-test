@@ -1,0 +1,20 @@
+# BUG-10: orders in every status the cancel/ship endpoints need, owned by alice.
+description: Alice's orders 1 Submitted, 2 Paid, 3 Shipped, 4 Cancelled (ordering status changes).
+extends: default
+
+postgres:
+  orderingdb:
+    - table: ordering.buyers
+      rows:
+        # alice, owner of all four orders
+        - { Id: 1, IdentityGuid: 50ddac7e-9b69-4d68-a91b-25100ef2e403, Name: alice }
+    - table: ordering.orders
+      rows:
+        # 1: Submitted - cancellable, not shippable
+        - { Id: 1, OrderDate: 2026-01-01T10:00:00Z, OrderStatus: Submitted, BuyerId: 1, Description: Submitted order, Street: 1 Main St, City: Redmond, State: WA, Country: US, ZipCode: "98052" }
+        # 2: Paid - shippable, not cancellable
+        - { Id: 2, OrderDate: 2026-01-02T10:00:00Z, OrderStatus: Paid, BuyerId: 1, Description: Paid order, Street: 1 Main St, City: Redmond, State: WA, Country: US, ZipCode: "98052" }
+        # 3: Shipped - neither shippable nor cancellable
+        - { Id: 3, OrderDate: 2026-01-03T10:00:00Z, OrderStatus: Shipped, BuyerId: 1, Description: Shipped order, Street: 1 Main St, City: Redmond, State: WA, Country: US, ZipCode: "98052" }
+        # 4: Cancelled
+        - { Id: 4, OrderDate: 2026-01-04T10:00:00Z, OrderStatus: Cancelled, BuyerId: 1, Description: Cancelled order, Street: 1 Main St, City: Redmond, State: WA, Country: US, ZipCode: "98052" }
