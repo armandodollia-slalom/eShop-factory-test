@@ -19,7 +19,7 @@ public static class OrdersApi
         return api;
     }
 
-    public static async Task<Results<Ok, BadRequest<string>, ProblemHttpResult>> CancelOrderAsync(
+    public static async Task<Results<Ok, BadRequest<string>, NotFound, Conflict<ProblemDetails>, ProblemHttpResult>> CancelOrderAsync(
         [FromHeader(Name = "x-requestid")] Guid requestId,
         CancelOrderCommand command,
         [AsParameters] OrderServices services)
@@ -38,17 +38,10 @@ public static class OrdersApi
             requestCancelOrder.Command.OrderNumber,
             requestCancelOrder);
 
-        var commandResult = await services.Mediator.Send(requestCancelOrder);
-
-        if (!commandResult)
-        {
-            return TypedResults.Problem(detail: "Cancel order failed to process.", statusCode: 500);
-        }
-
-        return TypedResults.Ok();
+        return await SendOrderStatusCommandAsync(requestCancelOrder, command.OrderNumber, "Cancel order failed to process.", services);
     }
 
-    public static async Task<Results<Ok, BadRequest<string>, ProblemHttpResult>> ShipOrderAsync(
+    public static async Task<Results<Ok, BadRequest<string>, NotFound, Conflict<ProblemDetails>, ProblemHttpResult>> ShipOrderAsync(
         [FromHeader(Name = "x-requestid")] Guid requestId,
         ShipOrderCommand command,
         [AsParameters] OrderServices services)
@@ -67,14 +60,65 @@ public static class OrdersApi
             requestShipOrder.Command.OrderNumber,
             requestShipOrder);
 
-        var commandResult = await services.Mediator.Send(requestShipOrder);
+        return await SendOrderStatusCommandAsync(requestShipOrder, command.OrderNumber, "Ship order failed to process.", services);
+    }
 
-        if (!commandResult)
+    /// <summary>
+    /// Sends an order status change command and maps its outcome: a domain rule violation is a 409 Conflict,
+    /// a command that fails validation is a 400, a missing order is a 404 and any other failure stays a 500.
+    /// </summary>
+    private static async Task<Results<Ok, BadRequest<string>, NotFound, Conflict<ProblemDetails>, ProblemHttpResult>> SendOrderStatusCommandAsync<TCommand>(
+        IdentifiedCommand<TCommand, bool> request,
+        int orderNumber,
+        string failureDetail,
+        OrderServices services)
+        where TCommand : IRequest<bool>
+    {
+        bool commandResult;
+        try
         {
-            return TypedResults.Problem(detail: "Ship order failed to process.", statusCode: 500);
+            commandResult = await services.Mediator.Send(request);
+        }
+        catch (OrderingDomainException ex) when (ex.InnerException is ValidationException validationException)
+        {
+            var errors = string.Join(" ", validationException.Errors.Select(e => e.ErrorMessage));
+            return TypedResults.BadRequest(string.IsNullOrWhiteSpace(errors) ? ex.Message : $"{ex.Message}: {errors}");
+        }
+        catch (OrderingDomainException ex)
+        {
+            services.Logger.LogWarning("Order status change rejected for order {OrderNumber}: {Reason}", orderNumber, ex.Message);
+            return TypedResults.Conflict(new ProblemDetails
+            {
+                Status = StatusCodes.Status409Conflict,
+                Title = "The order status cannot be changed.",
+                Detail = ex.Message
+            });
         }
 
-        return TypedResults.Ok();
+        if (commandResult)
+        {
+            return TypedResults.Ok();
+        }
+
+        if (!await OrderExistsAsync(orderNumber, services.Queries))
+        {
+            return TypedResults.NotFound();
+        }
+
+        return TypedResults.Problem(detail: failureDetail, statusCode: 500);
+    }
+
+    private static async Task<bool> OrderExistsAsync(int orderNumber, IOrderQueries queries)
+    {
+        try
+        {
+            await queries.GetOrderAsync(orderNumber);
+            return true;
+        }
+        catch (KeyNotFoundException)
+        {
+            return false;
+        }
     }
 
     public static async Task<Results<Ok<Order>, NotFound>> GetOrderAsync(int orderId, [AsParameters] OrderServices services)
@@ -120,9 +164,9 @@ public static class OrdersApi
         CreateOrderRequest request,
         [AsParameters] OrderServices services)
     {
-        
+
         //mask the credit card number
-        
+
         services.Logger.LogInformation(
             "Sending command: {CommandName} - {IdProperty}: {CommandId}",
             request.GetGenericTypeName(),
@@ -152,7 +196,18 @@ public static class OrdersApi
                 requestCreateOrder.Id,
                 requestCreateOrder);
 
-            var result = await services.Mediator.Send(requestCreateOrder);
+            bool result;
+            try
+            {
+                result = await services.Mediator.Send(requestCreateOrder);
+            }
+            catch (OrderingDomainException ex)
+            {
+                // Domain rule violations now propagate from IdentifiedCommandHandler; treat them as a
+                // failed command here, as before, so this endpoint's behavior is unchanged.
+                services.Logger.LogWarning(ex, "CreateOrderCommand rejected by the domain - RequestId: {RequestId}", requestId);
+                result = false;
+            }
 
             if (result)
             {
