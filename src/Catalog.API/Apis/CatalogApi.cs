@@ -475,10 +475,7 @@ public static class CatalogApi
 
         if (product.Id > 0 && await services.Context.CatalogItems.AnyAsync(i => i.Id == product.Id))
         {
-            return TypedResults.Conflict(new ProblemDetails
-            {
-                Detail = $"Item with id {product.Id} already exists."
-            });
+            return TypedResults.Conflict(ItemIdConflict(product.Id));
         }
 
         var item = new CatalogItem(product.Name)
@@ -496,10 +493,23 @@ public static class CatalogApi
         item.Embedding = await services.CatalogAI.GetEmbeddingAsync(item);
 
         services.Context.CatalogItems.Add(item);
-        await services.Context.SaveChangesAsync();
+        try
+        {
+            await services.Context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
+        {
+            // A concurrent create took the same explicit id, or a generated id collided with an explicitly inserted one.
+            return TypedResults.Conflict(ItemIdConflict(product.Id));
+        }
 
         return TypedResults.Created($"/api/catalog/items/{item.Id}");
     }
+
+    private static ProblemDetails ItemIdConflict(int id) => new()
+    {
+        Detail = id > 0 ? $"Item with id {id} already exists." : "The generated item id is already in use; retry the request."
+    };
 
     private static ProblemDetails? ValidateItemName(CatalogItem item)
     {
