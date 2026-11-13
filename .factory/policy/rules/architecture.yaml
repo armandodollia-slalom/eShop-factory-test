@@ -117,11 +117,11 @@ rules:
     required_evidence:
       - { type: validator_output, checkpoints: [pre_commit, code_review, ci], on_missing: block }
     remediation:
-      summary: Reverse the dependency (define an interface in the inner layer, implement it outward). A new project is classified in {topology_file} under policy.projects (an existing type, layer and service, or a new service under policy.services); the classes themselves are in {profile_file}.
+      summary: Reverse the dependency (define an interface in the inner layer, implement it outward). A new project's class is derived from the project by the conventions in {profile_file}; a project of a new service needs that service declared in {topology_file} under policy.services (id, roots, owns_datastores).
       steps:
         - Remove the offending ProjectReference/PackageReference.
         - Define the abstraction in the domain (e.g. IOrderRepository) and implement it in infrastructure.
-        - For a new project, declare it in {topology_file} under policy.projects with name, path, type, layer and service.
+        - For a project of a new service, declare the service in {topology_file} under policy.services (its id, the project's folder as a root, the datastores it owns). A project that fits no convention, or several, needs a person.
       references: []
     human_review_required: false
     tags: [layering, ddd]
