@@ -421,6 +421,11 @@ public static class CatalogApi
         [AsParameters] CatalogServices services,
         CatalogItem productToUpdate)
     {
+        if (ValidateItemName(productToUpdate) is { } nameProblem)
+        {
+            return TypedResults.BadRequest(nameProblem);
+        }
+
         var catalogItem = await services.Context.CatalogItems.SingleOrDefaultAsync(i => i.Id == id);
 
         if (catalogItem == null)
@@ -458,10 +463,15 @@ public static class CatalogApi
     }
 
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
-    public static async Task<Created> CreateItem(
+    public static async Task<Results<Created, BadRequest<ProblemDetails>>> CreateItem(
         [AsParameters] CatalogServices services,
         CatalogItem product)
     {
+        if (ValidateItemName(product) is { } nameProblem)
+        {
+            return TypedResults.BadRequest(nameProblem);
+        }
+
         var item = new CatalogItem(product.Name)
         {
             Id = product.Id,
@@ -480,6 +490,19 @@ public static class CatalogApi
         await services.Context.SaveChangesAsync();
 
         return TypedResults.Created($"/api/catalog/items/{item.Id}");
+    }
+
+    private static ProblemDetails? ValidateItemName(CatalogItem item)
+    {
+        if (string.IsNullOrWhiteSpace(item?.Name))
+        {
+            return new ProblemDetails
+            {
+                Detail = "Item name must be provided in the request body."
+            };
+        }
+
+        return null;
     }
 
     public static async Task<Results<NoContent, NotFound>> DeleteItemById(
