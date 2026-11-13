@@ -39,6 +39,11 @@ public static class CatalogApi
             .WithSummary("Get catalog item")
             .WithDescription("Get an item from the catalog")
             .WithTags("Items");
+        api.MapGet("/items/{id:int}/brand-mates", GetBrandMates)
+            .WithName("GetBrandMates")
+            .WithSummary("Get catalog items from the same brand")
+            .WithDescription("Get the other items of the same brand as the specified item, ordered by name.")
+            .WithTags("Items");
         v1.MapGet("/items/by/{name:minlength(1)}", GetItemsByName)
             .WithName("GetItemsByName")
             .WithSummary("Get catalog items by name")
@@ -234,6 +239,35 @@ public static class CatalogApi
         }
 
         return TypedResults.Ok(item);
+    }
+
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
+    public static async Task<Results<Ok<List<CatalogItem>>, NotFound, BadRequest<ProblemDetails>>> GetBrandMates(
+        [AsParameters] CatalogServices services,
+        [Description("The catalog item id")] int id,
+        [Description("The maximum number of items to return (1 to 12)")] int count = 4)
+    {
+        if (count < 1 || count > 12)
+        {
+            return TypedResults.BadRequest<ProblemDetails>(new (){
+                Detail = "Count must be between 1 and 12"
+            });
+        }
+
+        var item = await services.Context.CatalogItems.AsNoTracking().SingleOrDefaultAsync(ci => ci.Id == id);
+
+        if (item == null)
+        {
+            return TypedResults.NotFound();
+        }
+
+        var brandMates = await services.Context.CatalogItems
+            .AsNoTracking()
+            .Where(ci => ci.CatalogBrandId == item.CatalogBrandId && ci.Id != id)
+            .ToListAsync();
+
+        // Sorted in memory so the ordering is ordinal rather than database-collation dependent.
+        return TypedResults.Ok(brandMates.OrderBy(ci => ci.Name, StringComparer.Ordinal).Take(count).ToList());
     }
 
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
