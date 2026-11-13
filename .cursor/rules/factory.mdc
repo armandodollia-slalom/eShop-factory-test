@@ -5,13 +5,13 @@ alwaysApply: true
 
 ## AI app factory
 
-This repository is worked on through the AI app factory. Its engine is installed outside the repository; everything it keeps here is under `.factory/` (settings in `.factory/config.json`, agent addenda, lessons, architecture policy, test plans, test stack scenarios). Run it as `factory <command>`; when `factory` is not on your PATH, use `.factory/bin/factory <command>`.
+This repository is worked on through the AI app factory. Its engine is installed outside the repository; everything it keeps here is under `.factory/`: governance settings in `.factory/config.json` (models, gates, review, commands), the application's topology in `.factory/app.json` (services, test stack ports, URLs, readiness and publish overrides), agent addenda, lessons, architecture policy, test plans and test stack scenarios. Run it as `factory <command>`; when `factory` is not on your PATH, use `.factory/bin/factory <command>`.
 
 - To run stories through the whole pipeline: `factory implement run <KEY>...` (`--parallel N` runs several at once). It starts the implementer in each story's own worktree and branch; you don't need the steps below.
 - When you start implementing a story by hand, run `factory start <KEY>`.
 - When your line of work for that story is complete, run `factory done` before you finish. The Stop hook then runs the architecture review. If it blocks with findings, fix them and finish again; tests are written automatically after approval.
 - Stories, epics, spikes and mockups are tickets on the story board, cached in `.factory/state/board/<KEY>/`. Ignore that cache except for the story handed to the pipeline (`factory start <KEY>` or `factory implement run`). A PreToolUse hook enforces this.
-- Do not edit `.factory/` or the files listed in `.factory/manifest.json` while implementing a story: they belong to the factory, not to the application. Change generated files through their source and `factory render`. `factory check` fails when a generated file was edited by hand.
+- Do not edit `.factory/` or the files listed in `.factory/manifest.json` while implementing a story: they belong to the factory, not to the application. The exceptions are the application's topology in `.factory/app.json` (a story that adds a service registers it there) and the test stack it generates (`factory teststack publish`). Change generated files through their source and `factory render`. `factory check` fails when a generated file was edited by hand.
 - Tests the pipeline writes live in the application's own test tree and are tagged with their story; treat them like any other test.
 
 ## graphify

@@ -26,8 +26,11 @@ jobs:
   resolve:
     # Comments: the failure comment itself, edited (Resolved ticked), never by a bot.
     # Labels: a human adding escalation-resolved.
+    # Only people with a role in the repository: on a public repository anyone can comment, and this job
+    # holds FACTORY_TOKEN.
     if: >-
-      !endsWith(github.event.sender.login, '[bot]') && (
+      !endsWith(github.event.sender.login, '[bot]') &&
+      (github.event_name != 'issue_comment' || contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)) && (
         (github.event_name == 'issue_comment' && !github.event.issue.pull_request &&
           contains(github.event.comment.body, 'pipeline-escalation:')) ||
         (github.event_name == 'issues' && github.event.label.name == 'escalation-resolved')

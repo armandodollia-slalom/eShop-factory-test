@@ -26,7 +26,10 @@ runs:
         echo "::add-mask::$FACTORY_TOKEN"
         auth=(-c "http.extraHeader=AUTHORIZATION: basic $(printf 'x-access-token:%s' "$FACTORY_TOKEN" | base64 | tr -d '\n')")
       fi
-      if ! git "${auth[@]}" clone --quiet --depth 1 --branch "v$version" "$source" "$dest"; then
+      # Fetch the release tag and check out its commit: `clone --branch <annotated tag>` warns that the tag
+      # "is not a commit".
+      git init --quiet "$dest"
+      if ! { git -C "$dest" "${auth[@]}" fetch --quiet --depth 1 "$source" "refs/tags/v$version" && git -C "$dest" -c advice.detachedHead=false checkout --quiet --detach FETCH_HEAD; }; then
         echo "::error::could not clone the factory v$version from $source. A private factory needs the FACTORY_TOKEN secret (Contents: read on that repository); the tag v$version must exist there."
         exit 1
       fi
