@@ -49,6 +49,11 @@ public static class CatalogApi
             .WithSummary("Get catalog item picture")
             .WithDescription("Get the picture for a catalog item")
             .WithTags("Items");
+        api.MapGet("/items/{id:int}/brand-mates", GetItemBrandMates)
+            .WithName("GetItemBrandMates")
+            .WithSummary("Get other items of the same brand")
+            .WithDescription("Get the other catalog items of the same brand as the specified item, ordered by name.")
+            .WithTags("Items");
 
         api.MapGet("/items/facets", GetCatalogFacets)
             .WithName("GetCatalogFacets")
@@ -235,6 +240,45 @@ public static class CatalogApi
 
         return TypedResults.Ok(item);
     }
+
+    public const int BrandMatesDefaultCount = 4;
+    public const int BrandMatesMaxCount = 12;
+
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
+    public static async Task<Results<Ok<List<CatalogItem>>, NotFound, BadRequest<ProblemDetails>>> GetItemBrandMates(
+        [AsParameters] CatalogServices services,
+        [Description("The catalog item id")] int id,
+        [Description("The maximum number of items to return (1 to 12)")] int count = BrandMatesDefaultCount)
+    {
+        if (count < 1 || count > BrandMatesMaxCount)
+        {
+            return TypedResults.BadRequest<ProblemDetails>(new()
+            {
+                Detail = $"count must be between 1 and {BrandMatesMaxCount}"
+            });
+        }
+
+        var brandId = await services.Context.CatalogItems
+            .Where(ci => ci.Id == id)
+            .Select(ci => (int?)ci.CatalogBrandId)
+            .SingleOrDefaultAsync();
+
+        if (brandId is null)
+        {
+            return TypedResults.NotFound();
+        }
+
+        var mates = await services.Context.CatalogItems
+            .Include(ci => ci.CatalogBrand)
+            .Where(ci => ci.CatalogBrandId == brandId && ci.Id != id)
+            .ToListAsync();
+
+        return TypedResults.Ok(SelectBrandMates(mates, count));
+    }
+
+    // Ordinal name order is applied in memory so it does not depend on the database collation.
+    internal static List<CatalogItem> SelectBrandMates(IEnumerable<CatalogItem> mates, int count) =>
+        mates.OrderBy(ci => ci.Name, StringComparer.Ordinal).ThenBy(ci => ci.Id).Take(count).ToList();
 
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
     public static async Task<Ok<PaginatedItems<CatalogItem>>> GetItemsByName(
