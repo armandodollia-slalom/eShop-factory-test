@@ -19,7 +19,7 @@ public static class OrdersApi
         return api;
     }
 
-    public static async Task<Results<Ok, BadRequest<string>, ProblemHttpResult>> CancelOrderAsync(
+    public static async Task<Results<Ok, BadRequest<string>, NotFound<ProblemDetails>, Conflict<ProblemDetails>, ProblemHttpResult>> CancelOrderAsync(
         [FromHeader(Name = "x-requestid")] Guid requestId,
         CancelOrderCommand command,
         [AsParameters] OrderServices services)
@@ -27,6 +27,11 @@ public static class OrdersApi
         if (requestId == Guid.Empty)
         {
             return TypedResults.BadRequest("Empty GUID is not valid for request ID");
+        }
+
+        if (!await OrderExistsAsync(command.OrderNumber, services))
+        {
+            return OrderNotFound(command.OrderNumber);
         }
 
         var requestCancelOrder = new IdentifiedCommand<CancelOrderCommand, bool>(command, requestId);
@@ -38,7 +43,15 @@ public static class OrdersApi
             requestCancelOrder.Command.OrderNumber,
             requestCancelOrder);
 
-        var commandResult = await services.Mediator.Send(requestCancelOrder);
+        bool commandResult;
+        try
+        {
+            commandResult = await services.Mediator.Send(requestCancelOrder);
+        }
+        catch (OrderingDomainException ex)
+        {
+            return InvalidStatusChange(ex);
+        }
 
         if (!commandResult)
         {
@@ -48,7 +61,7 @@ public static class OrdersApi
         return TypedResults.Ok();
     }
 
-    public static async Task<Results<Ok, BadRequest<string>, ProblemHttpResult>> ShipOrderAsync(
+    public static async Task<Results<Ok, BadRequest<string>, NotFound<ProblemDetails>, Conflict<ProblemDetails>, ProblemHttpResult>> ShipOrderAsync(
         [FromHeader(Name = "x-requestid")] Guid requestId,
         ShipOrderCommand command,
         [AsParameters] OrderServices services)
@@ -56,6 +69,11 @@ public static class OrdersApi
         if (requestId == Guid.Empty)
         {
             return TypedResults.BadRequest("Empty GUID is not valid for request ID");
+        }
+
+        if (!await OrderExistsAsync(command.OrderNumber, services))
+        {
+            return OrderNotFound(command.OrderNumber);
         }
 
         var requestShipOrder = new IdentifiedCommand<ShipOrderCommand, bool>(command, requestId);
@@ -67,7 +85,15 @@ public static class OrdersApi
             requestShipOrder.Command.OrderNumber,
             requestShipOrder);
 
-        var commandResult = await services.Mediator.Send(requestShipOrder);
+        bool commandResult;
+        try
+        {
+            commandResult = await services.Mediator.Send(requestShipOrder);
+        }
+        catch (OrderingDomainException ex)
+        {
+            return InvalidStatusChange(ex);
+        }
 
         if (!commandResult)
         {
@@ -76,6 +102,36 @@ public static class OrdersApi
 
         return TypedResults.Ok();
     }
+
+    private static async Task<bool> OrderExistsAsync(int orderNumber, OrderServices services)
+    {
+        try
+        {
+            // IOrderQueries.GetOrderAsync throws KeyNotFoundException for an unknown order.
+            await services.Queries.GetOrderAsync(orderNumber);
+            return true;
+        }
+        catch (KeyNotFoundException)
+        {
+            return false;
+        }
+    }
+
+    private static NotFound<ProblemDetails> OrderNotFound(int orderNumber) =>
+        TypedResults.NotFound(new ProblemDetails
+        {
+            Title = "Order not found",
+            Detail = $"Order {orderNumber} was not found.",
+            Status = StatusCodes.Status404NotFound
+        });
+
+    private static Conflict<ProblemDetails> InvalidStatusChange(OrderingDomainException ex) =>
+        TypedResults.Conflict(new ProblemDetails
+        {
+            Title = "Invalid order status change",
+            Detail = ex.Message,
+            Status = StatusCodes.Status409Conflict
+        });
 
     public static async Task<Results<Ok<Order>, NotFound>> GetOrderAsync(int orderId, [AsParameters] OrderServices services)
     {
@@ -120,9 +176,9 @@ public static class OrdersApi
         CreateOrderRequest request,
         [AsParameters] OrderServices services)
     {
-        
+
         //mask the credit card number
-        
+
         services.Logger.LogInformation(
             "Sending command: {CommandName} - {IdProperty}: {CommandId}",
             request.GetGenericTypeName(),
@@ -152,7 +208,16 @@ public static class OrdersApi
                 requestCreateOrder.Id,
                 requestCreateOrder);
 
-            var result = await services.Mediator.Send(requestCreateOrder);
+            bool result;
+            try
+            {
+                result = await services.Mediator.Send(requestCreateOrder);
+            }
+            catch (OrderingDomainException)
+            {
+                // Keeps the create order outcome unchanged: a rejected command is reported as a failure below.
+                result = false;
+            }
 
             if (result)
             {
