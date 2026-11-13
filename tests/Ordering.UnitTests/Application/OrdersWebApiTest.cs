@@ -164,7 +164,7 @@ public class OrdersWebApiTest
         var result = await OrdersApi.CancelOrderAsync(Guid.NewGuid(), new CancelOrderCommand(1), services);
 
         var problem = Assert.IsInstanceOfType<ProblemHttpResult>(result.Result);
-        Assert.AreEqual(500, problem.StatusCode);
+        Assert.AreEqual(404, problem.StatusCode);
     }
 
     [TestMethod]
@@ -177,6 +177,6 @@ public class OrdersWebApiTest
         var result = await OrdersApi.ShipOrderAsync(Guid.NewGuid(), new ShipOrderCommand(1), services);
 
         var problem = Assert.IsInstanceOfType<ProblemHttpResult>(result.Result);
-        Assert.AreEqual(500, problem.StatusCode);
+        Assert.AreEqual(404, problem.StatusCode);
     }
 }

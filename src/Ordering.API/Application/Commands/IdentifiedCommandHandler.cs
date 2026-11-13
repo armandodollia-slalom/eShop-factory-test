@@ -96,7 +96,7 @@ public abstract class IdentifiedCommandHandler<T, R> : IRequestHandler<Identifie
 
                 return result;
             }
-            catch
+            catch (Exception ex) when (ex is not OrderingDomainException)
             {
                 return default;
             }

@@ -38,11 +38,19 @@ public static class OrdersApi
             requestCancelOrder.Command.OrderNumber,
             requestCancelOrder);
 
-        var commandResult = await services.Mediator.Send(requestCancelOrder);
+        bool commandResult;
+        try
+        {
+            commandResult = await services.Mediator.Send(requestCancelOrder);
+        }
+        catch (OrderingDomainException ex)
+        {
+            return TypedResults.Problem(detail: ex.Message, statusCode: StatusCodes.Status409Conflict);
+        }
 
         if (!commandResult)
         {
-            return TypedResults.Problem(detail: "Cancel order failed to process.", statusCode: 500);
+            return TypedResults.Problem(detail: $"Order {command.OrderNumber} was not found.", statusCode: StatusCodes.Status404NotFound);
         }
 
         return TypedResults.Ok();
@@ -67,11 +75,19 @@ public static class OrdersApi
             requestShipOrder.Command.OrderNumber,
             requestShipOrder);
 
-        var commandResult = await services.Mediator.Send(requestShipOrder);
+        bool commandResult;
+        try
+        {
+            commandResult = await services.Mediator.Send(requestShipOrder);
+        }
+        catch (OrderingDomainException ex)
+        {
+            return TypedResults.Problem(detail: ex.Message, statusCode: StatusCodes.Status409Conflict);
+        }
 
         if (!commandResult)
         {
-            return TypedResults.Problem(detail: "Ship order failed to process.", statusCode: 500);
+            return TypedResults.Problem(detail: $"Order {command.OrderNumber} was not found.", statusCode: StatusCodes.Status404NotFound);
         }
 
         return TypedResults.Ok();
@@ -152,7 +168,16 @@ public static class OrdersApi
                 requestCreateOrder.Id,
                 requestCreateOrder);
 
-            var result = await services.Mediator.Send(requestCreateOrder);
+            bool result;
+            try
+            {
+                result = await services.Mediator.Send(requestCreateOrder);
+            }
+            catch (OrderingDomainException)
+            {
+                // Invalid commands (ValidatorBehavior) and rule violations are reported like any other failed command.
+                result = false;
+            }
 
             if (result)
             {
