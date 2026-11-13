@@ -49,6 +49,11 @@ public static class CatalogApi
             .WithSummary("Get catalog item picture")
             .WithDescription("Get the picture for a catalog item")
             .WithTags("Items");
+        api.MapGet("/items/{id:int}/brand-mates", GetBrandMates)
+            .WithName("GetItemBrandMates")
+            .WithSummary("Get other items of the same brand")
+            .WithDescription("Get the other catalog items of the same brand as the specified item, ordered by name.")
+            .WithTags("Items");
 
         api.MapGet("/items/facets", GetCatalogFacets)
             .WithName("GetCatalogFacets")
@@ -63,7 +68,7 @@ public static class CatalogApi
             .WithDescription("Search the catalog for items related to the specified text")
             .WithTags("Search");
 
-                // Routes for resolving catalog items using AI.
+        // Routes for resolving catalog items using AI.
         v2.MapGet("/items/withsemanticrelevance", GetItemsBySemanticRelevance)
             .WithName("GetRelevantItems-V2")
             .WithSummary("Search catalog for relevant items")
@@ -221,7 +226,8 @@ public static class CatalogApi
     {
         if (id <= 0)
         {
-            return TypedResults.BadRequest<ProblemDetails>(new (){
+            return TypedResults.BadRequest<ProblemDetails>(new()
+            {
                 Detail = "Id is not valid"
             });
         }
@@ -234,6 +240,44 @@ public static class CatalogApi
         }
 
         return TypedResults.Ok(item);
+    }
+
+    private const int DefaultBrandMatesCount = 4;
+    private const int MaxBrandMatesCount = 12;
+
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
+    public static async Task<Results<Ok<List<CatalogItem>>, NotFound, ProblemHttpResult>> GetBrandMates(
+        [AsParameters] CatalogServices services,
+        [Description("The catalog item id")] int id,
+        [Description("The maximum number of items to return, from 1 to 12")] int count = DefaultBrandMatesCount)
+    {
+        if (count < 1 || count > MaxBrandMatesCount)
+        {
+            return TypedResults.Problem(
+                detail: $"Count must be between 1 and {MaxBrandMatesCount}",
+                statusCode: StatusCodes.Status400BadRequest);
+        }
+
+        var brandId = await services.Context.CatalogItems
+            .Where(ci => ci.Id == id)
+            .Select(ci => (int?)ci.CatalogBrandId)
+            .SingleOrDefaultAsync();
+
+        if (brandId is null)
+        {
+            return TypedResults.NotFound();
+        }
+
+        // The "C" collation compares names by code point, which is the ordinal order.
+        var items = await services.Context.CatalogItems
+            .Include(ci => ci.CatalogBrand)
+            .Where(ci => ci.CatalogBrandId == brandId && ci.Id != id)
+            .OrderBy(ci => EF.Functions.Collate(ci.Name, "C"))
+            .ThenBy(ci => ci.Id)
+            .Take(count)
+            .ToListAsync();
+
+        return TypedResults.Ok(items);
     }
 
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
@@ -363,7 +407,8 @@ public static class CatalogApi
     {
         if (productToUpdate?.Id == null)
         {
-            return TypedResults.BadRequest<ProblemDetails>(new (){
+            return TypedResults.BadRequest<ProblemDetails>(new()
+            {
                 Detail = "Item id must be provided in the request body."
             });
         }
@@ -380,7 +425,8 @@ public static class CatalogApi
 
         if (catalogItem == null)
         {
-            return TypedResults.NotFound<ProblemDetails>(new (){
+            return TypedResults.NotFound<ProblemDetails>(new()
+            {
                 Detail = $"Item with id {id} not found."
             });
         }
