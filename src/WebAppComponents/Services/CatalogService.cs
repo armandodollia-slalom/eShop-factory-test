@@ -18,7 +18,7 @@ public class CatalogService(HttpClient httpClient) : ICatalogService
     {
         var uri = $"{remoteServiceBaseUrl}items/{id}/brand-mates";
         var result = await httpClient.GetFromJsonAsync<List<CatalogItem>>(uri);
-        return result!;
+        return result ?? [];
     }
 
     public async Task<CatalogResult> GetCatalogItems(int pageIndex, int pageSize, int[]? brands, int[]? types)

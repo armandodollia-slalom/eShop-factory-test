@@ -4,6 +4,7 @@
 @inject BasketState BasketState
 @inject NavigationManager Nav
 @inject IProductImageUrlProvider ProductImages
+@inject ILogger<ItemPage> Logger
 
 @if (item is not null)
 {
@@ -132,9 +133,11 @@ else if (notFound)
             {
                 brandMates = await brandMatesTask;
             }
-            catch (HttpRequestException)
+            catch (Exception ex) when (ex is not OperationCanceledException || ex.InnerException is TimeoutException)
             {
                 // The section is optional; the product page renders without it.
+                // Timeouts, open circuits and bad payloads hide the section too.
+                Logger.LogWarning(ex, "Could not load brand-mates for catalog item {ItemId}", ItemId);
             }
             await UpdateNumInCartAsync();
         }
