@@ -421,6 +421,11 @@ public static class CatalogApi
         [AsParameters] CatalogServices services,
         CatalogItem productToUpdate)
     {
+        if (ValidateItem(productToUpdate) is { } validationProblem)
+        {
+            return TypedResults.BadRequest(validationProblem);
+        }
+
         var catalogItem = await services.Context.CatalogItems.SingleOrDefaultAsync(i => i.Id == id);
 
         if (catalogItem == null)
@@ -458,10 +463,15 @@ public static class CatalogApi
     }
 
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
-    public static async Task<Created> CreateItem(
+    public static async Task<Results<Created, BadRequest<ProblemDetails>>> CreateItem(
         [AsParameters] CatalogServices services,
         CatalogItem product)
     {
+        if (ValidateItem(product) is { } validationProblem)
+        {
+            return TypedResults.BadRequest(validationProblem);
+        }
+
         var item = new CatalogItem(product.Name)
         {
             Id = product.Id,
@@ -480,6 +490,23 @@ public static class CatalogApi
         await services.Context.SaveChangesAsync();
 
         return TypedResults.Created($"/api/catalog/items/{item.Id}");
+    }
+
+    // Rejects bodies the database would refuse (Name is NOT NULL), so callers get a 400 instead of a 500.
+    private static ProblemDetails? ValidateItem(CatalogItem item)
+    {
+        if (string.IsNullOrWhiteSpace(item.Name))
+        {
+            return new HttpValidationProblemDetails(new Dictionary<string, string[]>
+            {
+                [nameof(CatalogItem.Name)] = ["The Name field is required."]
+            })
+            {
+                Detail = "Item name must be provided in the request body."
+            };
+        }
+
+        return null;
     }
 
     public static async Task<Results<NoContent, NotFound>> DeleteItemById(
