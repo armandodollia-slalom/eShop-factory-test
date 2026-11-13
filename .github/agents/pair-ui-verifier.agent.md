@@ -22,6 +22,7 @@ You may run shell commands (the browser automation tool, curl, the mockup diff h
 - Use the browser automation tool the Project context names, with the commands it gives. Without one, use whatever headless browser tooling the repository already depends on, and say which in your summary.
 - Quick look: take a full-page screenshot of `<url>/<path>` into `<screenshots dir>/<name>.png`.
 - Flows (sign-in, forms, multi-step journeys): write a small script in the screenshots directory and run it, reusing the repository's sign-in helpers and test users (the Project context says where they are). Take a screenshot at each step that matters, named after the criterion (`ac2-coupon-applied.png`).
+- Data the criterion needs (a user with a particular basket, a record in a given state): the stack slot has the scenario the task names loaded, if any. Set up anything else yourself through the slot's own services or stores (the app's API, or `factory teststack --slot <n> compose exec <service> ...`), as a test would; never change source files to get it. Say in your summary what you set up.
 - If a page fails to load or the stack looks broken, capture it (screenshot plus the error text) and report it as a blocking finding; the harness passes it to the implementer.
 
 ## Comparing with the mockups
