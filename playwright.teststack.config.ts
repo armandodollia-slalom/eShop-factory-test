@@ -4,7 +4,7 @@ import { BASE_URL, STACK } from './e2e/teststack/ports';
 
 /**
  * Runs the e2e suite against the Docker Compose test stack (`factory teststack up`) instead of starting the
- * application itself. Ports and URLs come from the `stack` section of .factory/config.json, for the slot in
+ * application itself. Ports and URLs come from the `stack` section of .factory/app.json, for the slot in
  * TESTSTACK_SLOT. Test users and other data come from the scenarios in .factory/stack/scenarios; if the base
  * config reads credentials from the environment, give them their test stack values here.
  */
