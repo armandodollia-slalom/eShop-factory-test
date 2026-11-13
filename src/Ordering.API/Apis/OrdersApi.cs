@@ -45,7 +45,7 @@ public static class OrdersApi
         }
         catch (OrderingDomainException ex)
         {
-            return TypedResults.Problem(detail: ex.Message, statusCode: StatusCodes.Status409Conflict);
+            return OrderStatusChangeProblem(ex);
         }
 
         if (!commandResult)
@@ -82,7 +82,7 @@ public static class OrdersApi
         }
         catch (OrderingDomainException ex)
         {
-            return TypedResults.Problem(detail: ex.Message, statusCode: StatusCodes.Status409Conflict);
+            return OrderStatusChangeProblem(ex);
         }
 
         if (!commandResult)
@@ -92,6 +92,12 @@ public static class OrdersApi
 
         return TypedResults.Ok();
     }
+
+    // Invalid commands (ValidatorBehavior wraps a ValidationException) are bad requests; other domain exceptions are rule violations.
+    private static ProblemHttpResult OrderStatusChangeProblem(OrderingDomainException ex) =>
+        TypedResults.Problem(
+            detail: ex.Message,
+            statusCode: ex.InnerException is ValidationException ? StatusCodes.Status400BadRequest : StatusCodes.Status409Conflict);
 
     public static async Task<Results<Ok<Order>, NotFound>> GetOrderAsync(int orderId, [AsParameters] OrderServices services)
     {
@@ -136,9 +142,9 @@ public static class OrdersApi
         CreateOrderRequest request,
         [AsParameters] OrderServices services)
     {
-        
+
         //mask the credit card number
-        
+
         services.Logger.LogInformation(
             "Sending command: {CommandName} - {IdProperty}: {CommandId}",
             request.GetGenericTypeName(),
@@ -173,9 +179,10 @@ public static class OrdersApi
             {
                 result = await services.Mediator.Send(requestCreateOrder);
             }
-            catch (OrderingDomainException)
+            catch (Exception ex)
             {
-                // Invalid commands (ValidatorBehavior) and rule violations are reported like any other failed command.
+                // Invalid commands, rule violations and server faults are reported like any other failed command.
+                services.Logger.LogError(ex, "CreateOrderCommand threw - RequestId: {RequestId}", requestId);
                 result = false;
             }
 

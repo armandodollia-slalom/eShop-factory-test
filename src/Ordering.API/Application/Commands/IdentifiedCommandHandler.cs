@@ -98,7 +98,9 @@ public abstract class IdentifiedCommandHandler<T, R> : IRequestHandler<Identifie
             }
             catch (Exception ex) when (ex is not OrderingDomainException)
             {
-                return default;
+                // Server faults must not look like an ordinary negative command result (e.g. "order not found").
+                _logger.LogError(ex, "Error handling command {CommandName} - RequestId: {RequestId}", message.Command.GetGenericTypeName(), message.Id);
+                throw;
             }
         }
     }
