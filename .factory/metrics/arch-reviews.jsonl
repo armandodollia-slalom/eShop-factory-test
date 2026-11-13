@@ -1,0 +1,1 @@
+{"ts":"2026-11-13T07:28:29.359Z","story":"BUG-7","round":1,"verdict":"APPROVED","reviewer_ver":"866831a2","findings":[{"severity":"minor","category":"resilience","file":"src/WebApp/Services/BasketState.cs","line":138,"issue":"The orphan basket line is skipped silently with no log, so stale baskets cannot be diagnosed."}]}

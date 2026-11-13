@@ -1,0 +1,3 @@
+{"ts":"2026-11-13T07:30:20.382Z","stage":"plan","story":"BUG-7","round":2,"agent_prompt_ver":"a978a288","verifier_ver":"27d172f2","cli":"claude","score":7,"passed":false,"gaps":6}
+{"ts":"2026-11-13T07:31:27.110Z","stage":"plan","story":"BUG-7","round":3,"agent_prompt_ver":"a978a288","verifier_ver":"27d172f2","cli":"claude","score":9,"passed":true,"gaps":2}
+{"ts":"2026-11-13T07:46:03.868Z","stage":"automation","story":"BUG-7","round":1,"agent_prompt_ver":"5e010498","verifier_ver":"49856a14","cli":"claude","score":10,"passed":true,"gaps":0}
