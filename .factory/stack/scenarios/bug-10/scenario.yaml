@@ -1,0 +1,24 @@
+# BUG-10: orders in each status the status-change endpoints must handle, all owned by the buyer alice.
+description: The demo catalog and users plus one order per status needed by the BUG-10 cancel/ship cases.
+extends: default
+
+postgres:
+  orderingdb:
+    - table: ordering.buyers
+      rows:
+        # alice, the owner of every seeded order (the order-cancelled event handler reads the order's buyer)
+        - { Id: 1, IdentityGuid: 50ddac7e-9b69-4d68-a91b-25100ef2e403, Name: alice }
+    - table: ordering.orders
+      rows:
+        # TC-BUG-10-01, TC-BUG-10-12: cancelling a Shipped order is forbidden (409)
+        - { Id: 5, OrderStatus: Shipped, BuyerId: 1, OrderDate: "2024-05-01T10:00:00Z", Description: "seeded shipped order", Address_City: Seattle, Address_Country: USA, Address_State: WA, Address_Street: 1 Main St, Address_ZipCode: "98101" }
+        # TC-BUG-10-02: cancelling a Paid order is forbidden (409)
+        - { Id: 6, OrderStatus: Paid, BuyerId: 1, OrderDate: "2024-05-01T10:00:00Z", Description: "seeded paid order", Address_City: Seattle, Address_Country: USA, Address_State: WA, Address_Street: 1 Main St, Address_ZipCode: "98101" }
+        # TC-BUG-10-03: shipping a Cancelled order is forbidden (409)
+        - { Id: 7, OrderStatus: Cancelled, BuyerId: 1, OrderDate: "2024-05-01T10:00:00Z", Description: "seeded cancelled order", Address_City: Seattle, Address_Country: USA, Address_State: WA, Address_Street: 1 Main St, Address_ZipCode: "98101" }
+        # TC-BUG-10-04: shipping a Submitted order is forbidden (409)
+        - { Id: 8, OrderStatus: Submitted, BuyerId: 1, OrderDate: "2024-05-01T10:00:00Z", Description: "seeded submitted order", Address_City: Seattle, Address_Country: USA, Address_State: WA, Address_Street: 1 Main St, Address_ZipCode: "98101" }
+        # TC-BUG-10-10: cancelling a Submitted order succeeds (200)
+        - { Id: 9, OrderStatus: Submitted, BuyerId: 1, OrderDate: "2024-05-01T10:00:00Z", Description: "seeded submitted order", Address_City: Seattle, Address_Country: USA, Address_State: WA, Address_Street: 1 Main St, Address_ZipCode: "98101" }
+        # TC-BUG-10-11: shipping a Paid order succeeds (200)
+        - { Id: 10, OrderStatus: Paid, BuyerId: 1, OrderDate: "2024-05-01T10:00:00Z", Description: "seeded paid order", Address_City: Seattle, Address_Country: USA, Address_State: WA, Address_Street: 1 Main St, Address_ZipCode: "98101" }

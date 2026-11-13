@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace eShop.Ordering.FunctionalTests;
 
+[Trait("Story", "BUG-10")]
 public sealed class OrderingApiTests : IClassFixture<OrderingApiFixture>
 {
     private readonly WebApplicationFactory<Program> _webApplicationFactory;
@@ -51,10 +52,11 @@ public sealed class OrderingApiTests : IClassFixture<OrderingApiFixture>
     }
 
     [Fact]
-    public async Task CancelNonExistentOrderFails()
+    [Trait("TestCase", "TC-BUG-10-05")]
+    public async Task TC_BUG_10_05_CancelNonExistentOrderReturnsNotFound()
     {
         // Act
-        var content = new StringContent(BuildOrder(), UTF8Encoding.UTF8, "application/json")
+        var content = new StringContent(JsonSerializer.Serialize(new { OrderNumber = 999999 }), UTF8Encoding.UTF8, "application/json")
         {
             Headers = { { "x-requestid", Guid.NewGuid().ToString() } }
         };
@@ -62,7 +64,7 @@ public sealed class OrderingApiTests : IClassFixture<OrderingApiFixture>
         var s = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         // Assert
-        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     [Fact]
@@ -81,17 +83,18 @@ public sealed class OrderingApiTests : IClassFixture<OrderingApiFixture>
     }
 
     [Fact]
-    public async Task ShipNonExistentOrderFails()
+    [Trait("TestCase", "TC-BUG-10-06")]
+    public async Task TC_BUG_10_06_ShipNonExistentOrderReturnsNotFound()
     {
         // Act
-        var content = new StringContent(BuildOrder(), UTF8Encoding.UTF8, "application/json")
+        var content = new StringContent(JsonSerializer.Serialize(new { OrderNumber = 999999 }), UTF8Encoding.UTF8, "application/json")
         {
             Headers = { { "x-requestid", Guid.NewGuid().ToString() } }
         };
         var response = await _httpClient.PutAsync("api/orders/ship", content, TestContext.Current.CancellationToken);
 
         // Assert
-        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     [Fact]
