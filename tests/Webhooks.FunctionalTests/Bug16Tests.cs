@@ -120,4 +120,12 @@ public sealed class Bug16Tests(WebhooksApiFixture fixture) : IClassFixture<Webho
         var messages = doc.RootElement.GetProperty("errors").GetProperty("Event").EnumerateArray().Select(e => e.GetString()).ToList();
         Assert.Contains(messages, m => m!.Contains(" is invalid event name"));
     }
+
+    [Fact]
+    [Trait("TestCase", "TC-BUG-16-11")]
+    public Task TC_BUG_16_11_CommaCombinedNumericEventIsRejected() => AssertRejectedAndNothingStored("1,2");
+
+    [Fact]
+    [Trait("TestCase", "TC-BUG-16-11")]
+    public Task TC_BUG_16_11_CommaCombinedNamedEventIsRejected() => AssertRejectedAndNothingStored("CatalogItemPriceChange,OrderShipped");
 }

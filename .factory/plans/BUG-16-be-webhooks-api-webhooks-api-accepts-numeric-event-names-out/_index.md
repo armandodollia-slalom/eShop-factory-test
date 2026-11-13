@@ -27,6 +27,7 @@ Scope: `POST /api/webhooks/` must reject any `event` value that is not a defined
 | TC-BUG-16-08 | Numeric string naming a defined member ("1") is still accepted | happy | functional | Decisions |
 | TC-BUG-16-09 | Valid event name in different casing is accepted | happy | functional | Enum.TryParse ignoreCase |
 | TC-BUG-16-10 | Empty event name is rejected | sad | functional | Validation |
+| TC-BUG-16-11 | Comma-combined event values are rejected | sad | functional | Expected result, Enum.TryParse flags |
 
 ## Out of scope
 
