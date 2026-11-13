@@ -96,8 +96,10 @@ public abstract class IdentifiedCommandHandler<T, R> : IRequestHandler<Identifie
 
                 return result;
             }
-            catch
+            catch (Exception ex) when (ex is not OrderingDomainException)
             {
+                // Domain rule violations (invalid status transitions, validation failures) propagate so the caller
+                // can map them to a client error; any other failure keeps returning the default result.
                 return default;
             }
         }

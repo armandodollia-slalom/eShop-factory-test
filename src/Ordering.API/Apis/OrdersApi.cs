@@ -19,7 +19,7 @@ public static class OrdersApi
         return api;
     }
 
-    public static async Task<Results<Ok, BadRequest<string>, ProblemHttpResult>> CancelOrderAsync(
+    public static async Task<Results<Ok, BadRequest<string>, NotFound, Conflict<ProblemDetails>, ProblemHttpResult>> CancelOrderAsync(
         [FromHeader(Name = "x-requestid")] Guid requestId,
         CancelOrderCommand command,
         [AsParameters] OrderServices services)
@@ -38,17 +38,10 @@ public static class OrdersApi
             requestCancelOrder.Command.OrderNumber,
             requestCancelOrder);
 
-        var commandResult = await services.Mediator.Send(requestCancelOrder);
-
-        if (!commandResult)
-        {
-            return TypedResults.Problem(detail: "Cancel order failed to process.", statusCode: 500);
-        }
-
-        return TypedResults.Ok();
+        return await SendOrderStatusCommandAsync(requestCancelOrder, command.OrderNumber, "Cancel order failed to process.", services);
     }
 
-    public static async Task<Results<Ok, BadRequest<string>, ProblemHttpResult>> ShipOrderAsync(
+    public static async Task<Results<Ok, BadRequest<string>, NotFound, Conflict<ProblemDetails>, ProblemHttpResult>> ShipOrderAsync(
         [FromHeader(Name = "x-requestid")] Guid requestId,
         ShipOrderCommand command,
         [AsParameters] OrderServices services)
@@ -67,14 +60,66 @@ public static class OrdersApi
             requestShipOrder.Command.OrderNumber,
             requestShipOrder);
 
-        var commandResult = await services.Mediator.Send(requestShipOrder);
+        return await SendOrderStatusCommandAsync(requestShipOrder, command.OrderNumber, "Ship order failed to process.", services);
+    }
+
+    /// <summary>
+    /// Sends an order status change command and maps its outcome: 200 on success, 400 for command validation
+    /// failures, 409 for a status transition the order's rules forbid, 404 when the order does not exist and
+    /// 500 for any other failure.
+    /// </summary>
+    private static async Task<Results<Ok, BadRequest<string>, NotFound, Conflict<ProblemDetails>, ProblemHttpResult>> SendOrderStatusCommandAsync<T>(
+        IdentifiedCommand<T, bool> request,
+        int orderNumber,
+        string failureDetail,
+        OrderServices services)
+        where T : IRequest<bool>
+    {
+        bool commandResult;
+        try
+        {
+            commandResult = await services.Mediator.Send(request);
+        }
+        catch (OrderingDomainException ex) when (ex.InnerException is ValidationException validation)
+        {
+            services.Logger.LogWarning(ex, "Validation failed for order {OrderNumber}", orderNumber);
+            return TypedResults.BadRequest(string.Join(" ", validation.Errors.Select(e => e.ErrorMessage)));
+        }
+        catch (OrderingDomainException ex)
+        {
+            services.Logger.LogWarning(ex, "Order status change rejected for order {OrderNumber}", orderNumber);
+            return TypedResults.Conflict(new ProblemDetails
+            {
+                Title = "Invalid order status change",
+                Detail = ex.Message,
+                Status = StatusCodes.Status409Conflict
+            });
+        }
 
         if (!commandResult)
         {
-            return TypedResults.Problem(detail: "Ship order failed to process.", statusCode: 500);
+            if (!await OrderExistsAsync(orderNumber, services.Queries))
+            {
+                return TypedResults.NotFound();
+            }
+
+            return TypedResults.Problem(detail: failureDetail, statusCode: 500);
         }
 
         return TypedResults.Ok();
+    }
+
+    private static async Task<bool> OrderExistsAsync(int orderNumber, IOrderQueries queries)
+    {
+        try
+        {
+            await queries.GetOrderAsync(orderNumber);
+            return true;
+        }
+        catch (KeyNotFoundException)
+        {
+            return false;
+        }
     }
 
     public static async Task<Results<Ok<Order>, NotFound>> GetOrderAsync(int orderId, [AsParameters] OrderServices services)
@@ -120,9 +165,9 @@ public static class OrdersApi
         CreateOrderRequest request,
         [AsParameters] OrderServices services)
     {
-        
+
         //mask the credit card number
-        
+
         services.Logger.LogInformation(
             "Sending command: {CommandName} - {IdProperty}: {CommandId}",
             request.GetGenericTypeName(),
@@ -152,7 +197,17 @@ public static class OrdersApi
                 requestCreateOrder.Id,
                 requestCreateOrder);
 
-            var result = await services.Mediator.Send(requestCreateOrder);
+            bool result;
+            try
+            {
+                result = await services.Mediator.Send(requestCreateOrder);
+            }
+            catch (OrderingDomainException ex)
+            {
+                // IdentifiedCommandHandler lets domain exceptions through; keep this endpoint's existing behavior.
+                services.Logger.LogWarning(ex, "CreateOrderCommand rejected - RequestId: {RequestId}", requestId);
+                result = false;
+            }
 
             if (result)
             {
