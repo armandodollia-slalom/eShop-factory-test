@@ -8,3 +8,5 @@
 {"ts":"2026-11-13T22:40:32.582Z","stage":"automation","story":"BUG-17","round":1,"agent_prompt_ver":"170ddf68","verifier_ver":"ddb8bf01","cli":"claude","score":5,"passed":false,"gaps":8}
 {"ts":"2026-11-13T22:48:25.261Z","stage":"automation","story":"BUG-17","round":2,"agent_prompt_ver":"170ddf68","verifier_ver":"ddb8bf01","cli":"claude","score":7,"passed":false,"gaps":2}
 {"ts":"2026-11-13T22:57:36.560Z","stage":"automation","story":"BUG-17","round":3,"agent_prompt_ver":"170ddf68","verifier_ver":"ddb8bf01","cli":"claude","score":9,"passed":true,"gaps":1}
+{"ts":"2026-11-13T23:05:45.904Z","stage":"plan","story":"BUG-18","round":1,"agent_prompt_ver":"a978a288","verifier_ver":"27d172f2","cli":"claude","score":9,"passed":true,"gaps":2}
+{"ts":"2026-11-13T23:17:48.085Z","stage":"automation","story":"BUG-18","round":1,"agent_prompt_ver":"170ddf68","verifier_ver":"ddb8bf01","cli":"claude","score":9,"passed":true,"gaps":1}
