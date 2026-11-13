@@ -14,7 +14,7 @@ test.beforeAll(() => {
 
 async function signIn(page: Page, user: string) {
   await page.context().clearCookies();
-  await page.goto(BASE_URL!);
+  await page.goto(BASE_URL);
   await page.getByLabel('Sign in').click();
   await expect(page.getByRole('heading', { name: 'Login' })).toBeVisible();
   await page.getByPlaceholder('Username').fill(user);
