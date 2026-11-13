@@ -6,3 +6,5 @@
 {"ts":"2026-11-13T18:58:48.447Z","stage":"automation","story":"CAT-1","round":1,"agent_prompt_ver":"170ddf68","verifier_ver":"ddb8bf01","cli":"claude","score":9,"passed":true,"gaps":1}
 {"ts":"2026-11-13T19:17:29.926Z","stage":"plan","story":"BUG-17","round":1,"agent_prompt_ver":"a978a288","verifier_ver":"27d172f2","cli":"claude","score":9,"passed":true,"gaps":1}
 {"ts":"2026-11-13T19:25:55.348Z","stage":"automation","story":"BUG-17","round":1,"agent_prompt_ver":"170ddf68","verifier_ver":"ddb8bf01","cli":"claude","score":10,"passed":true,"gaps":0}
+{"ts":"2026-11-13T19:34:27.636Z","stage":"plan","story":"BUG-18","round":1,"agent_prompt_ver":"a978a288","verifier_ver":"27d172f2","cli":"claude","score":9,"passed":true,"gaps":1}
+{"ts":"2026-11-13T19:43:26.025Z","stage":"automation","story":"BUG-18","round":1,"agent_prompt_ver":"170ddf68","verifier_ver":"ddb8bf01","cli":"claude","score":9,"passed":true,"gaps":1}
