@@ -1,0 +1,5 @@
+description: Demo catalog for BUG-18 (creating a catalog item with an existing id); no extra rows, every case posts its own body.
+extends: default
+
+# Preconditions: 101 items with ids 1 to 101, brand 1 and type 1 exist (from `default`). Ids 6001 and 6002 used by
+# TC-BUG-18-05 and TC-BUG-18-07 are unused.
