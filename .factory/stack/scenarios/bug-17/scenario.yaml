@@ -1,0 +1,5 @@
+description: Demo catalog for BUG-17 (creating a catalog item without a name); no extra rows, every case posts its own body.
+extends: default
+
+# Preconditions: 101 items, brand 1 and type 1 exist (from `default`). Valid items created by TC-BUG-17-07 and
+# TC-BUG-17-08 use ids 9007 and 9008, which are unused.

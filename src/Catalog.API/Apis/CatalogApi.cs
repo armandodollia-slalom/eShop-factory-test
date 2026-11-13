@@ -458,10 +458,19 @@ public static class CatalogApi
     }
 
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
-    public static async Task<Created> CreateItem(
+    public static async Task<Results<Created, ValidationProblem>> CreateItem(
         [AsParameters] CatalogServices services,
         CatalogItem product)
     {
+        // Name is required by the database; reject a missing or blank one before saving.
+        if (string.IsNullOrWhiteSpace(product.Name))
+        {
+            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
+            {
+                [nameof(CatalogItem.Name)] = ["The Name field is required."]
+            });
+        }
+
         var item = new CatalogItem(product.Name)
         {
             Id = product.Id,
