@@ -39,6 +39,8 @@ jobs:
     # The architecture policy's own checks, as the review stage applies them: the application's declarations
     # (.factory/app.json policy), every project classified (by the profile or by its classification conventions),
     # the conventions agreeing with the profile, linked-source folders profiled, the rules and validators valid.
+    # The toolchain lets the engine confirm a new project's facts with the build tool (MSBuild); without it, selfcheck
+    # says so and a new project the profile does not list goes to a person.
     # (hashFiles is only available in step conditions, so each step checks for the policy.)
     runs-on: ubuntu-latest
     steps:
@@ -51,6 +53,9 @@ jobs:
       if: hashFiles('.factory/policy/policy.yaml') != ''
       with:
         token: ${{ secrets.FACTORY_TOKEN }}
+    - name: "Toolchain (yours: .github/actions/factory-toolchain), so the policy can ask the build tool to confirm a new project's facts"
+      if: hashFiles('.factory/policy/policy.yaml') != '' && hashFiles('.github/actions/factory-toolchain/action.yml') != ''
+      uses: ./.github/actions/factory-toolchain
     - name: Python for the policy engine
       if: hashFiles('.factory/policy/policy.yaml') != ''
       run: factory python setup
