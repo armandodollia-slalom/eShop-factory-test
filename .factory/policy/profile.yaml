@@ -41,6 +41,9 @@ projects:
   - { name: IntegrationEventLogEF,  path: src/IntegrationEventLogEF,  type: library, layer: shared }
   - { name: eShop.ServiceDefaults,  path: src/eShop.ServiceDefaults,  type: library, layer: shared }
   - { name: WebAppComponents,       path: src/WebAppComponents,       type: library, layer: shared }
+  # Linked source files (no csproj), compiled into Catalog.API, EventBusRabbitMQ, Identity.API, Ordering.API and
+  # Webhooks.API through <Compile Include="..\Shared\...">; classified like the reference's profile.
+  - { name: Shared,                 path: src/Shared,                 type: library, layer: shared }
   - { name: eShop.AppHost,          path: src/eShop.AppHost,          type: host,    layer: host }
   - { name: ClientApp,              path: src/ClientApp,              type: client,  layer: client }
   - { name: HybridApp,              path: src/HybridApp,              type: client,  layer: client }
@@ -53,6 +56,33 @@ projects:
   - { name: Ordering.FunctionalTests, path: tests/Ordering.FunctionalTests, type: test, layer: test }
   - { name: Webhooks.FunctionalTests, path: tests/Webhooks.FunctionalTests, type: test, layer: test }
   - { name: eShop.AppHost.UnitTests, path: tests/eShop.AppHost.UnitTests, type: test, layer: test }
+
+# How a project this list does not have is classified, from the project itself (the engine reads its manifest):
+# exactly one convention must fit, or a person extends this profile. selfcheck proves every project above gets
+# the same class from these conventions as from its entry. Written from the existing projects by the
+# author-architecture-policy skill.
+classification:
+  # The first segment of a project's name gives its service, for the classes that belong to one.
+  service_names:
+    Identity: identity
+    Catalog: catalog
+    Basket: basket
+    Ordering: ordering
+    OrderProcessor: ordering
+    PaymentProcessor: payment
+    Webhooks: webhooks
+    WebApp: webapp
+    WebhookClient: webhookclient
+  conventions:
+    - { type: test,           layer: test,           match: { roots: ["tests/*"], test_project: true } }
+    - { type: host,           layer: host,           match: { roots: ["src/*"], sdk: ["Aspire.AppHost.Sdk"] } }
+    - { type: client,         layer: client,         match: { roots: ["src/*"], properties: { UseMaui: "true" } } }
+    - { type: api,            layer: presentation,   service: required, traits: [exposes_http_api], match: { roots: ["src/*"], sdk: ["Microsoft.NET.Sdk.Web"], name: ["*.API"] } }
+    - { type: worker,         layer: presentation,   service: required, match: { roots: ["src/*"], sdk: ["Microsoft.NET.Sdk.Worker", "Microsoft.NET.Sdk.Web"], name: ["*Processor"] } }
+    - { type: web,            layer: presentation,   service: required, traits: [web_frontend], match: { roots: ["src/*"], sdk: ["Microsoft.NET.Sdk.Web"], not_name: ["*.API", "*Processor"] } }
+    - { type: domain,         layer: domain,         service: required, match: { roots: ["src/*"], sdk: ["Microsoft.NET.Sdk"], name: ["*.Domain"] } }
+    - { type: infrastructure, layer: infrastructure, service: required, match: { roots: ["src/*"], sdk: ["Microsoft.NET.Sdk"], name: ["*.Infrastructure"] } }
+    - { type: library,        layer: shared,         match: { roots: ["src/*"], sdk: ["Microsoft.NET.Sdk", "Microsoft.NET.Sdk.Razor"], output_type: Library, test_project: false, not_name: ["*.Domain", "*.Infrastructure", "*.API", "*Processor"], properties_absent: [UseMaui] } }
 
 services:
   - { id: identity,      owns_datastores: [identitydb], traits: [owns_database, exposes_http_api] }

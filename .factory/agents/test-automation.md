@@ -2,7 +2,7 @@
 
 Product code (`src/`) is never changed by this agent. Scenarios: `.factory/stack/scenarios/<name>/scenario.yaml` (format: `docs/test-stack.md` in the factory install, `factory version --path`).
 
-A new test project is registered in `tests/` and `eShop.Web.slnf` like the existing ones, and classified for the architecture policy in `.factory/app.json` under `policy.projects` (type `test`, layer `test`); without that the policy blocks it as unclassified (ARCH-001).
+A new test project is registered in `tests/` and `eShop.Web.slnf` like the existing ones, and is classified as a test by the architecture policy because it lives under `tests/` and is a test project (MSTest.Sdk or an xunit package), like the existing ones; without that the policy blocks it as unclassified (ARCH-001).
 
 ### Test framework per layer
 

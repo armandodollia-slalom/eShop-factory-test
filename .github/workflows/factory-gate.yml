@@ -35,6 +35,29 @@ jobs:
         factory teststack validate
         if node -e "process.exit(require('./.factory/config.json').teststack?.commands?.drift ? 0 : 1)"; then factory teststack drift; fi
 
+  policy:
+    # The architecture policy's own checks, as the review stage applies them: the application's declarations
+    # (.factory/app.json policy), every project classified (by the profile or by its classification conventions),
+    # the conventions agreeing with the profile, linked-source folders profiled, the rules and validators valid.
+    # (hashFiles is only available in step conditions, so each step checks for the policy.)
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      if: hashFiles('.factory/policy/policy.yaml') != ''
+      with:
+        node-version: 20.x
+    - uses: ./.github/actions/setup-factory
+      if: hashFiles('.factory/policy/policy.yaml') != ''
+      with:
+        token: ${{ secrets.FACTORY_TOKEN }}
+    - name: Python for the policy engine
+      if: hashFiles('.factory/policy/policy.yaml') != ''
+      run: factory python setup
+    - name: Architecture policy selfcheck
+      if: hashFiles('.factory/policy/policy.yaml') != ''
+      run: factory arch selfcheck --policy-dir .factory/policy --workspace .
+
   lint:
     # The repository's linters (precheck.lint) on the lines this pull request changes.
     runs-on: ubuntu-latest
