@@ -1,0 +1,2 @@
+description: BUG-17 (catalog item without a name) needs only the demo catalog; item 1, brand 1 and type 1 exist in it.
+extends: default
