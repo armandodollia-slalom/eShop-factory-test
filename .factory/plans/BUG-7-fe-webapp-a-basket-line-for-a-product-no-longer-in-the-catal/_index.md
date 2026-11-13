@@ -2,14 +2,14 @@
 story: BUG-7
 story-issue: "https://github.com/armandodollia-slalom/eShop-factory-test/issues/17"
 story-sha: 8607f9cfdf27
-plan-sha: 5e90b09d8ed0
-verified-score: 9
-verified-at: "2026-11-13T07:31:27.112Z"
-verified-by: test-planner@a978a288/27d172f2
-automation-sha: ce936c689e61
-automation-plan-sha: 5e90b09d8ed0
+automation-sha: 3cc376a23738
+automation-plan-sha: b99d6e069b54
 automation-score: 10
-automation-verified-at: "2026-11-13T07:46:03.888Z"
+automation-verified-at: "2026-11-13T08:11:57.053Z"
+plan-sha: b99d6e069b54
+verified-score: 9
+verified-at: "2026-11-13T08:08:59.513Z"
+verified-by: test-planner@a978a288/27d172f2
 ---
 # Test plan: BUG-7 [FE - WebApp] - A basket line for a product no longer in the catalog breaks every page
 
