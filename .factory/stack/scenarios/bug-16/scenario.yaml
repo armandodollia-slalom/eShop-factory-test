@@ -1,0 +1,4 @@
+description: BUG-16 (webhook event name validation) needs no extra rows; the demo data and users alice and bob suffice.
+extends: default
+
+# Preconditions of the BUG-16 cases: alice (AliceSmith@email.com) with no webhook subscriptions, which the default scenario provides.
