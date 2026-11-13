@@ -156,11 +156,3 @@ test('TC-BUG-16-10 empty event name is rejected', async ({ request }) => {
   expect((await response.json()).errors.Event).toContain(' is invalid event name');
   expect(await listSubscriptions(request)).toEqual([]);
 });
-
-test('TC-BUG-16-11 comma-combined event "1,2" is rejected', async ({ request }) => {
-  await expectRejected(request, '1,2');
-});
-
-test('TC-BUG-16-11 comma-combined event "CatalogItemPriceChange,OrderShipped" is rejected', async ({ request }) => {
-  await expectRejected(request, 'CatalogItemPriceChange,OrderShipped');
-});

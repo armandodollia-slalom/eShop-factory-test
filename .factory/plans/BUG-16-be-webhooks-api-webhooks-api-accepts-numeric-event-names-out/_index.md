@@ -2,14 +2,14 @@
 story: BUG-16
 story-issue: "https://github.com/armandodollia-slalom/eShop-factory-test/issues/33"
 story-sha: 8313c5a60d10
-plan-sha: 1f0b02b0c784
-verified-score: 10
-verified-at: "2026-11-13T20:17:33.849Z"
-verified-by: test-planner@a978a288/27d172f2
 automation-sha: 803a506359d4
-automation-plan-sha: 1f0b02b0c784
+automation-plan-sha: 7a85b8755f44
 automation-score: 10
-automation-verified-at: "2026-11-13T20:59:46.001Z"
+automation-verified-at: "2026-11-13T21:17:52.302Z"
+plan-sha: 7a85b8755f44
+verified-score: 9
+verified-at: "2026-11-13T21:10:02.627Z"
+verified-by: test-planner@a978a288/27d172f2
 ---
 # Test plan: BUG-16 Webhooks.API accepts numeric event names outside the allowed list
 
@@ -25,9 +25,8 @@ Scope: `POST /api/webhooks/` must reject any `event` value that is not a defined
 | TC-BUG-16-06 | Event larger than Int32 is rejected | sad | functional | Boundary |
 | TC-BUG-16-07 | Non-numeric unknown event name is still rejected | sad | functional | Message format unchanged |
 | TC-BUG-16-08 | Numeric string naming a defined member ("1") is still accepted | happy | functional | Decisions |
-| TC-BUG-16-09 | Valid event name in different casing is accepted | happy | functional | Enum.TryParse ignoreCase |
+| TC-BUG-16-09 | Valid event name in different casing is accepted | happy | functional | Decisions (defined names stay accepted; regression guard) |
 | TC-BUG-16-10 | Empty event name is rejected | sad | functional | Validation |
-| TC-BUG-16-11 | Comma-combined event values are rejected | sad | functional | Expected result, Enum.TryParse flags |
 
 ## Out of scope
 
@@ -39,3 +38,5 @@ Scope: `POST /api/webhooks/` must reject any `event` value that is not a defined
 - Authentication (no token / wrong user) on `POST /api/webhooks/` is not mentioned by the story; no case written.
 - Exact 400 body shape: the story says `400 BadRequest "99 is invalid event name"`; the endpoint filter returns a validation problem with the message under `errors.Event`. Cases assert the latter.
 - Whitespace-padded values (e.g. `" 1"`), null `event`, and a request with several simultaneous errors are not specified; no cases.
+- Comma-combined values (`"1,2"`, `"CatalogItemPriceChange,OrderShipped"`): `Enum.TryParse` ORs them into a single defined member, so `Enum.IsDefined` alone may accept them. The story does not specify the behavior; no case written and no outcome asserted until the story author decides.
+- Case-insensitive names (`"orderpaid"`): the story does not state a rule; TC-BUG-16-09 is only a regression guard for existing behavior that the fix keeps (defined members stay accepted).

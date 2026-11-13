@@ -2,7 +2,7 @@
 id: TC-BUG-16-09
 type: happy
 layer: functional
-covers: ["Algorithm: Enum.TryParse ignoreCase"]
+covers: ["Decisions: defined WebhookType members stay accepted (regression guard)"]
 priority: P2
 ---
 
@@ -10,7 +10,7 @@ priority: P2
 
 ## Why
 
-- Names must still be accepted case-insensitively after adding the IsDefined check; the existing lifecycle test only uses the exact-case name.
+- Not a story requirement: a regression guard for existing behavior. Names must still be accepted case-insensitively after adding the IsDefined check; the existing lifecycle test only uses the exact-case name.
 
 ## Preconditions
 
