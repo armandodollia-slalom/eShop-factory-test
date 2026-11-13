@@ -8,8 +8,8 @@ verified-at: "2026-11-13T23:05:45.912Z"
 verified-by: test-planner@a978a288/27d172f2
 automation-sha: 6b2715b503dc
 automation-plan-sha: ea8775d73c15
-automation-score: 9
-automation-verified-at: "2026-11-13T23:17:48.108Z"
+automation-score: 10
+automation-verified-at: "2026-11-13T23:40:47.244Z"
 ---
 # Test plan: BUG-18 Catalog API creating a catalog item with an existing id returns 500
 

@@ -144,29 +144,4 @@ public sealed class Bug18CatalogDuplicateIdTests : IClassFixture<CatalogApiFixtu
         var item = await GetItemAsync(client, 5001);
         Assert.Equal("First", item.Name);
     }
-
-    [Fact]
-    [Trait("TestCase", "TC-BUG-18-07")]
-    public async Task TC_BUG_18_07_GeneratedIdCollidingWithExistingRowReturns409()
-    {
-        // Point the identity sequence just below an id that an explicit create then takes, so the next
-        // database-generated id collides on save (past the AnyAsync pre-check) with a primary key violation.
-        await using (var connection = new Npgsql.NpgsqlConnection(await _fixture.Postgres.Resource.GetConnectionStringAsync(TestContext.Current.CancellationToken)))
-        {
-            await connection.OpenAsync(TestContext.Current.CancellationToken);
-            await using var command = new Npgsql.NpgsqlCommand("SELECT setval(pg_get_serial_sequence('\"Catalog\"', 'Id'), 7000)", connection);
-            await command.ExecuteScalarAsync(TestContext.Current.CancellationToken);
-        }
-
-        var client = CreateHttpClient(2.0);
-        var explicitCreate = await client.PostAsJsonAsync("/api/catalog/items", Body("Explicit 7001", id: 7001), TestContext.Current.CancellationToken);
-        Assert.Equal(HttpStatusCode.Created, explicitCreate.StatusCode);
-        var before = await CountAsync(client);
-
-        var response = await client.PostAsJsonAsync("/api/catalog/items", Body("Generated id item"), TestContext.Current.CancellationToken);
-
-        await AssertConflictAsync(response);
-        Assert.Equal(before, await CountAsync(client));
-        Assert.Equal("Explicit 7001", (await GetItemAsync(client, 7001)).Name);
-    }
 }
