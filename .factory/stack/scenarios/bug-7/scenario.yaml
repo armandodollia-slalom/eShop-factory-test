@@ -1,0 +1,18 @@
+description: Users with baskets that hold a line for a product missing from the catalog (BUG-7), plus bob with a valid two-line basket.
+extends: default
+
+postgres:
+  identitydb:
+    # oscar (Pass123$) and olive (Pass123$)
+    - sql: identitydb.sql
+
+redis:
+  # oscar: only a product that is not in the 101-item catalog (TC-BUG-7-01, TC-BUG-7-04)
+  - key: /basket/0a5ca100-0000-4000-8000-000000000001
+    json: { buyerId: 0a5ca100-0000-4000-8000-000000000001, items: [{ productId: 99999, quantity: 1 }] }
+  # olive: the missing product plus 2 x product 99 (TC-BUG-7-03)
+  - key: /basket/011e0e00-0000-4000-8000-000000000002
+    json: { buyerId: 011e0e00-0000-4000-8000-000000000002, items: [{ productId: 99999, quantity: 1 }, { productId: 99, quantity: 2 }] }
+  # bob: valid lines only, product 99 x1 and product 1 x3 (TC-BUG-7-05)
+  - key: /basket/bc8b0071-21af-41ab-b1d2-15c4efc368df
+    json: { buyerId: bc8b0071-21af-41ab-b1d2-15c4efc368df, items: [{ productId: 99, quantity: 1 }, { productId: 1, quantity: 3 }] }
