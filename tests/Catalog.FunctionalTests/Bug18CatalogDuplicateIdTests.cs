@@ -144,4 +144,36 @@ public sealed class Bug18CatalogDuplicateIdTests : IClassFixture<CatalogApiFixtu
         var item = await GetItemAsync(client, 5001);
         Assert.Equal("First", item.Name);
     }
+
+    [Fact]
+    public async Task GeneratedIdCollisionOnSaveReturns409()
+    {
+        // Point the identity sequence at an existing row so the pre-check passes (no explicit id) and the
+        // primary key violation is raised by SaveChanges; restore the sequence past the existing rows afterwards.
+        var connectionString = await _fixture.Postgres.Resource.GetConnectionStringAsync(TestContext.Current.CancellationToken);
+        await SetIdentitySequenceAsync(connectionString, "SELECT setval(pg_get_serial_sequence('\"Catalog\"', 'Id'), 1, false)");
+        try
+        {
+            var client = CreateHttpClient(2.0);
+            var before = await CountAsync(client);
+
+            var response = await client.PostAsJsonAsync("/api/catalog/items", Body("Generated id collision"), TestContext.Current.CancellationToken);
+
+            await AssertConflictAsync(response);
+            Assert.Equal(before, await CountAsync(client));
+            Assert.NotEqual("Generated id collision", (await GetItemAsync(client, 1)).Name);
+        }
+        finally
+        {
+            await SetIdentitySequenceAsync(connectionString, "SELECT setval(pg_get_serial_sequence('\"Catalog\"', 'Id'), GREATEST((SELECT MAX(\"Id\") FROM \"Catalog\"), 101))");
+        }
+    }
+
+    private static async Task SetIdentitySequenceAsync(string? connectionString, string sql)
+    {
+        await using var connection = new Npgsql.NpgsqlConnection(connectionString);
+        await connection.OpenAsync(TestContext.Current.CancellationToken);
+        await using var command = new Npgsql.NpgsqlCommand(sql, connection);
+        await command.ExecuteScalarAsync(TestContext.Current.CancellationToken);
+    }
 }
