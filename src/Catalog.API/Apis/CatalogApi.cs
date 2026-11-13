@@ -115,7 +115,9 @@ public static class CatalogApi
         api.MapPost("/items", CreateItem)
             .WithName("CreateItem")
             .WithSummary("Create a catalog item")
-            .WithDescription("Create a new item in the catalog");
+            .WithDescription("Create a new item in the catalog")
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status409Conflict);
         api.MapDelete("/items/{id:int}", DeleteItemById)
             .WithName("DeleteItem")
             .WithSummary("Delete catalog item")
@@ -476,10 +478,7 @@ public static class CatalogApi
         // A client-supplied id that is already taken would fail the primary key insert; report it as a conflict instead.
         if (product.Id != 0 && await services.Context.CatalogItems.AnyAsync(i => i.Id == product.Id))
         {
-            return TypedResults.Conflict<ProblemDetails>(new()
-            {
-                Detail = $"Item with id {product.Id} already exists."
-            });
+            return DuplicateItemConflict(product.Id);
         }
 
         var item = new CatalogItem(product.Name)
@@ -497,10 +496,24 @@ public static class CatalogApi
         item.Embedding = await services.CatalogAI.GetEmbeddingAsync(item);
 
         services.Context.CatalogItems.Add(item);
-        await services.Context.SaveChangesAsync();
+        try
+        {
+            await services.Context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex) when (product.Id != 0 && ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
+        {
+            // A concurrent request inserted the same id between the existence check and this insert.
+            return DuplicateItemConflict(product.Id);
+        }
 
         return TypedResults.Created($"/api/catalog/items/{item.Id}");
     }
+
+    private static Conflict<ProblemDetails> DuplicateItemConflict(int id) =>
+        TypedResults.Conflict<ProblemDetails>(new()
+        {
+            Detail = $"Item with id {id} already exists."
+        });
 
     // Rejects bodies the database would refuse (Name is NOT NULL), so callers get a 400 instead of a 500.
     private static ProblemDetails? ValidateItem(CatalogItem item)

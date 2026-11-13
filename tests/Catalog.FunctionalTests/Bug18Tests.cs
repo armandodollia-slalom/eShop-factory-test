@@ -131,4 +131,19 @@ public sealed class Bug18Tests : IClassFixture<CatalogApiFixture>
         var item = await GetItemAsync(client, "/api/catalog/items/5001");
         Assert.Equal("First", item.Name);
     }
+
+    // Concurrent creates of the same new id may all pass the existence check; the losers must still get 409, never 500.
+    [Fact]
+    public async Task ConcurrentCreatesSameIdReturnOneCreatedAndConflicts()
+    {
+        var client = CreateHttpClient(2.0);
+        var responses = await Task.WhenAll(Enumerable.Range(0, 8).Select(i =>
+            client.PostAsJsonAsync("/api/catalog/items", Body($"Concurrent {i}", ("id", 5002)), Ct)));
+
+        Assert.Single(responses, r => r.StatusCode == HttpStatusCode.Created);
+        foreach (var response in responses.Where(r => r.StatusCode != HttpStatusCode.Created))
+        {
+            await AssertConflictAsync(response);
+        }
+    }
 }
