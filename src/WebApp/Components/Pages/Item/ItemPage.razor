@@ -70,6 +70,19 @@
             </div>
         </div>
 
+        @if (brandMates is { Count: > 0 })
+        {
+            <section class="item-brand-mates" aria-labelledby="item-brand-mates-heading">
+                <h2 id="item-brand-mates-heading" class="item-brand-mates-heading">More from @item.CatalogBrand?.Brand</h2>
+                <div class="item-brand-mates-items">
+                    @foreach (var brandMate in brandMates)
+                    {
+                        <CatalogListItem Item="@brandMate" IsLoggedIn="@isLoggedIn" />
+                    }
+                </div>
+            </section>
+        }
+
         <dialog class="item-lightbox" data-zoom-dialog aria-label="Enlarged image of @item.Name">
             <button type="button" class="item-lightbox-close" data-zoom-close aria-label="Close image">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -93,6 +106,7 @@ else if (notFound)
 
 @code {
     private CatalogItem? item;
+    private List<CatalogItem>? brandMates;
     private int numInCart;
     private bool isLoggedIn;
     private bool notFound;
@@ -112,6 +126,7 @@ else if (notFound)
         {
             isLoggedIn = HttpContext?.User.Identity?.IsAuthenticated == true;
             item = await CatalogService.GetCatalogItem(ItemId);
+            brandMates = await CatalogService.GetBrandMates(ItemId);
             await UpdateNumInCartAsync();
         }
         catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
