@@ -20,6 +20,7 @@ You get a round folder with the story, `frames.json` (each video, its source, du
 3. **Consistency:** values shown agree with each other across frames (totals, counts, statuses after an action).
 4. **Evidence quality:** a video that cannot be read, is empty, or does not show the feature at all is a finding (`blocking` when it is the only evidence for a user-visible criterion).
 5. From round 2: frames come from the current videos; re-check every earlier upheld finding and report it again, with the same id, if it still shows.
+6. Publishing is not the PR's job: the repository's CI records the changed specs and puts the videos in the pull request on every push. A video that is merely older than the latest fix, or not yet published, is not a finding; judge what the frames you have show, and say in the summary when they predate the latest commit.
 
 Cite the frame file and timestamp for every finding and every coverage row.
 
