@@ -139,6 +139,13 @@ test('TC-CAT-1-17 items with identical names are ordered by id', async ({ reques
 
 // ---------------------------------------------------------------- Browser (e2e cases)
 
+// A broken image is still "visible"; require the browser to have decoded real pixels.
+async function expectPictureLoaded(card: import('@playwright/test').Locator) {
+  const img = card.locator('img');
+  await expect(img).toBeVisible();
+  await expect.poll(() => img.evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth > 0)).toBe(true);
+}
+
 const section = (page: import('@playwright/test').Page) => page.locator('section.item-brand-mates');
 
 async function expectPeakGearCards(page: import('@playwright/test').Page, demo: { highlight: (l: import('@playwright/test').Locator, label?: string) => Promise<void> }) {
@@ -148,7 +155,7 @@ async function expectPeakGearCards(page: import('@playwright/test').Page, demo: 
   await expect(cards).toHaveCount(4);
   await expect(cards.locator('.name')).toHaveText(['Beta Stove', 'Delta Lamp', 'Echo Boots', 'Foxtrot Mat']);
   await expect(cards.locator('.price')).toHaveText(['$30.00', '$15.50', '$45.00', '$25.00']);
-  for (let i = 0; i < 4; i++) await expect(cards.nth(i).locator('img')).toBeVisible();
+  for (let i = 0; i < 4; i++) await expectPictureLoaded(cards.nth(i));
   for (const name of ['Charlie Rope', 'Zulu Pack', 'alpha Tent']) {
     await expect(section(page).getByText(name, { exact: true })).toHaveCount(0);
   }
@@ -207,7 +214,9 @@ test('TC-CAT-1-14 a single-item brand shows no "More from" section', async ({ pa
     const title = page.getByRole('heading', { name: 'Lone Compass' });
     await expect(title).toBeVisible();
     await expect(page.getByText('$12.00').first()).toBeVisible();
-    await demo.absent(title, 'no "More from" section below Lone Compass');
+    // Frame the details block with the empty area below it, where "More from" would appear.
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await demo.absent(page.locator('.item-details'), 'no "More from" section below the Lone Compass details');
   });
   await test.step('no section and no brand-mate card', async () => {
     await expect(page.getByText(/^More from/)).toHaveCount(0);
@@ -224,8 +233,8 @@ test('TC-CAT-1-16 a brand with two other items shows the heading and exactly two
   await expect(cards).toHaveCount(2);
   await expect(cards.locator('.name')).toHaveText(['India Rope', 'Juliet Cup']);
   await expect(cards.locator('.price')).toHaveText(['$22.00', '$9.50']);
-  await expect(cards.nth(0).locator('img')).toBeVisible();
-  await expect(cards.nth(1).locator('img')).toBeVisible();
+  await expectPictureLoaded(cards.nth(0));
+  await expectPictureLoaded(cards.nth(1));
   await expect(section(page).getByText('Kilo Stick', { exact: true })).toHaveCount(0);
   await demo.highlight(section(page), 'More from Trail Co with two cards');
 });
