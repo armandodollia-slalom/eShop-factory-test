@@ -178,9 +178,13 @@ test('TC-CAT-1-12 following a brand-mate card opens that item\'s product page', 
     await demo.highlight(page.getByRole('heading', { name: 'More from Peak Gear' }), 'More from Peak Gear on item 1001');
   });
   await test.step('click the Delta Lamp card', async () => {
-    await section(page).getByRole('link', { name: /Delta Lamp/ }).click();
+    const card = section(page).getByRole('link', { name: /Delta Lamp/ });
+    await demo.highlight(card, 'Click the Delta Lamp card');
+    await card.click();
     await expect(page).toHaveURL(/\/item\/1003$/);
-    await expect(page.getByRole('heading', { name: 'Delta Lamp', level: 1 })).toBeVisible();
+    const title = page.getByRole('heading', { name: 'Delta Lamp', level: 1 });
+    await expect(title).toBeVisible();
+    await demo.highlight(title, 'Delta Lamp product page (/item/1003)');
   });
   await test.step('the new page has its own section without Delta Lamp', async () => {
     const heading = page.getByRole('heading', { name: 'More from Peak Gear' });
@@ -200,10 +204,15 @@ test('TC-CAT-1-13 a signed-in shopper sees the same section', async ({ page, dem
     await page.getByPlaceholder('Password').fill('Pass123$');
     await page.getByRole('button', { name: 'Login' }).click();
     await expect(page.getByRole('heading', { name: 'Ready for a new adventure?' })).toBeVisible();
+    await demo.highlight(page.getByRole('button', { name: 'Account' }), 'Signed in as alice');
   });
   await test.step('open /item/1001', async () => {
     await page.goto(`${BASE_URL}/item/1001`);
     await expect(page.getByRole('heading', { name: 'Charlie Rope' })).toBeVisible();
+    await demo.highlight(
+      page.getByRole('button', { name: 'Add to shopping bag' }),
+      'Signed in: Add to shopping bag is offered',
+    );
     await expectPeakGearCards(page, demo);
   });
 });

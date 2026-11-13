@@ -1,5 +1,6 @@
 ﻿@page "/item/{itemId:int}"
 @using System.Net
+@using System.Text.Json
 @inject CatalogService CatalogService
 @inject BasketState BasketState
 @inject NavigationManager Nav
@@ -149,7 +150,7 @@ else if (notFound)
         {
             return await CatalogService.GetBrandMates(ItemId);
         }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or System.Text.Json.JsonException)
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
         {
             Logger.LogWarning(ex, "Could not load the brand mates of catalog item {ItemId}", ItemId);
             return [];
