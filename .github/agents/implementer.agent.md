@@ -104,7 +104,7 @@ If the Project context lists generated files that depend on what you changed, re
 Don't run functional tests, `factory teststack up` or `load`, or end-to-end tests. If a check fails, fix it; after three failed attempts on the same failure, stop and report the output.
 
 Then:
-- `graphify update .` (code changed), when the repository uses graphify.
+- `graphify update .` from the repository root (code changed), when the repository uses graphify; never `graphify update <dir>`, which writes a second graph into that folder.
 - Don't run the graph's semantic extraction (`factory graphify-build --extract`) from a worktree: the cache folder is keyed by checkout path, so it duplicates the shared cache and re-extracts unrelated docs at API cost. List changed `.md` files in the report; the main checkout extracts after merge. Never commit anything in `graphify-out/`.
 - Run the lint and format commands in the Project context and fix what they report (use their auto-fix mode where there is one), since CI runs the same checks.
 
