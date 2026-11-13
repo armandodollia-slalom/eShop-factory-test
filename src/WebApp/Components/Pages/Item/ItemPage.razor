@@ -78,6 +78,19 @@
             </button>
             <img alt="@item.Name" src="@ProductImages.GetProductImageUrl(item)" />
         </dialog>
+
+        @if (brandMates.Count > 0)
+        {
+            <section class="brand-mates" aria-labelledby="brand-mates-heading">
+                <h2 id="brand-mates-heading" class="brand-mates-heading">More from @item.CatalogBrand?.Brand</h2>
+                <div class="brand-mates-items">
+                    @foreach (var mate in brandMates)
+                    {
+                        <CatalogListItem Item="@mate" IsLoggedIn="@isLoggedIn" />
+                    }
+                </div>
+            </section>
+        }
     </div>
 }
 else if (notFound)
@@ -93,6 +106,7 @@ else if (notFound)
 
 @code {
     private CatalogItem? item;
+    private List<CatalogItem> brandMates = [];
     private int numInCart;
     private bool isLoggedIn;
     private bool notFound;
@@ -111,7 +125,17 @@ else if (notFound)
         try
         {
             isLoggedIn = HttpContext?.User.Identity?.IsAuthenticated == true;
-            item = await CatalogService.GetCatalogItem(ItemId);
+            var itemTask = CatalogService.GetCatalogItem(ItemId);
+            var brandMatesTask = CatalogService.GetBrandMates(ItemId);
+            item = await itemTask;
+            try
+            {
+                brandMates = await brandMatesTask;
+            }
+            catch (HttpRequestException)
+            {
+                // The section is optional; the product page renders without it.
+            }
             await UpdateNumInCartAsync();
         }
         catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
