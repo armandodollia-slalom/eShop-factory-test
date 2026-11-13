@@ -1,0 +1,2 @@
+description: BUG-18 (create catalog item with an existing id) needs only the demo catalog; item 1 (the colliding id), brand 1/2 and type 1/2 exist in it, ids 5000 and 5001 are unused.
+extends: default
