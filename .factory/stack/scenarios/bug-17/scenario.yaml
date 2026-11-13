@@ -1,0 +1,2 @@
+description: Demo catalog (101 items, item 1 exists) for BUG-17 name validation; no extra rows are needed.
+extends: default
