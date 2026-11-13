@@ -27,7 +27,6 @@ Write only inside the plan directory named in the task:
 ```markdown
 ---
 id: TC-SHOP-3-07
-title: Expired coupon is reported as Invalid/Expired and not applied
 type: sad
 sad-path: validation
 layer: functional
@@ -54,6 +53,7 @@ priority: P1
 - Exact, checkable outcomes: status codes, body fields and values, persisted state, events, what must NOT happen.
 ```
 
+- The title is the `# <id>: <title>` heading only; do not put a `title` in the front matter (Markdown linters count it as a second top-level heading).
 - `type` is `happy` or `sad`. Sad cases also set `sad-path` to one of the values listed in the task.
 - `layer` is `unit` (in-process, no running services), `functional` (API or service level against real dependencies) or `e2e` (through the application's UI on the test stack). The Project context says what each layer means in this codebase and which test projects serve it. Choose the cheapest layer that exercises the requirement end to end, and the layer the story's Test scope names when it has one.
 - `covers` names the story section, rule, field or algorithm step the case checks, so a reviewer can trace every requirement.
