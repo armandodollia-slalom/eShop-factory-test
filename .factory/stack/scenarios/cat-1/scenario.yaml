@@ -1,0 +1,7 @@
+# CAT-1 "More from this brand": the default demo catalog plus three brands with known items.
+description: Default catalog plus brands Alpha (7 items), Beta (3 items) and Solo (1 item) for the brand-mates endpoint and product page.
+extends: default
+
+postgres:
+  catalogdb:
+    - sql: catalogdb.sql

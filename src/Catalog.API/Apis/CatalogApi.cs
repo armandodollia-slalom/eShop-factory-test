@@ -242,16 +242,17 @@ public static class CatalogApi
     }
 
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
-    public static async Task<Results<Ok<List<CatalogItem>>, NotFound, BadRequest<ProblemDetails>>> GetBrandMates(
+    public static async Task<Results<Ok<List<CatalogItem>>, NotFound, ProblemHttpResult>> GetBrandMates(
         [AsParameters] CatalogServices services,
         [Description("The catalog item id")] int id,
         [Description("The maximum number of items to return (1 to 12)")] int count = 4)
     {
         if (count < 1 || count > 12)
         {
-            return TypedResults.BadRequest<ProblemDetails>(new (){
-                Detail = "Count must be between 1 and 12"
-            });
+            // Problem() serves the body as application/problem+json; BadRequest<ProblemDetails> would use plain JSON.
+            return TypedResults.Problem(
+                detail: "Count must be between 1 and 12",
+                statusCode: StatusCodes.Status400BadRequest);
         }
 
         var item = await services.Context.CatalogItems.AsNoTracking().SingleOrDefaultAsync(ci => ci.Id == id);
