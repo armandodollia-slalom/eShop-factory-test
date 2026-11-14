@@ -293,6 +293,7 @@
     "tests/ClientApp.UnitTests"
   ],
   "stack": {
+    "poolSize": 4,
     "resolver": "pack:dotnet/stack/services.mjs",
     "composeFile": ".factory/stack/docker-compose.yaml",
     "build": {
@@ -343,7 +344,23 @@
     "allowedModels": [
       "opus",
       "sonnet"
-    ]
+    ],
+    "models": {
+      "default": "opus",
+      "automation": "opus",
+      "escalationQuestions": "opus"
+    }
+  },
+  "modelClasses": {
+    "small": "opus",
+    "medium": "opus"
+  },
+  "prCheck": {
+    "models": {
+      "claude": {
+        "style": "opus"
+      }
+    }
   },
   "metrics": {
     "sink": {
