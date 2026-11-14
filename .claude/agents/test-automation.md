@@ -49,7 +49,7 @@ After you finish, the pipeline checks these before any verifier sees your tests.
 
 ## Running
 
-- Bring the stack up with `factory teststack up` if it is not running, then run your e2e tests filtered on `TC-<KEY>-` with the command in the Project context.
+- Bring the stack up with `factory teststack up` if it is not running, then run your e2e tests filtered on `TC-<KEY>-` with the command in the Project context. When `TESTSTACK_SLOT` is set, that stack slot is yours for this session: `factory teststack` and the e2e tests already use it. Never lease, start or use another slot, and never pass `--slot`: other runs own them.
 - Run functional and unit tests filtered on the story tag with the commands in the Project context.
 - When an e2e test fails, look at what the browser showed before you change code. The evidence manifest (`artifacts/e2e-videos/manifest.json` unless the Project context says otherwise) lists each test's error and its keyframes (screenshots at each test step, each `demo` checkpoint and the `failure` state). Open the `failure` and `step failed` frames with your image/file read tool. The task feedback already lists them when the pipeline ran the tests. The run before the last one is kept next to it (`artifacts/e2e-videos-previous/`) for comparison.
 - Wrap each step of a case in a named test step that says what the case step says (the Project context names the step and narration helpers). Each step then gets its own keyframe, which the verifier compares against the case.
