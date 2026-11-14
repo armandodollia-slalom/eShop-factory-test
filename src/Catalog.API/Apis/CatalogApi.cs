@@ -421,6 +421,11 @@ public static class CatalogApi
         [AsParameters] CatalogServices services,
         CatalogItem productToUpdate)
     {
+        if (ValidateRequiredFields(productToUpdate) is { } validationProblem)
+        {
+            return TypedResults.BadRequest(validationProblem);
+        }
+
         var catalogItem = await services.Context.CatalogItems.SingleOrDefaultAsync(i => i.Id == id);
 
         if (catalogItem == null)
@@ -458,10 +463,15 @@ public static class CatalogApi
     }
 
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
-    public static async Task<Created> CreateItem(
+    public static async Task<Results<Created, BadRequest<ProblemDetails>>> CreateItem(
         [AsParameters] CatalogServices services,
         CatalogItem product)
     {
+        if (ValidateRequiredFields(product) is { } validationProblem)
+        {
+            return TypedResults.BadRequest(validationProblem);
+        }
+
         var item = new CatalogItem(product.Name)
         {
             Id = product.Id,
@@ -480,6 +490,20 @@ public static class CatalogApi
         await services.Context.SaveChangesAsync();
 
         return TypedResults.Created($"/api/catalog/items/{item.Id}");
+    }
+
+    // The database requires a name, so reject a missing one here rather than fail on save.
+    private static ProblemDetails? ValidateRequiredFields(CatalogItem item)
+    {
+        if (string.IsNullOrWhiteSpace(item.Name))
+        {
+            return new ProblemDetails
+            {
+                Detail = $"The {nameof(CatalogItem.Name)} field is required."
+            };
+        }
+
+        return null;
     }
 
     public static async Task<Results<NoContent, NotFound>> DeleteItemById(
