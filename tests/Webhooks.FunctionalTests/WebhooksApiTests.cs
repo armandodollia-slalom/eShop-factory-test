@@ -5,7 +5,8 @@ using Asp.Versioning.Http;
 
 namespace eShop.Webhooks.FunctionalTests;
 
-public sealed class WebhooksApiTests(WebhooksApiFixture fixture) : IClassFixture<WebhooksApiFixture>
+[Collection(WebhooksApiCollection.Name)]
+public sealed class WebhooksApiTests(WebhooksApiFixture fixture)
 {
     private HttpClient CreateClient(string userId)
     {
