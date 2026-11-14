@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using CardType = eShop.Ordering.API.Application.Queries.CardType;
 using Order = eShop.Ordering.API.Application.Queries.Order;
 
@@ -103,9 +104,9 @@ public static class OrdersApi
         return TypedResults.Ok(cardTypes);
     }
 
-    public static async Task<Results<Ok<OrderDraftDTO>, ProblemHttpResult>> CreateOrderDraftAsync(CreateOrderDraftCommand command, [AsParameters] OrderServices services)
+    public static async Task<Results<Ok<OrderDraftDTO>, ProblemHttpResult>> CreateOrderDraftAsync([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] CreateOrderDraftCommand command, [AsParameters] OrderServices services)
     {
-        // The body is optional for binding (nullable context is off), so a missing body arrives as null.
+        // EmptyBodyBehavior.Allow lets a missing body reach the handler as null, so it gets a problem response instead of a framework error.
         if (command?.Items is null || !command.Items.Any())
         {
             return TypedResults.Problem("The order draft must contain at least one item.", statusCode: StatusCodes.Status400BadRequest);
