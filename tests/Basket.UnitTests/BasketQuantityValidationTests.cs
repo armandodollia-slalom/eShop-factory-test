@@ -51,18 +51,6 @@ public class BasketQuantityValidationTests
             exception.Status.Detail);
     }
 
-    private async Task AssertRejectedAsync(params (int ProductId, int Quantity)[] items)
-    {
-        var repository = Substitute.For<IBasketRepository>();
-        var service = new BasketService(repository, NullLogger<BasketService>.Instance);
-
-        var exception = await Assert.ThrowsAsync<RpcException>(() =>
-            service.UpdateBasket(CreateRequest(items), CreateContext(Alice)));
-
-        Assert.AreEqual(StatusCode.InvalidArgument, exception.StatusCode);
-        await repository.DidNotReceive().UpdateBasketAsync(Arg.Any<CustomerBasket>());
-    }
-
     [TestMethod]
     [TestProperty("TestCase", "TC-BUG-8-04")]
     public async Task TC_BUG_8_04_SingleLineWithQuantityOneIsAcceptedAndSaved()
@@ -109,6 +97,18 @@ public class BasketQuantityValidationTests
             service.UpdateBasket(CreateRequest((7, -3)), CreateContext(null!)));
 
         Assert.AreEqual(StatusCode.Unauthenticated, exception.StatusCode);
+        await repository.DidNotReceive().UpdateBasketAsync(Arg.Any<CustomerBasket>());
+    }
+
+    private async Task AssertRejectedAsync(params (int ProductId, int Quantity)[] items)
+    {
+        var repository = Substitute.For<IBasketRepository>();
+        var service = new BasketService(repository, NullLogger<BasketService>.Instance);
+
+        var exception = await Assert.ThrowsAsync<RpcException>(() =>
+            service.UpdateBasket(CreateRequest(items), CreateContext(Alice)));
+
+        Assert.AreEqual(StatusCode.InvalidArgument, exception.StatusCode);
         await repository.DidNotReceive().UpdateBasketAsync(Arg.Any<CustomerBasket>());
     }
 
