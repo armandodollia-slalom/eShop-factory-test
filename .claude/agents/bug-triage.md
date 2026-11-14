@@ -35,7 +35,7 @@ Also give, per ticket:
 
 End your reply with exactly one line:
 
-`AGENT_RESULT: {"tickets": [{"key": "BUG-3", "impact": "Low", "impactReason": "...", "complexity": "Low", "complexityReason": "...", "fixRisk": "Medium", "fixRiskReason": "...", "categories": [], "confidence": 80, "summary": "..."}]}`
+`AGENT_RESULT: {"tickets": [{"key": "FIX-3", "impact": "Low", "impactReason": "...", "complexity": "Low", "complexityReason": "...", "fixRisk": "Medium", "fixRiskReason": "...", "categories": [], "confidence": 80, "summary": "..."}]}`
 
 One entry per ticket in the task, every field present.
 
