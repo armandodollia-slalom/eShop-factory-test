@@ -1,0 +1,4 @@
+description: BUG-12 catalog page clamp; needs only the default demo catalog (101 items, 9 per page, 12 pages).
+extends: default
+
+# No extra rows: page 12 of the demo catalog holds the last 2 items, and every case browses anonymously.
