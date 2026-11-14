@@ -1,9 +1,12 @@
 ﻿using System.Reflection;
+using System.Security.Claims;
 
 using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
 
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace eShop.Catalog.FunctionalTests;
 
@@ -33,6 +36,11 @@ public sealed class CatalogApiFixture : WebApplicationFactory<Program>, IAsyncLi
                 { $"ConnectionStrings:{Postgres.Resource.Name}", _postgresConnectionString },
                 });
         });
+        // Catalog writes require an authenticated caller; the existing tests exercise them as one.
+        builder.ConfigureServices(services =>
+        {
+            services.AddSingleton<IStartupFilter>(new AutoAuthorizeStartupFilter());
+        });
         return base.CreateHost(builder);
     }
 
@@ -54,5 +62,27 @@ public sealed class CatalogApiFixture : WebApplicationFactory<Program>, IAsyncLi
     {
         await _app.StartAsync();
         _postgresConnectionString = await Postgres.Resource.GetConnectionStringAsync();
+    }
+
+    /// <summary>A request with this header is sent as an anonymous caller: no test identity is attached.</summary>
+    public const string AnonymousHeader = "X-Test-Anonymous";
+
+    private class AutoAuthorizeStartupFilter : IStartupFilter
+    {
+        public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next)
+        {
+            return builder =>
+            {
+                builder.Use((context, nextMiddleware) =>
+                {
+                    if (!context.Request.Headers.ContainsKey(AnonymousHeader))
+                    {
+                        context.User.AddIdentity(new ClaimsIdentity([new Claim("sub", "catalog-functional-tests")], "tests"));
+                    }
+                    return nextMiddleware(context);
+                });
+                next(builder);
+            };
+        }
     }
 }

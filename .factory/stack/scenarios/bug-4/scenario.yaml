@@ -1,0 +1,5 @@
+description: BUG-4 catalog write authentication; needs only the seeded catalog (items 1-101) and the demo user alice.
+extends: default
+
+# No extra rows: the anonymous cases use item 1 (Wanderer Black Hiking Boots, 109.99) and the absent ids 10101, 10102 and 999999;
+# the authenticated cases (alice / Pass123$) create item 10103, update item 99 (Adventurer GPS Watch, 199.99) and delete item 101.
