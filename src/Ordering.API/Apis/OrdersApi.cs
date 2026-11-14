@@ -107,7 +107,7 @@ public static class OrdersApi
     {
         if (command?.Items is null || !command.Items.Any())
         {
-            return TypedResults.Problem("An order draft requires at least one item.", statusCode: StatusCodes.Status400BadRequest);
+            return TypedResults.Problem(detail: "An order draft requires at least one item.", statusCode: StatusCodes.Status400BadRequest);
         }
 
         services.Logger.LogInformation(
