@@ -1,0 +1,4 @@
+description: BUG-5 return URL handling after sign-in; needs only the seeded user alice (Pass123$) and catalog item 5.
+extends: default
+
+# No extra rows: every case signs in as alice from a fresh browser context.
