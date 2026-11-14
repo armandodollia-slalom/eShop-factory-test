@@ -6,10 +6,10 @@ plan-sha: 0d4040341055
 verified-score: 9
 verified-at: "2026-11-14T02:49:45.512Z"
 verified-by: test-planner@476d82b5/27d172f2
-automation-sha: 109d58483c41
+automation-sha: 16e6fd8f8a31
 automation-plan-sha: 0d4040341055
 automation-score: 9
-automation-verified-at: "2026-11-14T03:07:32.407Z"
+automation-verified-at: "2026-11-14T03:42:15.463Z"
 ---
 # Test plan: BUG-18 [BE - Catalog.API] - Creating a catalog item with an existing id returns 500
 
