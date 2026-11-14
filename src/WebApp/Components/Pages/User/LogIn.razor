@@ -10,10 +10,27 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var returnUrl = ReturnUrl ?? "/";
-        var url = new Uri(returnUrl, UriKind.RelativeOrAbsolute);
-        Nav.NavigateTo(url.IsAbsoluteUri ? "/" : returnUrl);
+        Nav.NavigateTo(LocalReturnUrl(ReturnUrl));
         await base.OnInitializedAsync();
+    }
+
+    // Only paths of this site are followed. Protocol-relative ("//host") and backslash
+    // ("/\host", "\host") forms are rejected because browsers and Uri treat them as another
+    // host, and control or whitespace characters are rejected because browsers and Uri strip
+    // them (" //host", "/\t/host").
+    // Base-relative paths without a leading slash (as produced by Url(nav)) stay allowed.
+    internal static string LocalReturnUrl(string? returnUrl)
+    {
+        if (string.IsNullOrEmpty(returnUrl)
+            || returnUrl.Any(c => char.IsControl(c) || char.IsWhiteSpace(c))
+            || returnUrl[0] == '\\'
+            || (returnUrl[0] == '/' && returnUrl.Length > 1 && returnUrl[1] is '/' or '\\')
+            || (returnUrl[0] != '/' && Uri.TryCreate(returnUrl, UriKind.Absolute, out _)))
+        {
+            return "/";
+        }
+
+        return returnUrl;
     }
 
     public static string Url(NavigationManager nav)
