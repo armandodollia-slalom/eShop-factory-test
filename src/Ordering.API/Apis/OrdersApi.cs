@@ -103,8 +103,14 @@ public static class OrdersApi
         return TypedResults.Ok(cardTypes);
     }
 
-    public static async Task<OrderDraftDTO> CreateOrderDraftAsync(CreateOrderDraftCommand command, [AsParameters] OrderServices services)
+    public static async Task<Results<Ok<OrderDraftDTO>, ProblemHttpResult>> CreateOrderDraftAsync(CreateOrderDraftCommand command, [AsParameters] OrderServices services)
     {
+        // The body is optional for binding (nullable context is off), so a missing body arrives as null.
+        if (command?.Items is null || !command.Items.Any())
+        {
+            return TypedResults.Problem("The order draft must contain at least one item.", statusCode: StatusCodes.Status400BadRequest);
+        }
+
         services.Logger.LogInformation(
             "Sending command: {CommandName} - {IdProperty}: {CommandId} ({@Command})",
             command.GetGenericTypeName(),
@@ -112,7 +118,7 @@ public static class OrdersApi
             command.BuyerId,
             command);
 
-        return await services.Mediator.Send(command);
+        return TypedResults.Ok(await services.Mediator.Send(command));
     }
 
     public static async Task<Results<Ok, BadRequest<string>>> CreateOrderAsync(
@@ -120,9 +126,9 @@ public static class OrdersApi
         CreateOrderRequest request,
         [AsParameters] OrderServices services)
     {
-        
+
         //mask the credit card number
-        
+
         services.Logger.LogInformation(
             "Sending command: {CommandName} - {IdProperty}: {CommandId}",
             request.GetGenericTypeName(),
