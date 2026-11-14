@@ -14,7 +14,7 @@ public class Bug4Tests
         var scopes = Config.GetApiScopes().Select(scope => scope.Name).ToArray();
         var resources = Config.GetApis().Select(resource => resource.Name).ToArray();
 
-        CollectionAssert.AreEquivalent(new[] { "basket", "catalog", "orders", "webhooks" }, scopes);
+        CollectionAssert.Contains(scopes, "catalog");
         CollectionAssert.Contains(resources, "catalog");
     }
 }

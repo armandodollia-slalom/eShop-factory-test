@@ -12,6 +12,9 @@ namespace eShop.Catalog.FunctionalTests;
 
 public sealed class CatalogApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
 {
+    /// <summary>A request with this header is sent as an anonymous caller: no test identity is attached.</summary>
+    public const string AnonymousHeader = "X-Test-Anonymous";
+
     private readonly IHost _app;
 
     public IResourceBuilder<PostgresServerResource> Postgres { get; private set; }
@@ -63,9 +66,6 @@ public sealed class CatalogApiFixture : WebApplicationFactory<Program>, IAsyncLi
         await _app.StartAsync();
         _postgresConnectionString = await Postgres.Resource.GetConnectionStringAsync();
     }
-
-    /// <summary>A request with this header is sent as an anonymous caller: no test identity is attached.</summary>
-    public const string AnonymousHeader = "X-Test-Anonymous";
 
     private class AutoAuthorizeStartupFilter : IStartupFilter
     {

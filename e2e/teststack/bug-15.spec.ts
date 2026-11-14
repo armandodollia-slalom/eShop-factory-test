@@ -1,4 +1,5 @@
 import { test, expect } from '../demo';
+import { getAccessToken } from './identity-token';
 import { url } from './ports';
 import { loadScenario } from './scenario';
 
@@ -20,24 +21,7 @@ test.beforeAll(() => {
 
 // The "orderingswaggerui" client uses the implicit flow: signing in as alice returns an access token in the redirect fragment.
 test.beforeAll(async ({ browser }) => {
-  const context = await browser.newContext();
-  const page = await context.newPage();
-  const authorize = new URL(`${url('identity')}/connect/authorize`);
-  authorize.search = new URLSearchParams({
-    client_id: 'orderingswaggerui',
-    response_type: 'token',
-    scope: 'orders',
-    redirect_uri: REDIRECT,
-    state: 'bug15',
-  }).toString();
-  await page.goto(authorize.toString());
-  await page.getByPlaceholder('Username').fill('alice');
-  await page.getByPlaceholder('Password').fill('Pass123$');
-  const callback = page.waitForResponse((r) => r.url().includes('/connect/authorize/callback') && r.status() === 302);
-  await page.getByRole('button', { name: 'Login' }).click();
-  const location = (await callback).headers()['location'] ?? '';
-  token = new URLSearchParams(location.split('#')[1] ?? '').get('access_token') ?? '';
-  await context.close();
+  token = await getAccessToken(browser, { clientId: 'orderingswaggerui', scope: 'orders', redirectUri: REDIRECT, state: 'bug15' });
   expect(token).not.toBe('');
 });
 
