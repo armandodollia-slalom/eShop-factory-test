@@ -17,6 +17,7 @@ public class OrderQueries(OrderingContext context)
             OrderNumber = order.Id,
             Date = order.OrderDate,
             Description = order.Description,
+            DeliveryNote = order.DeliveryNote,
             City = order.Address.City,
             Country = order.Address.Country,
             State = order.Address.State,

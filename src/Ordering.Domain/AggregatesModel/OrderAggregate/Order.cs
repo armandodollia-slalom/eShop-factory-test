@@ -19,6 +19,8 @@ public class Order
     
     public string Description { get; private set; }
 
+    public string DeliveryNote { get; private set; }
+
     // Draft orders have this set to true. Currently we don't check anywhere the draft status of an Order, but we could do it if needed
 #pragma warning disable CS0414 // The field 'Order._isDraft' is assigned but its value is never used
     private bool _isDraft;
@@ -50,13 +52,14 @@ public class Order
     }
 
     public Order(string userId, string userName, Address address, int cardTypeId, string cardNumber, string cardSecurityNumber,
-            string cardHolderName, DateTime cardExpiration, int? buyerId = null, int? paymentMethodId = null) : this()
+            string cardHolderName, DateTime cardExpiration, int? buyerId = null, int? paymentMethodId = null, string deliveryNote = null) : this()
     {
         BuyerId = buyerId;
         PaymentId = paymentMethodId;
         OrderStatus = OrderStatus.Submitted;
         OrderDate = DateTime.UtcNow;
         Address = address;
+        DeliveryNote = deliveryNote;
 
         // Add the OrderStarterDomainEvent to the domain events collection 
         // to be raised/dispatched when committing changes into the Database [ After DbContext.SaveChanges() ]
