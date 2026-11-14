@@ -4,8 +4,10 @@ using System.Net;
 using System.Text.Json;
 using Asp.Versioning;
 using Asp.Versioning.Http;
+using eShop.Catalog.API.Infrastructure;
 using eShop.Catalog.API.Model;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace eShop.Catalog.FunctionalTests;
@@ -503,5 +505,256 @@ public sealed class CatalogApiTests : IClassFixture<CatalogApiFixture>
             TestContext.Current.CancellationToken);
         Assert.Empty(result!.Data);
         Assert.Equal(1000, result.PageIndex);
+    }
+
+    private const string RestOfBody = "\"catalogBrandId\":1,\"catalogTypeId\":1,\"price\":10.5,\"availableStock\":5,\"restockThreshold\":1,\"maxStockThreshold\":10";
+
+    private static StringContent Json(string json) => new(json, System.Text.Encoding.UTF8, "application/json");
+
+    private static async Task AssertProblemAsync(HttpResponseMessage response, HttpStatusCode expectedStatus = HttpStatusCode.BadRequest)
+    {
+        Assert.Equal(expectedStatus, response.StatusCode);
+        var text = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        Assert.False(string.IsNullOrWhiteSpace(text));
+        using var doc = JsonDocument.Parse(text);
+        Assert.Equal(JsonValueKind.String, doc.RootElement.GetProperty("detail").ValueKind);
+    }
+
+    private async Task<int> GetCatalogCountAsync(HttpClient client)
+    {
+        var response = await client.GetAsync("/api/catalog/items?pageIndex=0&pageSize=1", TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        return doc.RootElement.GetProperty("count").GetInt32();
+    }
+
+    private async Task<string> GetItemNameAsync(HttpClient client, int id)
+    {
+        var response = await client.GetAsync($"/api/catalog/items/{id}", TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        return doc.RootElement.GetProperty("name").GetString();
+    }
+
+    [Fact]
+    [Trait("Story", "BUG-17")]
+    [Trait("TestCase", "TC-BUG-17-01")]
+    public async Task TC_BUG_17_01_PostWithoutNameReturns400ProblemDetails()
+    {
+        var client = CreateHttpClient(new ApiVersion(2.0));
+
+        var response = await client.PostAsync("/api/catalog/items", Json($"{{{RestOfBody},\"description\":\"No name\"}}"), TestContext.Current.CancellationToken);
+
+        await AssertProblemAsync(response);
+        Assert.Null(response.Headers.Location);
+    }
+
+    [Fact]
+    [Trait("Story", "BUG-17")]
+    [Trait("TestCase", "TC-BUG-17-02")]
+    public async Task TC_BUG_17_02_PostWithNullNameReturns400ProblemDetails()
+    {
+        var client = CreateHttpClient(new ApiVersion(2.0));
+
+        var response = await client.PostAsync("/api/catalog/items", Json($"{{\"name\":null,{RestOfBody},\"description\":\"Null name\"}}"), TestContext.Current.CancellationToken);
+
+        await AssertProblemAsync(response);
+    }
+
+    [Fact]
+    [Trait("Story", "BUG-17")]
+    [Trait("TestCase", "TC-BUG-17-03")]
+    public async Task TC_BUG_17_03_RejectedNamelessPostStoresNoItem()
+    {
+        var client = CreateHttpClient(new ApiVersion(2.0));
+        var countBefore = await GetCatalogCountAsync(client);
+
+        var response = await client.PostAsync("/api/catalog/items", Json($"{{{RestOfBody},\"description\":\"No name\"}}"), TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(countBefore, await GetCatalogCountAsync(client));
+    }
+
+    [Fact]
+    [Trait("Story", "BUG-17")]
+    [Trait("TestCase", "TC-BUG-17-04")]
+    public async Task TC_BUG_17_04_PostWithNameReturns201WithLocation()
+    {
+        // The seeded catalog rows carry explicit ids, so move the id sequence past them before the server generates one.
+        using (var scope = _webApplicationFactory.Services.CreateScope())
+        {
+            var context = scope.ServiceProvider.GetRequiredService<CatalogContext>();
+            await context.Database.ExecuteSqlRawAsync("SELECT setval(pg_get_serial_sequence('\"Catalog\"', 'Id'), (SELECT MAX(\"Id\") FROM \"Catalog\"))", TestContext.Current.CancellationToken);
+        }
+
+        var client = CreateHttpClient(new ApiVersion(2.0));
+
+        var response = await client.PostAsync("/api/catalog/items", Json($"{{\"id\":0,\"name\":\"BUG-17 Valid Item\",{RestOfBody},\"description\":\"Valid\"}}"), TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var location = response.Headers.Location;
+        Assert.NotNull(location);
+        Assert.StartsWith("/api/catalog/items/", location.ToString());
+
+        var get = await client.GetAsync(location, TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.OK, get.StatusCode);
+        using var doc = JsonDocument.Parse(await get.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        Assert.Equal("BUG-17 Valid Item", doc.RootElement.GetProperty("name").GetString());
+    }
+
+    [Fact]
+    [Trait("Story", "BUG-17")]
+    [Trait("TestCase", "TC-BUG-17-05")]
+    public async Task TC_BUG_17_05_PutV2WithoutNameReturns400AndLeavesItemUnchanged()
+    {
+        var client = CreateHttpClient(new ApiVersion(2.0));
+        var nameBefore = await GetItemNameAsync(client, 1);
+
+        var response = await client.PutAsync("/api/catalog/items/1", Json($"{{\"id\":1,{RestOfBody},\"description\":\"No name\"}}"), TestContext.Current.CancellationToken);
+
+        await AssertProblemAsync(response);
+        Assert.Equal(nameBefore, await GetItemNameAsync(client, 1));
+    }
+
+    [Fact]
+    [Trait("Story", "BUG-17")]
+    [Trait("TestCase", "TC-BUG-17-06")]
+    public async Task TC_BUG_17_06_PutV1WithoutNameReturns400ProblemDetails()
+    {
+        var client = CreateHttpClient(new ApiVersion(1.0));
+
+        var response = await client.PutAsync("/api/catalog/items", Json($"{{\"id\":1,{RestOfBody},\"description\":\"No name\"}}"), TestContext.Current.CancellationToken);
+
+        await AssertProblemAsync(response);
+    }
+
+    [Fact]
+    [Trait("Story", "BUG-17")]
+    [Trait("TestCase", "TC-BUG-17-07")]
+    public async Task TC_BUG_17_07_PutV2WithNameStillUpdatesItem()
+    {
+        var client = CreateHttpClient(new ApiVersion(2.0));
+        var getResponse = await client.GetAsync("/api/catalog/items/1", TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
+        var item = JsonSerializer.Deserialize<CatalogItem>(await getResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), _jsonSerializerOptions);
+        var originalName = item.Name;
+        item.Name = "BUG-17 Renamed";
+
+        var response = await client.PutAsJsonAsync("/api/catalog/items/1", item, TestContext.Current.CancellationToken);
+
+        try
+        {
+            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+            Assert.Equal("BUG-17 Renamed", await GetItemNameAsync(client, 1));
+        }
+        finally
+        {
+            // Item 1 is shared with the name-search tests: put its seeded name back.
+            item.Name = originalName;
+            await client.PutAsJsonAsync("/api/catalog/items/1", item, TestContext.Current.CancellationToken);
+        }
+    }
+
+    [Fact]
+    [Trait("Story", "BUG-18")]
+    [Trait("TestCase", "TC-BUG-18-01")]
+    public async Task TC_BUG_18_01_PostWithExistingIdReturns409ProblemDetails()
+    {
+        var client = CreateHttpClient(new ApiVersion(2.0));
+
+        var response = await client.PostAsync("/api/catalog/items", Json($"{{\"id\":1,\"name\":\"Duplicate of one\",{RestOfBody},\"description\":\"Plan case\"}}"), TestContext.Current.CancellationToken);
+
+        await AssertProblemAsync(response, HttpStatusCode.Conflict);
+        Assert.Null(response.Headers.Location);
+    }
+
+    [Fact]
+    [Trait("Story", "BUG-18")]
+    [Trait("TestCase", "TC-BUG-18-02")]
+    public async Task TC_BUG_18_02_RejectedDuplicatePostLeavesItemAndCountUnchanged()
+    {
+        var client = CreateHttpClient(new ApiVersion(2.0));
+        var countBefore = await GetCatalogCountAsync(client);
+        var nameBefore = await GetItemNameAsync(client, 1);
+
+        var response = await client.PostAsync("/api/catalog/items", Json($"{{\"id\":1,\"name\":\"Duplicate of one\",{RestOfBody},\"description\":\"Plan case\"}}"), TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.Equal(nameBefore, await GetItemNameAsync(client, 1));
+        Assert.Equal(countBefore, await GetCatalogCountAsync(client));
+    }
+
+    [Fact]
+    [Trait("Story", "BUG-18")]
+    [Trait("TestCase", "TC-BUG-18-03")]
+    public async Task TC_BUG_18_03_PostWithUnusedExplicitIdReturns201AndKeepsId()
+    {
+        var client = CreateHttpClient(new ApiVersion(2.0));
+        var id = Random.Shared.Next(1_000_000, int.MaxValue);
+
+        var response = await client.PostAsync("/api/catalog/items", Json($"{{\"id\":{id},\"name\":\"Explicit id item\",{RestOfBody},\"description\":\"Plan case\"}}"), TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        Assert.NotNull(response.Headers.Location);
+        Assert.EndsWith($"/api/catalog/items/{id}", response.Headers.Location.ToString());
+
+        var get = await client.GetAsync($"/api/catalog/items/{id}", TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.OK, get.StatusCode);
+        using var doc = JsonDocument.Parse(await get.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        Assert.Equal(id, doc.RootElement.GetProperty("id").GetInt32());
+        Assert.Equal("Explicit id item", doc.RootElement.GetProperty("name").GetString());
+    }
+
+    [Fact]
+    [Trait("Story", "BUG-18")]
+    [Trait("TestCase", "TC-BUG-18-04")]
+    public async Task TC_BUG_18_04_PostingSameNewIdTwiceReturns409TheSecondTime()
+    {
+        var client = CreateHttpClient(new ApiVersion(2.0));
+        var id = Random.Shared.Next(1_000_000, int.MaxValue);
+
+        var first = await client.PostAsync("/api/catalog/items", Json($"{{\"id\":{id},\"name\":\"First of two\",{RestOfBody},\"description\":\"Plan case\"}}"), TestContext.Current.CancellationToken);
+        var second = await client.PostAsync("/api/catalog/items", Json($"{{\"id\":{id},\"name\":\"Second of two\",{RestOfBody},\"description\":\"Plan case\"}}"), TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Created, first.StatusCode);
+        Assert.Equal(HttpStatusCode.Conflict, second.StatusCode);
+        Assert.Equal("First of two", await GetItemNameAsync(client, id));
+    }
+
+    [Fact]
+    [Trait("Story", "BUG-18")]
+    [Trait("TestCase", "TC-BUG-18-05")]
+    public async Task TC_BUG_18_05_PostWithIdZeroStillGeneratesId()
+    {
+        // The seeded catalog rows carry explicit ids, so move the id sequence past them before the server generates one.
+        using (var scope = _webApplicationFactory.Services.CreateScope())
+        {
+            var context = scope.ServiceProvider.GetRequiredService<CatalogContext>();
+            await context.Database.ExecuteSqlRawAsync("SELECT setval(pg_get_serial_sequence('\"Catalog\"', 'Id'), (SELECT MAX(\"Id\") FROM \"Catalog\"))", TestContext.Current.CancellationToken);
+        }
+
+        var client = CreateHttpClient(new ApiVersion(2.0));
+
+        var response = await client.PostAsync("/api/catalog/items", Json($"{{\"id\":0,\"name\":\"Generated id item\",{RestOfBody},\"description\":\"Plan case\"}}"), TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var location = response.Headers.Location;
+        Assert.NotNull(location);
+        Assert.Matches(@"/api/catalog/items/\d+$", location.ToString());
+        var id = int.Parse(location.ToString().Split('/').Last());
+        Assert.True(id > 101);
+        Assert.Equal("Generated id item", await GetItemNameAsync(client, id));
+    }
+
+    [Fact]
+    [Trait("Story", "BUG-18")]
+    [Trait("TestCase", "TC-BUG-18-06")]
+    public async Task TC_BUG_18_06_PostWithoutNameAndExistingIdReturns400Not409()
+    {
+        var client = CreateHttpClient(new ApiVersion(2.0));
+
+        var response = await client.PostAsync("/api/catalog/items", Json($"{{\"id\":1,{RestOfBody},\"description\":\"No name\"}}"), TestContext.Current.CancellationToken);
+
+        await AssertProblemAsync(response);
     }
 }

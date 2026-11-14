@@ -1,0 +1,4 @@
+description: BUG-17 catalog item name validation; needs only the default catalog (101 items, brand id 1, type id 1).
+extends: default
+
+# No extra rows: every case posts or updates its own body against the default catalog's brand 1, type 1 and item 1.

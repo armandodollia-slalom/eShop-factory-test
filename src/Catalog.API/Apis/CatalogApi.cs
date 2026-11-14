@@ -421,6 +421,11 @@ public static class CatalogApi
         [AsParameters] CatalogServices services,
         CatalogItem productToUpdate)
     {
+        if (ValidateRequiredFields(productToUpdate) is { } validationProblem)
+        {
+            return TypedResults.BadRequest(validationProblem);
+        }
+
         var catalogItem = await services.Context.CatalogItems.SingleOrDefaultAsync(i => i.Id == id);
 
         if (catalogItem == null)
@@ -457,11 +462,29 @@ public static class CatalogApi
         return TypedResults.Created($"/api/catalog/items/{id}");
     }
 
+    // ProblemHttpResult adds no response metadata of its own, so the OpenAPI document keeps the
+    // application/problem+json content type the attributes below declare.
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
-    public static async Task<Created> CreateItem(
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
+    public static async Task<Results<Created, ProblemHttpResult>> CreateItem(
         [AsParameters] CatalogServices services,
         CatalogItem product)
     {
+        if (ValidateRequiredFields(product) is { } validationProblem)
+        {
+            return TypedResults.Problem(
+                detail: validationProblem.Detail,
+                statusCode: StatusCodes.Status400BadRequest);
+        }
+
+        // A client-supplied id that is already taken would fail on save with a primary key violation.
+        if (product.Id != 0 && await services.Context.CatalogItems.AnyAsync(i => i.Id == product.Id))
+        {
+            return TypedResults.Problem(
+                detail: $"Item with id {product.Id} already exists.",
+                statusCode: StatusCodes.Status409Conflict);
+        }
+
         var item = new CatalogItem(product.Name)
         {
             Id = product.Id,
@@ -480,6 +503,20 @@ public static class CatalogApi
         await services.Context.SaveChangesAsync();
 
         return TypedResults.Created($"/api/catalog/items/{item.Id}");
+    }
+
+    // The database requires a name, so reject a missing one here rather than fail on save.
+    private static ProblemDetails? ValidateRequiredFields(CatalogItem item)
+    {
+        if (string.IsNullOrWhiteSpace(item.Name))
+        {
+            return new ProblemDetails
+            {
+                Detail = $"The {nameof(CatalogItem.Name)} field is required."
+            };
+        }
+
+        return null;
     }
 
     public static async Task<Results<NoContent, NotFound>> DeleteItemById(
