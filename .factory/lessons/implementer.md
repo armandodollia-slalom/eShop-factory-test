@@ -17,3 +17,13 @@ When a story or `ProducesResponseType` says "problem details" or a validation pr
 
 - Bad: `return TypedResults.BadRequest(new ProblemDetails { Detail = "Count must be between 1 and 12" });`
 - Good: `return TypedResults.Problem("Count must be between 1 and 12", statusCode: StatusCodes.Status400BadRequest);`
+
+## L3: Match the neighbouring code's call shape, reuse existing helpers and keep the diff on the story
+<!-- category: pr-check-style; subtype: ; added: 2026-11-14 -->
+
+Before committing, open the nearest existing code in the same file and compare: use the same call style (for example `TypedResults.Problem(detail: "...", statusCode: ...)` with named `detail:` and wrapped arguments, not one long positional line over about 120 characters); do not add a bool parameter only to pick a message, write the explicit small methods like their neighbours; if a line you add duplicates one already in the file (a serialize-and-set call), call the existing helper or extract one; do not touch unrelated lines (whitespace, BOM, `nameof`); run `dotnet format --verify-no-changes` on touched projects and fix what it reports; mention regenerated files (snapshots, OpenAPI) in the change description.
+
+## L4: Do not restyle existing UI beyond what the story asks, and keep its layout stable
+<!-- category: pr-check-design; subtype: ; added: 2026-11-14 -->
+
+When adding a column, section or button to an existing page: keep the existing breakpoints, spacing and font sizes of untouched cells; give header and rows one shared grid template so labels align at desktop and 390px; check that existing values (dates, status pills) do not newly wrap at desktop width; reuse the existing component or class for repeated actions (the same Remove button with its icon); and add no extra bottom padding or margin that leaves a visible gap before the new section. Load the page at 390px and desktop width before finishing.
