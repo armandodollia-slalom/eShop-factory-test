@@ -463,13 +463,23 @@ public static class CatalogApi
     }
 
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
-    public static async Task<Results<Created, BadRequest<ProblemDetails>>> CreateItem(
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
+    public static async Task<Results<Created, BadRequest<ProblemDetails>, Conflict<ProblemDetails>>> CreateItem(
         [AsParameters] CatalogServices services,
         CatalogItem product)
     {
         if (ValidateRequiredFields(product) is { } validationProblem)
         {
             return TypedResults.BadRequest(validationProblem);
+        }
+
+        // A client-supplied id that is already taken would fail on save with a primary key violation.
+        if (product.Id != 0 && await services.Context.CatalogItems.AnyAsync(i => i.Id == product.Id))
+        {
+            return TypedResults.Conflict<ProblemDetails>(new()
+            {
+                Detail = $"Item with id {product.Id} already exists."
+            });
         }
 
         var item = new CatalogItem(product.Name)
