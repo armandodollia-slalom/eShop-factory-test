@@ -1,0 +1,4 @@
+description: BUG-18 catalog create with an existing id; needs only the default catalog (ids 1-101, brand id 1, type id 1).
+extends: default
+
+# No extra rows: item 1 is the existing id the cases collide with; ids 5000 and 5001 are deliberately unused.
