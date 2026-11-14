@@ -8,7 +8,7 @@
 <SectionContent SectionName="page-header-subtitle">Start the season with the latest in clothing and equipment.</SectionContent>
 
 <div class="catalog">
-    <CatalogSearch BrandIds="@BrandIds" TypeIds="@TypeIds" />
+    <CatalogSearch BrandIds="@BrandIds" TypeIds="@TypeIds" OnlyAvailable="@OnlyAvailable" />
 
     @if (catalogResult is null)
     {
@@ -159,6 +159,9 @@
     [SupplyParameterFromQuery(Name = "type")]
     public int[]? TypeIds { get; set; }
 
+    [SupplyParameterFromQuery(Name = "onlyAvailable")]
+    public bool OnlyAvailable { get; set; }
+
     CatalogResult? catalogResult;
 
     static IEnumerable<int> GetPageTokens(int totalPages, int current)
@@ -191,6 +194,7 @@
         { "page", null },
         { "brand", null },
         { "type", null },
+        { "onlyAvailable", null },
     });
 
     protected override async Task OnInitializedAsync()
@@ -199,6 +203,7 @@
             Page.GetValueOrDefault(1) - 1,
             PageSize,
             BrandIds,
-            TypeIds);
+            TypeIds,
+            OnlyAvailable);
     }
 }

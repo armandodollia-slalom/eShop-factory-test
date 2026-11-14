@@ -21,9 +21,12 @@ public class CatalogService(HttpClient httpClient) : ICatalogService
         return result ?? [];
     }
 
-    public async Task<CatalogResult> GetCatalogItems(int pageIndex, int pageSize, int[]? brands, int[]? types)
+    public Task<CatalogResult> GetCatalogItems(int pageIndex, int pageSize, int[]? brands, int[]? types)
+        => GetCatalogItems(pageIndex, pageSize, brands, types, onlyAvailable: false);
+
+    public async Task<CatalogResult> GetCatalogItems(int pageIndex, int pageSize, int[]? brands, int[]? types, bool onlyAvailable)
     {
-        var uri = GetAllCatalogItemsUri(remoteServiceBaseUrl, pageIndex, pageSize, brands, types);
+        var uri = GetAllCatalogItemsUri(remoteServiceBaseUrl, pageIndex, pageSize, brands, types, onlyAvailable);
         var result = await httpClient.GetFromJsonAsync<CatalogResult>(uri);
         return result!;
     }
@@ -73,7 +76,7 @@ public class CatalogService(HttpClient httpClient) : ICatalogService
         return result!;
     }
 
-    private static string GetAllCatalogItemsUri(string baseUri, int pageIndex, int pageSize, int[]? brands, int[]? types)
+    private static string GetAllCatalogItemsUri(string baseUri, int pageIndex, int pageSize, int[]? brands, int[]? types, bool onlyAvailable)
     {
         string filterQs = string.Empty;
 
@@ -84,6 +87,10 @@ public class CatalogService(HttpClient httpClient) : ICatalogService
         if (brands is { Length: > 0 })
         {
             filterQs += string.Join("&", brands.Select(b => $"brand={b}")) + "&";
+        }
+        if (onlyAvailable)
+        {
+            filterQs += "onlyAvailable=true&";
         }
 
         return $"{baseUri}items?{filterQs}pageIndex={pageIndex}&pageSize={pageSize}";
