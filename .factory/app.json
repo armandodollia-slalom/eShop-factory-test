@@ -400,11 +400,12 @@
         {
           "services": [
             "basket-api",
+            "catalog-api",
             "ordering-api",
             "webhooks-api"
           ],
           "env": {
-            "Identity__Url": "http://host.docker.internal:${IDENTITY_API_HOST_PORT:-28081}"
+            "Identity__Url":"http://host.docker.internal:${IDENTITY_API_HOST_PORT:-28081}"
           },
           "why": "OIDC: the token issuer must be the same URL for the browser and the services, so identity is reached through the Docker host, not its container name"
         },
