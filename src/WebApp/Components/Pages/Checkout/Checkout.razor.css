@@ -40,7 +40,8 @@
     line-height: 1.4;
 }
 
-.checkout ::deep input {
+.checkout ::deep input,
+.checkout ::deep textarea {
     width: 100%;
     box-sizing: border-box;
     padding: 0.7rem 0.85rem;
@@ -54,10 +55,15 @@
     transition: border-color var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease);
 }
 
-.checkout ::deep input:focus {
+.checkout ::deep input:focus,
+.checkout ::deep textarea:focus {
     outline: none;
     border-color: var(--color-ink);
     box-shadow: var(--ring);
+}
+
+.checkout ::deep textarea {
+    resize: vertical;
 }
 
 .checkout ::deep .validation-message {
