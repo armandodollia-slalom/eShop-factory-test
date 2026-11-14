@@ -1,0 +1,4 @@
+description: BUG-15 order draft validation; needs only the seeded user alice and no orders.
+extends: default
+
+# No extra rows: every case posts its own draft body as alice (Pass123$); nothing is read from or written to the database.
