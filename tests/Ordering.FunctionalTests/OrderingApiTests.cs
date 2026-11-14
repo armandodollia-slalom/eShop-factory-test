@@ -12,6 +12,11 @@ namespace eShop.Ordering.FunctionalTests;
 
 public sealed class OrderingApiTests : IClassFixture<OrderingApiFixture>
 {
+    private const string DraftRequestId = "7c9e6679-7425-40de-944b-e07fc1f90ae7";
+    private const string ItemRequiredDetail = "An order draft requires at least one item.";
+    private const string SingleItemDraftJson = """{"buyerId":"b1","items":[{"id":"i1","productId":1,"productName":"Test Product 1","unitPrice":10.2,"oldUnitPrice":9.8,"quantity":2,"pictureUrl":"p1"}]}""";
+    private const string ProblemJson = "application/problem+json";
+
     private readonly WebApplicationFactory<Program> _webApplicationFactory;
     private readonly HttpClient _httpClient;
 
@@ -230,6 +235,88 @@ public sealed class OrderingApiTests : IClassFixture<OrderingApiFixture>
         var orderItemsProductIds = responseData.OrderItems.Select(x => x.ProductId);
         Assert.All(orderItemsProductIds, orderItemProdId => payloadItemsProductIds.Contains(orderItemProdId));
         // TODO: might need to add more asserts in here
+    }
+
+    [Fact]
+    [Trait("Story", "BUG-15")]
+    [Trait("TestCase", "TC-BUG-15-01")]
+    public async Task TC_BUG_15_01_DraftWithNoBodyReturns400()
+    {
+        var content = new ByteArrayContent([]);
+        content.Headers.ContentType = null;
+        content.Headers.Add("x-requestid", DraftRequestId);
+
+        var response = await _httpClient.PostAsync("api/orders/draft", content, TestContext.Current.CancellationToken);
+
+        await AssertItemRequiredProblemAsync(response);
+    }
+
+    [Fact]
+    [Trait("Story", "BUG-15")]
+    [Trait("TestCase", "TC-BUG-15-02")]
+    public async Task TC_BUG_15_02_DraftWithJsonNullBodyReturns400()
+    {
+        var response = await PostDraftAsync("null");
+
+        await AssertItemRequiredProblemAsync(response);
+    }
+
+    [Fact]
+    [Trait("Story", "BUG-15")]
+    [Trait("TestCase", "TC-BUG-15-03")]
+    public async Task TC_BUG_15_03_DraftWithNullItemsReturns400()
+    {
+        var response = await PostDraftAsync("""{"buyerId":"b1","items":null}""");
+
+        await AssertItemRequiredProblemAsync(response);
+    }
+
+    [Fact]
+    [Trait("Story", "BUG-15")]
+    [Trait("TestCase", "TC-BUG-15-04")]
+    public async Task TC_BUG_15_04_DraftWithEmptyItemsReturns400()
+    {
+        var response = await PostDraftAsync("""{"buyerId":"b1","items":[]}""");
+
+        await AssertItemRequiredProblemAsync(response);
+    }
+
+    [Fact]
+    [Trait("Story", "BUG-15")]
+    [Trait("TestCase", "TC-BUG-15-05")]
+    public async Task TC_BUG_15_05_DraftWithSingleItemReturns200()
+    {
+        var response = await PostDraftAsync(SingleItemDraftJson);
+
+        var json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var document = JsonDocument.Parse(json);
+        var orderItems = document.RootElement.GetProperty("orderItems");
+        Assert.Equal(1, orderItems.GetArrayLength());
+        Assert.Equal(1, orderItems[0].GetProperty("productId").GetInt32());
+        Assert.Equal(20.4m, document.RootElement.GetProperty("total").GetDecimal());
+    }
+
+    private async Task<HttpResponseMessage> PostDraftAsync(string json)
+    {
+        var content = new StringContent(json, Encoding.UTF8, "application/json")
+        {
+            Headers = { { "x-requestid", DraftRequestId } }
+        };
+        return await _httpClient.PostAsync("api/orders/draft", content, TestContext.Current.CancellationToken);
+    }
+
+    private static async Task AssertItemRequiredProblemAsync(HttpResponseMessage response)
+    {
+        var json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(ProblemJson, response.Content.Headers.ContentType?.MediaType);
+        using var document = JsonDocument.Parse(json);
+        Assert.Equal(ItemRequiredDetail, document.RootElement.GetProperty("detail").GetString());
+        Assert.Equal(400, document.RootElement.GetProperty("status").GetInt32());
+        // No draft is computed: the handler is not invoked, so the body carries no draft fields.
+        Assert.False(document.RootElement.TryGetProperty("orderItems", out _));
+        Assert.False(document.RootElement.TryGetProperty("total", out _));
     }
 
     string BuildOrder()
