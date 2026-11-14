@@ -22,4 +22,5 @@ public record OrderRecord(
     int OrderNumber,
     DateTime Date,
     string Status,
-    decimal Total);
+    decimal Total,
+    int ItemCount);

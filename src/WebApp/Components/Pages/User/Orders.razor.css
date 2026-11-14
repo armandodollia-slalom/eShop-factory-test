@@ -103,6 +103,10 @@
     color: var(--color-ink-2);
 }
 
+.order-items {
+    color: var(--color-ink-2);
+}
+
 .order-total {
     color: var(--color-ink);
     text-align: right;

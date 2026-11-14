@@ -29,6 +29,7 @@ public record OrderSummary
     public DateTime Date { get; init; }
     public string Status { get; init; }
     public double Total { get; init; }
+    public int ItemCount { get; init; }
 }
 
 public record CardType
