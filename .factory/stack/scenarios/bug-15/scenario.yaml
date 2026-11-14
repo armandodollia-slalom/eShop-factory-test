@@ -1,0 +1,4 @@
+description: BUG-15 order draft validation; the draft endpoint is stateless, so only the default seed data is needed.
+extends: default
+
+# No extra rows: every case posts its own draft request and nothing is read back from the database.

@@ -103,8 +103,13 @@ public static class OrdersApi
         return TypedResults.Ok(cardTypes);
     }
 
-    public static async Task<OrderDraftDTO> CreateOrderDraftAsync(CreateOrderDraftCommand command, [AsParameters] OrderServices services)
+    public static async Task<Results<Ok<OrderDraftDTO>, ProblemHttpResult>> CreateOrderDraftAsync([AsParameters] OrderServices services, CreateOrderDraftCommand command = null)
     {
+        if (command?.Items is null || !command.Items.Any())
+        {
+            return TypedResults.Problem("An order draft requires at least one item.", statusCode: StatusCodes.Status400BadRequest);
+        }
+
         services.Logger.LogInformation(
             "Sending command: {CommandName} - {IdProperty}: {CommandId} ({@Command})",
             command.GetGenericTypeName(),
@@ -112,7 +117,7 @@ public static class OrdersApi
             command.BuyerId,
             command);
 
-        return await services.Mediator.Send(command);
+        return TypedResults.Ok(await services.Mediator.Send(command));
     }
 
     public static async Task<Results<Ok, BadRequest<string>>> CreateOrderAsync(
