@@ -1,8 +1,8 @@
 ﻿using System.Security.Claims;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
 using eShop.WebAppComponents.Catalog;
 using eShop.WebAppComponents.Services;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 
 namespace eShop.WebApp.Services;
 
@@ -103,7 +103,8 @@ public class BasketState(
             CardSecurityNumber: "111",
             CardTypeId: checkoutInfo.CardTypeId,
             Buyer: buyerId,
-            Items: [.. orderItems]);
+            Items: [.. orderItems],
+            DeliveryNote: string.IsNullOrWhiteSpace(checkoutInfo.DeliveryNote) ? null : checkoutInfo.DeliveryNote.Trim());
         await orderingService.CreateOrder(request, checkoutInfo.RequestId);
         await DeleteBasketAsync();
     }
@@ -169,4 +170,5 @@ public record CreateOrderRequest(
     string CardSecurityNumber,
     int CardTypeId,
     string Buyer,
-    List<BasketItem> Items);
+    List<BasketItem> Items,
+    string? DeliveryNote);
