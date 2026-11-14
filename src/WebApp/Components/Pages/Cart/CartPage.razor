@@ -74,6 +74,12 @@
                                 <span>Remove</span>
                             </button>
                         </form>
+                        <form method="post" data-enhance class="cart-save-for-later">
+                            <input type="hidden" name="_handler" value="save-for-later" />
+                            <AntiforgeryToken />
+                            <input type="hidden" name="SaveForLaterId" value="@item.ProductId" />
+                            <button type="submit" class="cart-save-button" aria-label="Save @item.ProductName for later">Save for later</button>
+                        </form>
                     </div>
                     <div class="catalog-item-total">
                         $@((item.UnitPrice * quantity).ToPriceDisplay())
@@ -104,10 +110,57 @@
     }
 </div>
 
+@if (savedItems is { Count: > 0 })
+{
+    <section class="cart-saved" aria-labelledby="cart-saved-heading">
+        <h2 id="cart-saved-heading" class="cart-saved-title">Saved for later (@savedItems.Count)</h2>
+        @foreach (var item in savedItems)
+        {
+            <div class="cart-saved-item" @key="@item.Id">
+                <div class="catalog-item-info">
+                    <img alt="@item.ProductName" src="@ProductImages.GetProductImageUrl(item.ProductId)" />
+                    <div class="catalog-item-content">
+                        <p class="name">@item.ProductName</p>
+                        <p class="price">$@item.UnitPrice.ToPriceDisplay()</p>
+                        <p class="quantity">Quantity: @item.Quantity</p>
+                    </div>
+                </div>
+                <div class="cart-saved-actions">
+                    <form method="post" data-enhance>
+                        <input type="hidden" name="_handler" value="move-to-cart" />
+                        <AntiforgeryToken />
+                        <input type="hidden" name="MoveToCartId" value="@item.ProductId" />
+                        <button type="submit" class="button button-secondary" aria-label="Move @item.ProductName to cart">Move to cart</button>
+                    </form>
+                    <form method="post" data-enhance>
+                        <input type="hidden" name="_handler" value="remove-saved" />
+                        <AntiforgeryToken />
+                        <input type="hidden" name="RemoveSavedId" value="@item.ProductId" />
+                        <button type="submit" class="cart-remove" aria-label="Remove @item.ProductName from saved for later">Remove</button>
+                    </form>
+                </div>
+            </div>
+        }
+    </section>
+}
+
 <form @formname="update-cart" @onsubmit="@UpdateQuantityAsync"></form>
+<form @formname="save-for-later" @onsubmit="@SaveForLaterAsync"></form>
+<form @formname="move-to-cart" @onsubmit="@MoveToCartAsync"></form>
+<form @formname="remove-saved" @onsubmit="@RemoveSavedAsync"></form>
 
 @code {
     private IReadOnlyCollection<BasketItem>? basketItems;
+    private IReadOnlyCollection<BasketItem>? savedItems;
+
+    [SupplyParameterFromForm]
+    public int? SaveForLaterId { get; set; }
+
+    [SupplyParameterFromForm]
+    public int? MoveToCartId { get; set; }
+
+    [SupplyParameterFromForm]
+    public int? RemoveSavedId { get; set; }
 
     [SupplyParameterFromForm]
     public int? UpdateQuantityId { get; set; }
@@ -117,7 +170,13 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadBasketAsync();
+    }
+
+    private async Task LoadBasketAsync()
+    {
         basketItems = await Basket.GetBasketItemsAsync();
+        savedItems = await Basket.GetSavedItemsAsync();
     }
 
     private decimal? TotalPrice => basketItems?.Sum(i => i.Quantity * i.UnitPrice);
@@ -135,6 +194,24 @@
         var id = UpdateQuantityId!.Value;
         var quantity = UpdateQuantityValue!.Value;
         await Basket.SetQuantityAsync(id, quantity);
-        basketItems = await Basket.GetBasketItemsAsync();
+        await LoadBasketAsync();
+    }
+
+    private async Task SaveForLaterAsync()
+    {
+        await Basket.SaveForLaterAsync(SaveForLaterId!.Value);
+        await LoadBasketAsync();
+    }
+
+    private async Task MoveToCartAsync()
+    {
+        await Basket.MoveToCartAsync(MoveToCartId!.Value);
+        await LoadBasketAsync();
+    }
+
+    private async Task RemoveSavedAsync()
+    {
+        await Basket.RemoveSavedItemAsync(RemoveSavedId!.Value);
+        await LoadBasketAsync();
     }
 }

@@ -12,7 +12,7 @@ public class BasketState(
     OrderingService orderingService,
     AuthenticationStateProvider authenticationStateProvider) : IBasketState
 {
-    private Task<IReadOnlyCollection<BasketItem>>? _cachedBasket;
+    private Task<(IReadOnlyCollection<BasketItem> Items, IReadOnlyCollection<BasketItem> SavedItems)>? _cachedBasket;
     private HashSet<BasketStateChangedSubscription> _changeSubscriptions = new();
 
     public Task DeleteBasketAsync()
@@ -21,6 +21,11 @@ public class BasketState(
     public async Task<IReadOnlyCollection<BasketItem>> GetBasketItemsAsync()
         => (await GetUserAsync()).Identity?.IsAuthenticated == true
         ? await FetchBasketItemsAsync()
+        : [];
+
+    public async Task<IReadOnlyCollection<BasketItem>> GetSavedItemsAsync()
+        => (await GetUserAsync()).Identity?.IsAuthenticated == true
+        ? (await FetchBasketAsync()).SavedItems
         : [];
 
     public IDisposable NotifyOnChange(EventCallback callback)
@@ -75,6 +80,27 @@ public class BasketState(
         }
     }
 
+    public async Task SaveForLaterAsync(int productId)
+    {
+        await basketService.SaveForLaterAsync(productId);
+        _cachedBasket = null;
+        await NotifyChangeSubscribersAsync();
+    }
+
+    public async Task MoveToCartAsync(int productId)
+    {
+        await basketService.MoveToCartAsync(productId);
+        _cachedBasket = null;
+        await NotifyChangeSubscribersAsync();
+    }
+
+    public async Task RemoveSavedItemAsync(int productId)
+    {
+        await basketService.RemoveSavedItemAsync(productId);
+        _cachedBasket = null;
+        await NotifyChangeSubscribersAsync();
+    }
+
     public async Task CheckoutAsync(BasketCheckoutInfo checkoutInfo)
     {
         if (checkoutInfo.RequestId == default)
@@ -114,38 +140,47 @@ public class BasketState(
     private async Task<ClaimsPrincipal> GetUserAsync()
         => (await authenticationStateProvider.GetAuthenticationStateAsync()).User;
 
-    private Task<IReadOnlyCollection<BasketItem>> FetchBasketItemsAsync()
+    private async Task<IReadOnlyCollection<BasketItem>> FetchBasketItemsAsync()
+        => (await FetchBasketAsync()).Items;
+
+    private Task<(IReadOnlyCollection<BasketItem> Items, IReadOnlyCollection<BasketItem> SavedItems)> FetchBasketAsync()
     {
         return _cachedBasket ??= FetchCoreAsync();
 
-        async Task<IReadOnlyCollection<BasketItem>> FetchCoreAsync()
+        async Task<(IReadOnlyCollection<BasketItem> Items, IReadOnlyCollection<BasketItem> SavedItems)> FetchCoreAsync()
         {
-            var quantities = await basketService.GetBasketAsync();
+            var contents = await basketService.GetBasketAsync();
+            var quantities = contents.Items.Concat(contents.SavedItems).ToList();
             if (quantities.Count == 0)
             {
-                return [];
+                return ([], []);
             }
 
-            // Get details for the items in the basket
-            var basketItems = new List<BasketItem>();
-            var productIds = quantities.Select(row => row.ProductId);
+            // Get details for the items in the basket and the saved products
+            var productIds = quantities.Select(row => row.ProductId).Distinct();
             var catalogItems = (await catalogService.GetCatalogItems(productIds)).ToDictionary(k => k.Id, v => v);
-            foreach (var item in quantities)
-            {
-                var catalogItem = catalogItems[item.ProductId];
-                var orderItem = new BasketItem
-                {
-                    Id = Guid.NewGuid().ToString(), // TODO: this value is meaningless, use ProductId instead.
-                    ProductId = catalogItem.Id,
-                    ProductName = catalogItem.Name,
-                    UnitPrice = catalogItem.Price,
-                    Quantity = item.Quantity,
-                };
-                basketItems.Add(orderItem);
-            }
-
-            return basketItems;
+            return (ToBasketItems(contents.Items, catalogItems), ToBasketItems(contents.SavedItems, catalogItems));
         }
+    }
+
+    private static List<BasketItem> ToBasketItems(IEnumerable<BasketQuantity> quantities, Dictionary<int, CatalogItem> catalogItems)
+    {
+        var basketItems = new List<BasketItem>();
+        foreach (var item in quantities)
+        {
+            var catalogItem = catalogItems[item.ProductId];
+            var orderItem = new BasketItem
+            {
+                Id = Guid.NewGuid().ToString(), // TODO: this value is meaningless, use ProductId instead.
+                ProductId = catalogItem.Id,
+                ProductName = catalogItem.Name,
+                UnitPrice = catalogItem.Price,
+                Quantity = item.Quantity,
+            };
+            basketItems.Add(orderItem);
+        }
+
+        return basketItems;
     }
 
     private class BasketStateChangedSubscription(BasketState Owner, EventCallback Callback) : IDisposable
