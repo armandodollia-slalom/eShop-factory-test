@@ -1,0 +1,4 @@
+description: BUG-12 catalog page query values below 1; needs only the default demo catalog (101 items, 12 pages of 9) and an anonymous visitor.
+extends: default
+
+# No extra rows: every case browses the seeded catalog as a visitor.
