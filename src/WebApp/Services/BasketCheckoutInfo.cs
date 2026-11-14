@@ -19,6 +19,8 @@ public class BasketCheckoutInfo
     [Required]
     public string? ZipCode { get; set; }
 
+    public string? DeliveryNote { get; set; }
+
     public string? CardNumber { get; set; }
 
     public string? CardHolderName { get; set; }
