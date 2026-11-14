@@ -14,3 +14,5 @@
 {"ts":"2026-11-13T23:40:47.227Z","stage":"automation","story":"BUG-18","round":1,"agent_prompt_ver":"170ddf68","verifier_ver":"ddb8bf01","cli":"claude","score":10,"passed":true,"gaps":0}
 {"ts":"2026-11-13T23:51:54.559Z","stage":"automation","story":"BUG-17","round":1,"agent_prompt_ver":"170ddf68","verifier_ver":"ddb8bf01","cli":"claude","score":10,"passed":true,"gaps":0}
 {"ts":"2026-11-13T23:56:31.929Z","stage":"automation","story":"BUG-18","round":1,"agent_prompt_ver":"170ddf68","verifier_ver":"ddb8bf01","cli":"claude","score":10,"passed":true,"gaps":0}
+{"ts":"2026-11-13T22:28:08.324Z","stage":"plan","story":"BUG-16","round":1,"agent_prompt_ver":"a978a288","verifier_ver":"27d172f2","cli":"claude","score":10,"passed":true,"gaps":0}
+{"ts":"2026-11-13T22:50:43.749Z","stage":"automation","story":"BUG-16","round":1,"agent_prompt_ver":"170ddf68","verifier_ver":"ddb8bf01","cli":"claude","score":10,"passed":true,"gaps":0}
