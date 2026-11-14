@@ -464,22 +464,25 @@ public static class CatalogApi
 
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
-    public static async Task<Results<Created, BadRequest<ProblemDetails>, Conflict<ProblemDetails>>> CreateItem(
+    // ProblemHttpResult adds no response metadata of its own, so the OpenAPI document keeps the
+    // application/problem+json content type the attributes above declare.
+    public static async Task<Results<Created, ProblemHttpResult>> CreateItem(
         [AsParameters] CatalogServices services,
         CatalogItem product)
     {
         if (ValidateRequiredFields(product) is { } validationProblem)
         {
-            return TypedResults.BadRequest(validationProblem);
+            return TypedResults.Problem(
+                detail: validationProblem.Detail,
+                statusCode: StatusCodes.Status400BadRequest);
         }
 
         // A client-supplied id that is already taken would fail on save with a primary key violation.
         if (product.Id != 0 && await services.Context.CatalogItems.AnyAsync(i => i.Id == product.Id))
         {
-            return TypedResults.Conflict<ProblemDetails>(new()
-            {
-                Detail = $"Item with id {product.Id} already exists."
-            });
+            return TypedResults.Problem(
+                detail: $"Item with id {product.Id} already exists.",
+                statusCode: StatusCodes.Status409Conflict);
         }
 
         var item = new CatalogItem(product.Name)
