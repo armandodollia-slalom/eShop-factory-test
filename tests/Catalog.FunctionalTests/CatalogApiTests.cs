@@ -10,7 +10,8 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace eShop.Catalog.FunctionalTests;
 
-public sealed class CatalogApiTests : IClassFixture<CatalogApiFixture>
+[Collection(CatalogApiCollection.Name)]
+public sealed class CatalogApiTests
 {
     private readonly WebApplicationFactory<Program> _webApplicationFactory;
     private readonly JsonSerializerOptions _jsonSerializerOptions = new(JsonSerializerDefaults.Web);
@@ -422,15 +423,22 @@ public sealed class CatalogApiTests : IClassFixture<CatalogApiFixture>
         var response = await _httpClient.PostAsJsonAsync("/api/catalog/items", bodyContent, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
 
-        // Act - 2
-        response = await _httpClient.GetAsync($"/api/catalog/items/{id}", TestContext.Current.CancellationToken);
-        response.EnsureSuccessStatusCode();
-        var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-        var addedItem = JsonSerializer.Deserialize<CatalogItem>(body, _jsonSerializerOptions);
+        try
+        {
+            // Act - 2
+            response = await _httpClient.GetAsync($"/api/catalog/items/{id}", TestContext.Current.CancellationToken);
+            response.EnsureSuccessStatusCode();
+            var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            var addedItem = JsonSerializer.Deserialize<CatalogItem>(body, _jsonSerializerOptions);
 
-        // Assert - 1
-        Assert.Equal(bodyContent.Id, addedItem.Id);
-
+            // Assert - 1
+            Assert.Equal(bodyContent.Id, addedItem.Id);
+        }
+        finally
+        {
+            // The collection shares one database: leave the 101 seeded items as they were.
+            await _httpClient.DeleteAsync($"/api/catalog/items/{id}", TestContext.Current.CancellationToken);
+        }
     }
 
     [Theory]
@@ -440,11 +448,17 @@ public sealed class CatalogApiTests : IClassFixture<CatalogApiFixture>
     {
         var _httpClient = CreateHttpClient(new ApiVersion(version));
 
+        // Deletes an item of its own, so the seeded catalog the other tests of the collection read stays whole.
         var id = version switch {
-            1.0 => 5,
-            2.0 => 6,
+            1.0 => 10017,
+            2.0 => 10018,
             _ => 0
         };
+        var createResponse = await _httpClient.PostAsJsonAsync(
+            "/api/catalog/items",
+            new CatalogItem("Item to delete") { Id = id, CatalogTypeId = 1, CatalogBrandId = 1 },
+            TestContext.Current.CancellationToken);
+        createResponse.EnsureSuccessStatusCode();
 
         //Act - 1
         var response = await _httpClient.DeleteAsync($"/api/catalog/items/{id}", TestContext.Current.CancellationToken);
