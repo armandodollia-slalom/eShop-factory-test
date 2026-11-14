@@ -400,7 +400,7 @@ public static class CatalogApi
         return await GetAllItems(paginationRequest, services, null, null, brandId is null ? null : [brandId.Value]);
     }
 
-    public static async Task<Results<Created, BadRequest<ProblemDetails>, NotFound<ProblemDetails>>> UpdateItemV1(
+    public static async Task<Results<Created, BadRequest<ProblemDetails>, NotFound<ProblemDetails>, ProblemHttpResult>> UpdateItemV1(
         HttpContext httpContext,
         [AsParameters] CatalogServices services,
         CatalogItem productToUpdate)
@@ -415,7 +415,7 @@ public static class CatalogApi
         return await UpdateItem(httpContext, productToUpdate.Id, services, productToUpdate);
     }
 
-    public static async Task<Results<Created, BadRequest<ProblemDetails>, NotFound<ProblemDetails>>> UpdateItem(
+    public static async Task<Results<Created, BadRequest<ProblemDetails>, NotFound<ProblemDetails>, ProblemHttpResult>> UpdateItem(
         HttpContext httpContext,
         [Description("The id of the catalog item to delete")] int id,
         [AsParameters] CatalogServices services,
@@ -429,6 +429,11 @@ public static class CatalogApi
             {
                 Detail = $"Item with id {id} not found."
             });
+        }
+
+        if (await ValidateBrandAndType(services.Context, productToUpdate) is { } invalidReference)
+        {
+            return invalidReference;
         }
 
         // Update current product
@@ -458,10 +463,15 @@ public static class CatalogApi
     }
 
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
-    public static async Task<Created> CreateItem(
+    public static async Task<Results<Created, ProblemHttpResult>> CreateItem(
         [AsParameters] CatalogServices services,
         CatalogItem product)
     {
+        if (await ValidateBrandAndType(services.Context, product) is { } invalidReference)
+        {
+            return invalidReference;
+        }
+
         var item = new CatalogItem(product.Name)
         {
             Id = product.Id,
@@ -496,6 +506,25 @@ public static class CatalogApi
         services.Context.CatalogItems.Remove(item);
         await services.Context.SaveChangesAsync();
         return TypedResults.NoContent();
+    }
+
+    private static async Task<ProblemHttpResult?> ValidateBrandAndType(CatalogContext context, CatalogItem item)
+    {
+        if (!await context.CatalogBrands.AnyAsync(b => b.Id == item.CatalogBrandId))
+        {
+            return TypedResults.Problem(
+                detail: $"Catalog brand with id {item.CatalogBrandId} does not exist.",
+                statusCode: StatusCodes.Status400BadRequest);
+        }
+
+        if (!await context.CatalogTypes.AnyAsync(t => t.Id == item.CatalogTypeId))
+        {
+            return TypedResults.Problem(
+                detail: $"Catalog type with id {item.CatalogTypeId} does not exist.",
+                statusCode: StatusCodes.Status400BadRequest);
+        }
+
+        return null;
     }
 
     private static string GetImageMimeTypeFromImageFileExtension(string extension) => extension switch
