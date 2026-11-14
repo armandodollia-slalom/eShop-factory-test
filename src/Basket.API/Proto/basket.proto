@@ -8,6 +8,9 @@ service Basket {
     rpc GetBasket(GetBasketRequest) returns (CustomerBasketResponse) {}
     rpc UpdateBasket(UpdateBasketRequest) returns (CustomerBasketResponse) {}
     rpc DeleteBasket(DeleteBasketRequest) returns (DeleteBasketResponse) {}
+    rpc SaveForLater(SaveForLaterRequest) returns (CustomerBasketResponse) {}
+    rpc MoveToCart(MoveToCartRequest) returns (CustomerBasketResponse) {}
+    rpc RemoveSavedItem(RemoveSavedItemRequest) returns (CustomerBasketResponse) {}
 }
 
 message GetBasketRequest {
@@ -15,6 +18,7 @@ message GetBasketRequest {
 
 message CustomerBasketResponse {
     repeated BasketItem items = 1;
+    repeated BasketItem saved_items = 2;
 }
 
 message BasketItem {
@@ -30,4 +34,16 @@ message DeleteBasketRequest {
 }
 
 message DeleteBasketResponse {
+}
+
+message SaveForLaterRequest {
+    int32 product_id = 1;
+}
+
+message MoveToCartRequest {
+    int32 product_id = 1;
+}
+
+message RemoveSavedItemRequest {
+    int32 product_id = 1;
 }

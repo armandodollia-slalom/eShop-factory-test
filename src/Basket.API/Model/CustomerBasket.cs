@@ -6,6 +6,8 @@ public class CustomerBasket
 
     public List<BasketItem> Items { get; set; } = [];
 
+    public List<BasketItem> SavedItems { get; set; } = [];
+
     public CustomerBasket() { }
 
     public CustomerBasket(string customerId)

@@ -17,6 +17,14 @@ public class RedisBasketRepository(ILogger<RedisBasketRepository> logger, IConne
 
     public async Task<bool> DeleteBasketAsync(string id)
     {
+        // Saved-for-later products outlive the cart: only the cart items are emptied while any are saved.
+        var basket = await GetBasketAsync(id);
+        if (basket is { SavedItems.Count: > 0 })
+        {
+            basket.Items = [];
+            return await _database.StringSetAsync(GetBasketKey(id), JsonSerializer.SerializeToUtf8Bytes(basket, BasketSerializationContext.Default.CustomerBasket));
+        }
+
         return await _database.KeyDeleteAsync(GetBasketKey(id));
     }
 
