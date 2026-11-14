@@ -64,6 +64,9 @@ public sealed class CatalogApiFixture : WebApplicationFactory<Program>, IAsyncLi
         _postgresConnectionString = await Postgres.Resource.GetConnectionStringAsync();
     }
 
+    /// <summary>A request with this header is sent as an anonymous caller: no test identity is attached.</summary>
+    public const string AnonymousHeader = "X-Test-Anonymous";
+
     private class AutoAuthorizeStartupFilter : IStartupFilter
     {
         public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next)
@@ -72,7 +75,10 @@ public sealed class CatalogApiFixture : WebApplicationFactory<Program>, IAsyncLi
             {
                 builder.Use((context, nextMiddleware) =>
                 {
-                    context.User.AddIdentity(new ClaimsIdentity([new Claim("sub", "catalog-functional-tests")], "tests"));
+                    if (!context.Request.Headers.ContainsKey(AnonymousHeader))
+                    {
+                        context.User.AddIdentity(new ClaimsIdentity([new Claim("sub", "catalog-functional-tests")], "tests"));
+                    }
                     return nextMiddleware(context);
                 });
                 next(builder);

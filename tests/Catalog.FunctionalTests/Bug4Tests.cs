@@ -1,0 +1,68 @@
+﻿using System.Net;
+using System.Net.Http.Json;
+using Asp.Versioning;
+using Asp.Versioning.Http;
+using eShop.Catalog.API.Infrastructure;
+using eShop.IntegrationEventLogEF;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace eShop.Catalog.FunctionalTests;
+
+// BUG-4: catalog create, update and delete require an authenticated caller; an anonymous price change publishes no event.
+[Trait("Story", "BUG-4")]
+[Collection(CatalogApiCollection.Name)]
+public sealed class Bug4Tests(CatalogApiFixture fixture)
+{
+    private const int ItemId = 1;
+    private const decimal SeededPrice = 109.99m;
+    private const string PriceChangedEvent = "ProductPriceChangedIntegrationEvent";
+
+    private async Task<int> CountPriceChangedEvents(CatalogContext context) =>
+        await context.Set<IntegrationEventLogEntry>()
+            .CountAsync(e => e.EventTypeName.Contains(PriceChangedEvent), TestContext.Current.CancellationToken);
+
+    [Fact]
+    [Trait("TestCase", "TC-BUG-4-06")]
+    public async Task TC_BUG_4_06_AnonymousPriceChangePublishesNoPriceChangedEvent()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        using var scope = fixture.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<CatalogContext>();
+
+        // Precondition: item 1 carries its seeded price (other tests in the collection change it), and N events are logged.
+        var seeded = await context.CatalogItems.SingleAsync(i => i.Id == ItemId, cancellationToken);
+        seeded.Price = SeededPrice;
+        await context.SaveChangesAsync(cancellationToken);
+        context.ChangeTracker.Clear();
+        var eventsBefore = await CountPriceChangedEvents(context);
+
+        // Step 1: anonymous v2 PUT that changes the price.
+        var handler = new ApiVersionHandler(new QueryStringApiVersionWriter(), new ApiVersion(2.0));
+        using var client = fixture.CreateDefaultClient(handler);
+        client.DefaultRequestHeaders.Add(CatalogApiFixture.AnonymousHeader, "true");
+        var body = new
+        {
+            id = 1,
+            name = "Wanderer Black Hiking Boots",
+            description = "Anonymous price change",
+            price = 1.00m,
+            pictureFileName = "1.webp",
+            catalogTypeId = 1,
+            catalogBrandId = 1,
+            availableStock = 100,
+            restockThreshold = 10,
+            maxStockThreshold = 200,
+            onReorder = false
+        };
+        var response = await client.PutAsJsonAsync($"/api/catalog/items/{ItemId}", body, cancellationToken);
+
+        // Step 2: no new ProductPriceChangedIntegrationEvent row. Step 3: the stored price is unchanged.
+        var eventsAfter = await CountPriceChangedEvents(context);
+        var stored = await context.CatalogItems.AsNoTracking().SingleAsync(i => i.Id == ItemId, cancellationToken);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.Equal(eventsBefore, eventsAfter);
+        Assert.Equal(SeededPrice, stored.Price);
+    }
+}
