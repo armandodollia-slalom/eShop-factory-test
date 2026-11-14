@@ -2,18 +2,18 @@
 story: BUG-5
 story-issue: "https://github.com/armandodollia-slalom/eShop-factory-test/issues/64"
 story-sha: dd60d09dd157
-plan-sha: 16dde264702b
+automation-sha: 16d9b0f216ae
+automation-plan-sha: aadf17670e57
+automation-score: 9
+automation-verified-at: "2026-11-14T13:37:54.543Z"
+plan-sha: aadf17670e57
 verified-score: 9
-verified-at: "2026-11-14T13:14:58.268Z"
+verified-at: "2026-11-14T13:32:53.593Z"
 verified-by: test-planner@476d82b5/27d172f2
-automation-sha: 1aaa91ba3966
-automation-plan-sha: 16dde264702b
-automation-score: 10
-automation-verified-at: "2026-11-14T13:23:37.386Z"
 ---
 # Test plan: BUG-5 [FE - WebApp] Open redirect after sign-in through a protocol-relative returnUrl
 
-Scope: the sign-in return URL handling on `/user/login` (`LogIn.razor` calling `eShop.WebApp.LocalReturnUrl.ToLocalOrRoot`). Off-site return URLs (`//host`, `/\host`, `\host`, `https://host`, control characters) must end at `/`; local and base-relative paths are kept; missing or empty goes to `/`. E2E cases prove the browser behaviour on the test stack; unit cases pin the helper rule exactly.
+Scope: the sign-in return URL handling on `/user/login` (`LogIn.razor` calling `eShop.WebApp.ReturnUrl.ToLocalOrRoot` in `src/WebApp/Extensions/ReturnUrl.cs`). Off-site return URLs (`//host`, `/\host`, `\host`, `https://host`, control characters) must end at `/`; local and base-relative paths are kept; missing or empty goes to `/`. E2E cases prove the browser behaviour on the test stack; unit cases pin the helper rule exactly.
 
 | ID | Title | Type | Layer | Covers |
 | --- | --- | --- | --- | --- |

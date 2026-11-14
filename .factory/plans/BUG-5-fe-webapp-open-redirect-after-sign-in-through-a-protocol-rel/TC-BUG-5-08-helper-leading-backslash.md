@@ -15,11 +15,11 @@ priority: P1
 
 ## Preconditions
 
-- Unit test project for the WebApp (MSTest, no services); calls the public static method `eShop.WebApp.LocalReturnUrl.ToLocalOrRoot(string?)`.
+- Unit test project for the WebApp (MSTest, no services); calls the public static method `eShop.WebApp.ReturnUrl.ToLocalOrRoot(string?)`.
 
 ## Steps
 
-1. Call `LocalReturnUrl.ToLocalOrRoot("\evil.example")` (backslash, evil.example).
+1. Call `ReturnUrl.ToLocalOrRoot("\evil.example")` (backslash, evil.example).
 
 ## Expected result
 

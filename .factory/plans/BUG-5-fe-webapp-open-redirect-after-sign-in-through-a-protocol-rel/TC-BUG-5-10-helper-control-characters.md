@@ -15,12 +15,12 @@ priority: P1
 
 ## Preconditions
 
-- Unit test project for the WebApp (MSTest, no services); calls the public static method `eShop.WebApp.LocalReturnUrl.ToLocalOrRoot(string?)`.
+- Unit test project for the WebApp (MSTest, no services); calls the public static method `eShop.WebApp.ReturnUrl.ToLocalOrRoot(string?)`.
 
 ## Steps
 
-1. Call `LocalReturnUrl.ToLocalOrRoot("/\t/evil.example")` (C# string literal: slash, TAB escape `\t`, slash, evil.example).
-2. Call `LocalReturnUrl.ToLocalOrRoot("/item/5\n")` (C# string literal with a trailing LF escape `\n`).
+1. Call `ReturnUrl.ToLocalOrRoot("/\t/evil.example")` (C# string literal: slash, TAB escape `\t`, slash, evil.example).
+2. Call `ReturnUrl.ToLocalOrRoot("/item/5\n")` (C# string literal with a trailing LF escape `\n`).
 
 ## Expected result
 
