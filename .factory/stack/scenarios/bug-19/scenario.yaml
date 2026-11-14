@@ -1,0 +1,4 @@
+description: BUG-19 catalog reference validation; needs only the seeded catalog (13 brands, 8 types, 101 items) and no extra rows.
+extends: default
+
+# No extra rows: cases use brand ids 1-13, type ids 1-8, item 1 and the absence of brand 999/14, type 998/999 and item 99999.

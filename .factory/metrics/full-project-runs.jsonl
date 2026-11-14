@@ -4,3 +4,5 @@
 {"ts":"2026-11-14T07:26:20.315Z","story":"ORD-1","unit":"tests/Ordering.UnitTests","why":"covers ordering-api","argv":"dotnet test --project tests/Ordering.UnitTests --no-build","status":0,"timedOut":false}
 {"ts":"2026-11-14T07:48:47.352Z","story":"ORD-1","unit":"tests/Ordering.FunctionalTests","why":"holds the story's tests","argv":"dotnet test --project tests/Ordering.FunctionalTests --no-build","status":0,"timedOut":false}
 {"ts":"2026-11-14T07:49:02.461Z","story":"ORD-1","unit":"tests/Ordering.UnitTests","why":"covers ordering-api","argv":"dotnet test --project tests/Ordering.UnitTests --no-build","status":0,"timedOut":false}
+{"ts":"2026-11-14T16:58:34.292Z","story":"BUG-19","unit":"tests/Application.UnitTests","why":"covers catalog-api","argv":"dotnet test --project tests/Application.UnitTests --no-build","status":0,"timedOut":false}
+{"ts":"2026-11-14T16:58:52.531Z","story":"BUG-19","unit":"tests/Catalog.FunctionalTests","why":"covers catalog-api","argv":"dotnet test --project tests/Catalog.FunctionalTests --no-build","status":0,"timedOut":false}
