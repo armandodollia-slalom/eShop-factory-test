@@ -1,0 +1,25 @@
+description: CHK-1 delivery note at checkout; alice has item 99 in her basket and no orders, bob has one order stored before the note column existed.
+extends: default
+
+# alice (50ddac7e-9b69-4d68-a91b-25100ef2e403, Pass123$) is ready to check out: one "Adventurer GPS Watch" (TC-CHK-1-10 to TC-CHK-1-13).
+# The WebApp reads her basket from Basket.API, which keeps it in Redis under /basket/<user id>.
+redis:
+  - key: /basket/50ddac7e-9b69-4d68-a91b-25100ef2e403
+    json:
+      buyerId: 50ddac7e-9b69-4d68-a91b-25100ef2e403
+      items:
+        - { id: "1", productId: 99, productName: Adventurer GPS Watch, unitPrice: 10.00, oldUnitPrice: 0, quantity: 1, pictureUrl: "" }
+
+# TC-CHK-1-09: an order row as written before the DeliveryNote column existed (the column is left out, so it is NULL).
+# It belongs to bob, not alice, so alice's own order list stays empty for the cases that place an order and read the single entry back.
+postgres:
+  orderingdb:
+    - table: ordering.buyers
+      rows:
+        - { Id: 9001, IdentityGuid: bc8b0071-21af-41ab-b1d2-15c4efc368df, Name: bob }
+    - table: ordering.orders
+      rows:
+        - { Id: 9001, BuyerId: 9001, OrderDate: "2026-01-15T10:00:00Z", OrderStatus: Submitted, Description: Legacy order stored before the delivery note, Address_Street: 1 Main St, Address_City: Seattle, Address_State: WA, Address_Country: USA, Address_ZipCode: "98101" }
+    - table: ordering.orderItems
+      rows:
+        - { Id: 9001, OrderId: 9001, ProductId: 99, ProductName: Adventurer GPS Watch, UnitPrice: 10.00, Units: 1, Discount: 0, PictureUrl: "" }
