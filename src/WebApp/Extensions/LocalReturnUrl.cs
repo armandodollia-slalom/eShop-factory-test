@@ -1,6 +1,6 @@
 ﻿namespace eShop.WebApp;
 
-public static class ReturnUrl
+public static class LocalReturnUrl
 {
     // Returns a local path to navigate to after sign-in, or "/" when the return URL could leave the site.
     // A local path has a single leading '/' not followed by '/' or '\' (the rule of MVC's Url.IsLocalUrl).

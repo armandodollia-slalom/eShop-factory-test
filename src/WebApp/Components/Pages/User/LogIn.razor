@@ -10,7 +10,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        Nav.NavigateTo(eShop.WebApp.ReturnUrl.ToLocalOrRoot(ReturnUrl));
+        Nav.NavigateTo(LocalReturnUrl.ToLocalOrRoot(ReturnUrl));
         await base.OnInitializedAsync();
     }
 

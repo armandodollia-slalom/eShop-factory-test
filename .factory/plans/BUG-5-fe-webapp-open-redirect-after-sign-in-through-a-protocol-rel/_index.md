@@ -13,7 +13,7 @@ automation-verified-at: "2026-11-14T13:23:37.386Z"
 ---
 # Test plan: BUG-5 [FE - WebApp] Open redirect after sign-in through a protocol-relative returnUrl
 
-Scope: the sign-in return URL handling on `/user/login` (`LogIn.razor` calling `eShop.WebApp.ReturnUrl.ToLocalOrRoot`). Off-site return URLs (`//host`, `/\host`, `\host`, `https://host`, control characters) must end at `/`; local and base-relative paths are kept; missing or empty goes to `/`. E2E cases prove the browser behaviour on the test stack; unit cases pin the helper rule exactly.
+Scope: the sign-in return URL handling on `/user/login` (`LogIn.razor` calling `eShop.WebApp.LocalReturnUrl.ToLocalOrRoot`). Off-site return URLs (`//host`, `/\host`, `\host`, `https://host`, control characters) must end at `/`; local and base-relative paths are kept; missing or empty goes to `/`. E2E cases prove the browser behaviour on the test stack; unit cases pin the helper rule exactly.
 
 | ID | Title | Type | Layer | Covers |
 | --- | --- | --- | --- | --- |
