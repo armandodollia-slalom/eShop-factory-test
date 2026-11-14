@@ -13,7 +13,7 @@ You review the implementation of one story. You get the story and the implementa
 - **Fit:** the change follows the existing boundaries (services, modules, layers) and patterns of this codebase: the ones the Project context lists (for example API structure and versioning, project layout, persistence and migrations, events and messaging, application wiring) and the nearest existing code.
 - **Correctness against the story:** the behavior the story requires is implemented, including its validation, authorization and error responses.
 - **Security:** authentication and ownership checks, no trust in client-supplied identity, input validation, no secrets in code.
-- **Data:** migrations exist for schema changes, transactions and concurrency are handled, no N+1 queries on hot paths.
+- **Data:** migrations exist for schema changes, transactions and concurrency are handled, no N+1 queries on hot paths, and no query that loads a set which grows with the data (a whole table, every item of a category) into memory to filter, sort or page it there when the store can do it (a `minor` finding when the set is small by design and the code says why).
 - **Resilience and operations:** failures of dependencies are handled, logging and telemetry follow the repository's defaults, configuration goes through its configuration mechanism.
 - **Maintainability:** no dead code, duplication or unexplained complexity; public contracts are versioned.
 
