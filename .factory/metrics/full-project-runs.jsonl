@@ -18,3 +18,7 @@
 {"ts":"2026-11-14T22:46:18.124Z","story":"BUG-4","unit":"tests/Catalog.FunctionalTests","why":"holds the story's tests","argv":"dotnet test --project tests/Catalog.FunctionalTests --no-build","status":0,"timedOut":false}
 {"ts":"2026-11-14T22:46:33.354Z","story":"BUG-4","unit":"tests/eShop.AppHost.UnitTests","why":"covers eshop-apphost","argv":"dotnet test --project tests/eShop.AppHost.UnitTests --no-build","status":0,"timedOut":false}
 {"ts":"2026-11-14T22:47:09.933Z","story":"BUG-4","unit":"tests/Ordering.FunctionalTests","why":"covers identity-api","argv":"dotnet test --project tests/Ordering.FunctionalTests --no-build","status":0,"timedOut":false}
+{"ts":"2026-11-14T22:53:48.352Z","story":"BUG-4","unit":"tests/Application.UnitTests","why":"holds the story's tests","argv":"dotnet test --project tests/Application.UnitTests --no-build","status":0,"timedOut":false}
+{"ts":"2026-11-14T22:53:57.026Z","story":"BUG-4","unit":"tests/Catalog.FunctionalTests","why":"holds the story's tests","argv":"dotnet test --project tests/Catalog.FunctionalTests --no-build","status":0,"timedOut":false}
+{"ts":"2026-11-14T22:54:02.260Z","story":"BUG-4","unit":"tests/eShop.AppHost.UnitTests","why":"covers eshop-apphost","argv":"dotnet test --project tests/eShop.AppHost.UnitTests --no-build","status":0,"timedOut":false}
+{"ts":"2026-11-14T22:54:20.642Z","story":"BUG-4","unit":"tests/Ordering.FunctionalTests","why":"covers identity-api","argv":"dotnet test --project tests/Ordering.FunctionalTests --no-build","status":0,"timedOut":false}
