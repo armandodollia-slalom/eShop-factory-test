@@ -145,12 +145,24 @@
 @media only screen and (max-width: 480px) {
     .orders-item {
         display: flex;
-        gap: 1rem;
+        gap: 0.5rem 1rem;
         flex-wrap: wrap;
     }
 
     .orders-item > div {
         flex: 1 0 0;
         min-width: auto;
+    }
+
+    /* A full-width break before Total: Number, Date and Items always share line 1 and Total and Status line 2,
+       so every row and the header wrap the same way. The break is its own empty line, hence the halved row gap. */
+    .orders-item::after {
+        content: "";
+        flex-basis: 100%;
+        order: 1;
+    }
+
+    .orders-item > div:nth-child(n + 4) {
+        order: 2;
     }
 }

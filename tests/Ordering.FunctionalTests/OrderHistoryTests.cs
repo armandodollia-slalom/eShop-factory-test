@@ -1,6 +1,5 @@
 ﻿using System.Net;
 using System.Text.Json;
-using System.Threading;
 using Asp.Versioning;
 using Asp.Versioning.Http;
 using eShop.Ordering.Infrastructure;
@@ -23,7 +22,7 @@ public sealed class OrderHistoryTests
     private const int AliceOrderOneLine = 102;
     private const int BobOrder = 103;
 
-    private static readonly SemaphoreSlim SeedLock = new(1, 1);
+    private static readonly System.Threading.SemaphoreSlim SeedLock = new(1, 1);
     private static bool s_seeded;
 
     private readonly OrderingApiFixture _fixture;

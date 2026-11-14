@@ -107,6 +107,9 @@ test('TC-ORD-1-08 order history lists only the signed-in user\'s orders', async 
     await expect(orderRow(page, ALICE_ORDER_WITH_ONE_ITEM).locator('.order-items')).toHaveText(/^\s*1 item\s*$/);
     await expect(orderRow(page, BOB_ORDER)).toHaveCount(0);
     await demo.highlight(page.locator('.orders-list'), 'Alice sees orders 101 and 102 only');
-    await demo.absent(orderRow(page, ALICE_ORDER_WITH_ONE_ITEM), 'No row for order 103');
+    await demo.absent(page.locator('.orders-list'), 'No row for order 103');
+    // The recording only keeps an overlay once a later frame follows it, so close with a caption.
+    await demo.caption("Bob's order 103 is not listed for alice");
+    await demo.pause();
   });
 });
