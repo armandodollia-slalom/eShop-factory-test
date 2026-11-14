@@ -91,7 +91,7 @@
 
             @{
                 var totalPages = (int)Math.Ceiling(1.0 * catalogResult.Count / PageSize);
-                var current = Page.GetValueOrDefault(1);
+                var current = CurrentPage;
             }
             @if (totalPages > 1)
             {
@@ -161,6 +161,9 @@
 
     CatalogResult? catalogResult;
 
+    // Pages are 1-based; a missing, zero or negative page means the first page.
+    private int CurrentPage => Math.Max(Page.GetValueOrDefault(1), 1);
+
     static IEnumerable<int> GetPageTokens(int totalPages, int current)
     {
         var pages = new SortedSet<int> { 1, totalPages };
@@ -196,7 +199,7 @@
     protected override async Task OnInitializedAsync()
     {
         catalogResult = await CatalogService.GetCatalogItems(
-            Page.GetValueOrDefault(1) - 1,
+            CurrentPage - 1,
             PageSize,
             BrandIds,
             TypeIds);
