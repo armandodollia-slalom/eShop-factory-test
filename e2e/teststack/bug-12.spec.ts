@@ -72,19 +72,7 @@ test('TC-BUG-12-02 ?page=-1 shows the first catalog page', async ({ page, demo }
 });
 
 test('TC-BUG-12-03 ?page=-100 shows the first catalog page', async ({ page, demo }) => {
-  await test.step('Open /?page=-100', async () => {
-    await openPage(page, '?page=-100');
-  });
-  await test.step('Nine cards, no skeleton, no error bar', async () => {
-    await expect(page.locator('.catalog-product')).toHaveCount(PAGE_SIZE);
-    await expect(page.locator('.catalog-card-skeleton')).toHaveCount(0);
-    await expect(page.getByText('An unhandled error has occurred.')).not.toBeVisible();
-    await demo.highlight(page.locator('.catalog-product').first(), 'first catalog page shown for ?page=-100');
-  });
-  const names = await productNames(page);
-  await test.step('Names equal those of ?page=1', async () => {
-    expect(names).toEqual(await firstPageNames(page));
-  });
+  await expectClampedToFirstPage(page, demo, '?page=-100');
 });
 
 test('TC-BUG-12-04 ?page=0 pagination bar shows page 1 active with Previous disabled', async ({ page, demo }) => {
