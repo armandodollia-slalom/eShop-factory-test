@@ -512,12 +512,16 @@ public static class CatalogApi
     {
         if (!await context.CatalogBrands.AnyAsync(b => b.Id == item.CatalogBrandId))
         {
-            return TypedResults.Problem($"Catalog brand with id {item.CatalogBrandId} does not exist.", statusCode: StatusCodes.Status400BadRequest);
+            return TypedResults.Problem(
+                detail: $"Catalog brand with id {item.CatalogBrandId} does not exist.",
+                statusCode: StatusCodes.Status400BadRequest);
         }
 
         if (!await context.CatalogTypes.AnyAsync(t => t.Id == item.CatalogTypeId))
         {
-            return TypedResults.Problem($"Catalog type with id {item.CatalogTypeId} does not exist.", statusCode: StatusCodes.Status400BadRequest);
+            return TypedResults.Problem(
+                detail: $"Catalog type with id {item.CatalogTypeId} does not exist.",
+                statusCode: StatusCodes.Status400BadRequest);
         }
 
         return null;
