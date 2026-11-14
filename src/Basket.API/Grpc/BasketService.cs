@@ -5,6 +5,7 @@ using eShop.Basket.API.Model;
 
 namespace eShop.Basket.API.Grpc;
 
+[Authorize(Policy = Extensions.Extensions.BasketScopePolicy)]
 public class BasketService(
     IBasketRepository repository,
     ILogger<BasketService> logger) : Basket.BasketBase
