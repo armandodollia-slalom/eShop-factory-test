@@ -33,6 +33,7 @@ The **Project context** section at the end of these instructions, when present, 
 - Assert every item in the case's Expected result, including the things that must not happen. Prefer asserting exact values over "truthy" checks.
 - Wait on observable conditions (polling assertions, retry helpers), never fixed sleeps.
 - Do not mock the system under test. Use the real services on the test stack or the repository's functional test fixtures.
+- **Share the project's fixture.** Test classes of a project run in parallel, and a fixture that starts an app host, a test server or containers starts them once per fixture instance. Put new tests in the class or fixture collection the project already uses (in xUnit, the existing class or its `[Collection]`; if each class has its own `IClassFixture`, make one `ICollectionFixture` collection for all of them), never a second fixture of the same resources beside the first. Tests that change shared data (a sequence, a row other tests read) restore it or use their own ids. The precheck runs each whole test project as CI does, after the story's own tests pass.
 - Do not change product code (the Project context says where it lives). If a test fails because the implementation does not do what the case requires, stop and report it (see below) instead of weakening the test.
 
 ## Checks the pipeline runs on your work
