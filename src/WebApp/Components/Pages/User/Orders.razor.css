@@ -70,7 +70,7 @@
 /* One column template shared by the header and every row, so each cell lines up under its header. */
 .orders-item {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 0.8fr) minmax(11.5rem, 1.6fr) minmax(0, 0.8fr) minmax(0, 1fr) minmax(0, 1.2fr);
     align-items: center;
     gap: 1.75rem;
     align-self: stretch;
@@ -80,7 +80,6 @@
 
 .orders-item > div {
     min-width: 0;
-    overflow-wrap: anywhere;
 }
 
 .orders-header {
@@ -104,10 +103,12 @@
 
 .order-date {
     color: var(--color-ink-2);
+    white-space: nowrap;
 }
 
 .order-items {
     color: var(--color-ink-2);
+    white-space: nowrap;
 }
 
 .order-total {
@@ -143,19 +144,13 @@
 
 @media only screen and (max-width: 480px) {
     .orders-item {
-        gap: 0.5rem;
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
     }
 
-    .order-number,
-    .order-date,
-    .order-items,
-    .order-total {
-        font-size: var(--text-sm);
-    }
-
-    .order-status .status {
-        padding: 0.3rem 0.5rem;
-        white-space: normal;
-        text-align: center;
+    .orders-item > div {
+        flex: 1 0 0;
+        min-width: auto;
     }
 }

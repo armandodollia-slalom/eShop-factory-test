@@ -41,6 +41,26 @@ test('TC-ORD-1-05 Items column sits between Date and Total and shows 3 items', a
     await expect(cell).toHaveText('3 items');
     await demo.highlight(orderRow(page, ALICE_ORDER_WITH_THREE_ITEMS), 'Order 101: 3 items');
   });
+  await test.step('At phone width (375px) the row cells wrap onto new lines without breaking the date or status', async () => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    const row = orderRow(page, ALICE_ORDER_WITH_THREE_ITEMS);
+    await expect(row).toHaveCSS('flex-wrap', 'wrap');
+    const firstCell = await row.locator('.order-number').boundingBox();
+    const lastCell = await row.locator('.order-status').boundingBox();
+    expect(lastCell!.y).toBeGreaterThan(firstCell!.y);
+    for (const cell of ['.order-date', '.order-items', '.order-status .status']) {
+      // Number of distinct text lines the cell's text occupies.
+      const lines = await row.locator(cell).evaluate((el) => {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        return new Set(Array.from(range.getClientRects(), (r) => Math.round(r.top))).size;
+      });
+      expect(lines, `${cell} stays on one line`).toBe(1);
+    }
+    const pageWidth = await page.evaluate(() => document.documentElement.scrollWidth);
+    expect(pageWidth).toBeLessThanOrEqual(375);
+    await demo.highlight(row, 'Phone width: cells wrap onto new lines');
+  });
 });
 
 test('TC-ORD-1-06 one-unit order shows 1 item', async ({ page, demo }) => {
