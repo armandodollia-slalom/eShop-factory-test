@@ -142,6 +142,22 @@
     align-self: stretch;
 }
 
+.add-to-cart .button:disabled {
+    opacity: 0.45;
+    box-shadow: none;
+}
+
+.item-stock {
+    align-self: flex-start;
+    padding: 0.3rem 0.7rem;
+    border-radius: var(--radius-pill, 999px);
+    background: var(--color-ink, #141414);
+    color: #ffffff;
+    font-size: var(--text-sm);
+    font-weight: 700;
+    line-height: 1.2;
+}
+
 .add-to-cart .button svg {
     width: 1.35rem;
     height: 1.35rem;

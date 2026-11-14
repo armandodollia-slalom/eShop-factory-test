@@ -186,6 +186,35 @@
     border-style: dashed;
 }
 
+.catalog-search-availability {
+    margin: 0;
+}
+
+.catalog-search-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    color: var(--color-ink-2);
+    font-size: var(--text-sm);
+    cursor: pointer;
+}
+
+.catalog-search-check:hover {
+    color: var(--color-ink);
+}
+
+.catalog-search-check input {
+    width: 1.05rem;
+    height: 1.05rem;
+    margin: 0;
+    accent-color: var(--color-ink);
+    cursor: pointer;
+}
+
+.catalog-search-apply {
+    margin-left: 0.75rem;
+}
+
 /* Tablet and mobile: full-width, static (not sticky), collapsible via the summary. */
 @media only screen and (max-width: 1024px) {
     .catalog-search {

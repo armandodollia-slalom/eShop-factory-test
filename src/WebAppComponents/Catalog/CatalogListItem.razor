@@ -12,6 +12,10 @@
             {
                 <span class="catalog-product-brand">@brand.Brand</span>
             }
+            @if (Item.IsOutOfStock)
+            {
+                <span class="catalog-product-stock">Out of stock</span>
+            }
         </span>
         <span class='catalog-product-content'>
             <span class='name'>@Item.Name</span>
