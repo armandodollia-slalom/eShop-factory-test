@@ -49,7 +49,7 @@ test('TC-BUG-5-01 protocol-relative returnUrl does not leave the site after sign
   await test.step('the browser ends on the WebApp root', async () => {
     await expect(page).toHaveURL(`${BASE_URL}/`);
     const landed = new URL(page.url());
-    expect(landed.origin).toBe(new URL(BASE_URL!).origin);
+    expect(landed.origin).toBe(new URL(`${BASE_URL}/`).origin);
     expect(landed.pathname).toBe('/');
     await showLanding(page, demo, 'Ready for a new adventure?');
     expect(evil).toEqual([]);
