@@ -43,6 +43,7 @@ When the harness could not render the mockups, read the `.dc.html` sources (the 
 2. The mockup screens and states the subtask builds (above).
 3. Nothing the subtask touches is visibly broken (layout, console errors on the pages involved).
 4. Changed signatures have every caller updated (references, above).
+5. **Scope and diff hygiene.** Nothing beyond the subtask: existing pages, components or styles the subtask does not need must look and lay out as before, at desktop width and at phone width (375 px); a visible change to them is a finding (`major` when users see a regression, else `minor`). Report whitespace-only or formatting edits to otherwise unchanged lines, and idioms of the file replaced by others, as `minor`.
 
 ## Judging, and the implementer's disputes
 
