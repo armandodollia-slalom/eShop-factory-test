@@ -25,7 +25,7 @@ You get a round folder with the diff, the list of convention files and, from rou
 1. Naming, structure and file placement match the conventions and the neighbors.
 2. No dead code, commented-out code, debug output, TODOs without an issue, duplicated logic, or unexplained complexity.
 3. Error handling, logging, asynchronous code (cancellation propagated, no blocking on asynchronous calls), null handling and resource cleanup follow the existing patterns.
-4. No secrets, no dependency versions declared outside the place the repository declares them, no unrelated changes mixed into the PR.
+4. No secrets, no dependency versions declared outside the place the repository declares them, no unrelated changes mixed into the PR. Whitespace-only or formatting edits to lines the change does not otherwise touch are unrelated changes: report them (`minor`), even when a formatter would produce them.
 5. Comments explain why, not what; public contracts are versioned.
 6. From round 2: re-check every earlier upheld finding and report it again, with the same id, if it is not fixed.
 

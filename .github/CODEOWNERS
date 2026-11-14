@@ -6,6 +6,7 @@
 /.claude/agents/bug-triage.md @armandodollia-slalom
 /.claude/agents/escalation-questions.md @armandodollia-slalom
 /.claude/agents/implementer.md @armandodollia-slalom
+/.claude/agents/lessons-check.md @armandodollia-slalom
 /.claude/agents/pair-implementer.md @armandodollia-slalom
 /.claude/agents/pair-ui-verifier.md @armandodollia-slalom
 /.claude/agents/pair-verifier.md @armandodollia-slalom
@@ -35,6 +36,7 @@
 /.github/agents/bug-triage.agent.md @armandodollia-slalom
 /.github/agents/escalation-questions.agent.md @armandodollia-slalom
 /.github/agents/implementer.agent.md @armandodollia-slalom
+/.github/agents/lessons-check.agent.md @armandodollia-slalom
 /.github/agents/pair-implementer.agent.md @armandodollia-slalom
 /.github/agents/pair-ui-verifier.agent.md @armandodollia-slalom
 /.github/agents/pair-verifier.agent.md @armandodollia-slalom
