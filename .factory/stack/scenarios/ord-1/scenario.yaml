@@ -1,0 +1,27 @@
+description: Order history of ORD-1 - alice (orders 101, 102), bob (order 103) and carol (no orders).
+extends: default
+
+postgres:
+  identitydb:
+    # carol: same password hash as alice (Pass123$), no orders
+    - sql: identitydb.sql
+  orderingdb:
+    # buyers: the ordering side of alice and bob, keyed by their identity ids
+    - table: ordering.buyers
+      rows:
+        - { Id: 1, IdentityGuid: 50ddac7e-9b69-4d68-a91b-25100ef2e403, Name: alice }
+        - { Id: 2, IdentityGuid: bc8b0071-21af-41ab-b1d2-15c4efc368df, Name: bob }
+    - table: ordering.orders
+      rows:
+        # alice order 101: itemCount 3 (2 units + 1 unit over two lines), total 25.00
+        - { Id: 101, OrderDate: "2026-01-10T10:00:00Z", Description: ord-1 order 101, BuyerId: 1, OrderStatus: Submitted, Address_Street: 1 Main St, Address_City: Redmond, Address_State: WA, Address_Country: U.S., Address_ZipCode: "98052" }
+        # alice order 102: itemCount 1 (one line of 1 unit), total 12.50
+        - { Id: 102, OrderDate: "2026-01-11T10:00:00Z", Description: ord-1 order 102, BuyerId: 1, OrderStatus: Submitted, Address_Street: 1 Main St, Address_City: Redmond, Address_State: WA, Address_Country: U.S., Address_ZipCode: "98052" }
+        # bob order 103: itemCount 4 (one line of 4 units), total 32.00
+        - { Id: 103, OrderDate: "2026-01-12T10:00:00Z", Description: ord-1 order 103, BuyerId: 2, OrderStatus: Submitted, Address_Street: 2 Oak Ave, Address_City: Redmond, Address_State: WA, Address_Country: U.S., Address_ZipCode: "98052" }
+    - table: ordering.orderItems
+      rows:
+        - { Id: 1001, OrderId: 101, ProductId: 1, ProductName: Line A, PictureUrl: 1.webp, UnitPrice: 10.00, Discount: 0, Units: 2 }
+        - { Id: 1002, OrderId: 101, ProductId: 2, ProductName: Line B, PictureUrl: 2.webp, UnitPrice: 5.00, Discount: 0, Units: 1 }
+        - { Id: 1003, OrderId: 102, ProductId: 3, ProductName: Single line, PictureUrl: 3.webp, UnitPrice: 12.50, Discount: 0, Units: 1 }
+        - { Id: 1004, OrderId: 103, ProductId: 4, ProductName: Bob line, PictureUrl: 4.webp, UnitPrice: 8.00, Discount: 0, Units: 4 }

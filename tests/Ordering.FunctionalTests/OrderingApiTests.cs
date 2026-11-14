@@ -10,7 +10,8 @@ using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace eShop.Ordering.FunctionalTests;
 
-public sealed class OrderingApiTests : IClassFixture<OrderingApiFixture>
+[Collection(OrderingApiCollection.Name)]
+public sealed class OrderingApiTests
 {
     private readonly WebApplicationFactory<Program> _webApplicationFactory;
     private readonly HttpClient _httpClient;
