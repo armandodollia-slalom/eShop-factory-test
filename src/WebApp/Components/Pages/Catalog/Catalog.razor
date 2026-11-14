@@ -159,8 +159,11 @@
     [SupplyParameterFromQuery(Name = "type")]
     public int[]? TypeIds { get; set; }
 
+    // Bound as a string and parsed leniently so a malformed value in the URL is ignored instead of failing the page.
     [SupplyParameterFromQuery(Name = "onlyAvailable")]
-    public bool OnlyAvailable { get; set; }
+    public string? OnlyAvailableQuery { get; set; }
+
+    private bool OnlyAvailable => bool.TryParse(OnlyAvailableQuery, out var onlyAvailable) && onlyAvailable;
 
     CatalogResult? catalogResult;
 
