@@ -70,10 +70,10 @@ public class BasketService(
     }
 
     public override Task<CustomerBasketResponse> SaveForLater(SaveForLaterRequest request, ServerCallContext context)
-        => MoveProduct(request.ProductId, context, static basket => (basket.Items, basket.SavedItems), isSaving: true);
+        => MoveProduct(request.ProductId, context, static basket => (basket.Items, basket.SavedItems), $"Product {request.ProductId} is not in the cart");
 
     public override Task<CustomerBasketResponse> MoveToCart(MoveToCartRequest request, ServerCallContext context)
-        => MoveProduct(request.ProductId, context, static basket => (basket.SavedItems, basket.Items), isSaving: false);
+        => MoveProduct(request.ProductId, context, static basket => (basket.SavedItems, basket.Items), $"Product {request.ProductId} is not saved for later");
 
     public override async Task<CustomerBasketResponse> RemoveSavedItem(RemoveSavedItemRequest request, ServerCallContext context)
     {
@@ -94,7 +94,7 @@ public class BasketService(
         int productId,
         ServerCallContext context,
         Func<CustomerBasket, (List<Model.BasketItem> Source, List<Model.BasketItem> Target)> select,
-        bool isSaving)
+        string notFoundMessage)
     {
         var userId = GetRequiredUserId(context);
         var basket = await repository.GetBasketAsync(userId);
@@ -103,12 +103,7 @@ public class BasketService(
         var item = source?.FirstOrDefault(i => i.ProductId == productId);
         if (item is null)
         {
-            if (isSaving)
-            {
-                ThrowNotFound($"Product {productId} is not in the cart");
-            }
-
-            ThrowSavedItemNotFound(productId);
+            ThrowNotFound(notFoundMessage);
         }
 
         source.Remove(item);

@@ -34,9 +34,11 @@ const savedLine = (page: Page, name: string) => savedLines(page).filter({ has: p
 const savedHeading = (page: Page, count: number) => page.getByRole('heading', { name: `Saved for later (${count})`, exact: true });
 const orderTotal = (page: Page) => page.locator('.cart-summary-total div').last();
 const badge = (page: Page) => page.locator('.cart-button-count');
-// Tall viewport, so the place below the last block where the section would follow is inside the frame.
+// Scroll the anchor's bottom edge to the middle of the viewport, so the place below it where the section would
+// follow is inside the frame at the recorded scale (resizing the viewport shrinks the video frame instead).
 async function absentBelow(page: Page, demo: { absent: (anchor: Locator, label: string) => Promise<void> }, anchor: Locator, label: string) {
-  await page.setViewportSize({ width: 1280, height: 1600 });
+  await anchor.scrollIntoViewIfNeeded();
+  await anchor.evaluate(el => window.scrollBy(0, el.getBoundingClientRect().bottom - window.innerHeight / 2));
   await demo.absent(anchor, label);
 }
 
@@ -191,6 +193,7 @@ test('TC-CART-1-20 placing an order orders only cart items and keeps the saved p
       await page.goto(`${BASE_URL}/cart`);
       await expect(page.getByText('Your shopping bag is empty')).toBeVisible({ timeout: 1000 });
     }).toPass();
+    await demo.highlight(page.getByText('Your shopping bag is empty'), 'Cart is empty after the order');
     await expect(savedHeading(page, 1)).toBeVisible();
     await expect(savedLines(page)).toHaveCount(1);
     await expect(savedLine(page, 'Cedar Headlamp').locator('.quantity')).toHaveText('Quantity: 3');

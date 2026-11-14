@@ -22,7 +22,7 @@ public class RedisBasketRepository(ILogger<RedisBasketRepository> logger, IConne
         if (basket is { SavedItems.Count: > 0 })
         {
             basket.Items = [];
-            return await _database.StringSetAsync(GetBasketKey(id), JsonSerializer.SerializeToUtf8Bytes(basket, BasketSerializationContext.Default.CustomerBasket));
+            return await SaveBasketAsync(id, basket);
         }
 
         return await _database.KeyDeleteAsync(GetBasketKey(id));
@@ -41,8 +41,7 @@ public class RedisBasketRepository(ILogger<RedisBasketRepository> logger, IConne
 
     public async Task<CustomerBasket> UpdateBasketAsync(CustomerBasket basket)
     {
-        var json = JsonSerializer.SerializeToUtf8Bytes(basket, BasketSerializationContext.Default.CustomerBasket);
-        var created = await _database.StringSetAsync(GetBasketKey(basket.BuyerId), json);
+        var created = await SaveBasketAsync(basket.BuyerId, basket);
 
         if (!created)
         {
@@ -54,6 +53,9 @@ public class RedisBasketRepository(ILogger<RedisBasketRepository> logger, IConne
         logger.LogInformation("Basket item persisted successfully.");
         return await GetBasketAsync(basket.BuyerId);
     }
+
+    private Task<bool> SaveBasketAsync(string id, CustomerBasket basket)
+        => _database.StringSetAsync(GetBasketKey(id), JsonSerializer.SerializeToUtf8Bytes(basket, BasketSerializationContext.Default.CustomerBasket));
 }
 
 [JsonSerializable(typeof(CustomerBasket))]

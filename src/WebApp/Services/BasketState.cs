@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using Grpc.Core;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using eShop.WebAppComponents.Catalog;
@@ -80,26 +81,14 @@ public class BasketState(
         }
     }
 
-    public async Task SaveForLaterAsync(int productId)
-    {
-        await basketService.SaveForLaterAsync(productId);
-        _cachedBasket = null;
-        await NotifyChangeSubscribersAsync();
-    }
+    public Task SaveForLaterAsync(int productId)
+        => ChangeSavedItemsAsync(() => basketService.SaveForLaterAsync(productId));
 
-    public async Task MoveToCartAsync(int productId)
-    {
-        await basketService.MoveToCartAsync(productId);
-        _cachedBasket = null;
-        await NotifyChangeSubscribersAsync();
-    }
+    public Task MoveToCartAsync(int productId)
+        => ChangeSavedItemsAsync(() => basketService.MoveToCartAsync(productId));
 
-    public async Task RemoveSavedItemAsync(int productId)
-    {
-        await basketService.RemoveSavedItemAsync(productId);
-        _cachedBasket = null;
-        await NotifyChangeSubscribersAsync();
-    }
+    public Task RemoveSavedItemAsync(int productId)
+        => ChangeSavedItemsAsync(() => basketService.RemoveSavedItemAsync(productId));
 
     public async Task CheckoutAsync(BasketCheckoutInfo checkoutInfo)
     {
@@ -132,6 +121,22 @@ public class BasketState(
             Items: [.. orderItems]);
         await orderingService.CreateOrder(request, checkoutInfo.RequestId);
         await DeleteBasketAsync();
+    }
+
+    private async Task ChangeSavedItemsAsync(Func<Task> change)
+    {
+        try
+        {
+            await change();
+        }
+        catch (RpcException ex) when (ex.StatusCode == StatusCode.NotFound)
+        {
+            // The page was stale (another tab or a double submit already changed this product):
+            // ignore it, like SetQuantityAsync ignores a missing row, and show the current basket.
+        }
+
+        _cachedBasket = null;
+        await NotifyChangeSubscribersAsync();
     }
 
     private Task NotifyChangeSubscribersAsync()

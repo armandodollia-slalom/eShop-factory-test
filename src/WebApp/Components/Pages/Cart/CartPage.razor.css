@@ -403,6 +403,16 @@
     color: var(--color-ink);
 }
 
+/* Keep the Saved for later section close to the cart (or the empty-cart message) above it */
+.cart:has(+ .cart-saved) {
+    padding-bottom: 1.5rem;
+}
+
+.cart:has(+ .cart-saved) .cart-empty {
+    margin-bottom: 0;
+    padding-bottom: 1rem;
+}
+
 .cart-saved {
     max-width: var(--content-max);
     margin: 0 auto;
