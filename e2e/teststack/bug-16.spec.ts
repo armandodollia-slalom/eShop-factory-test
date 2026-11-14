@@ -1,5 +1,4 @@
 import { test, expect } from '../demo';
-import { getAccessToken } from './identity-token';
 import { url } from './ports';
 import { loadScenario } from './scenario';
 
@@ -20,7 +19,25 @@ test.beforeAll(() => {
 
 // The "webhooksswaggerui" client uses the implicit flow: signing in as alice returns an access token in the redirect fragment.
 test.beforeAll(async ({ browser }) => {
-  token = await getAccessToken(browser, { clientId: 'webhooksswaggerui', scope: 'webhooks', redirectUri: REDIRECT, state: 'bug16' });
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const authorize = new URL(`${url('identity')}/connect/authorize`);
+  authorize.search = new URLSearchParams({
+    client_id: 'webhooksswaggerui',
+    response_type: 'token',
+    scope: 'webhooks',
+    redirect_uri: REDIRECT,
+    state: 'bug16',
+  }).toString();
+  await page.goto(authorize.toString());
+  await page.getByPlaceholder('Username').fill('alice');
+  await page.getByPlaceholder('Password').fill('Pass123$');
+  // The 302 from /connect/authorize/callback carries the token in its Location fragment; the target host is unreachable, so read it from the response.
+  const callback = page.waitForResponse((r) => r.url().includes('/connect/authorize/callback') && r.status() === 302);
+  await page.getByRole('button', { name: 'Login' }).click();
+  const location = (await callback).headers()['location'] ?? '';
+  token = new URLSearchParams(location.split('#')[1] ?? '').get('access_token') ?? '';
+  await context.close();
   expect(token).not.toBe('');
 });
 
