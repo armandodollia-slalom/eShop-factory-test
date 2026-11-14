@@ -109,7 +109,7 @@ public static class OrdersApi
         // EmptyBodyBehavior.Allow lets a missing body reach the handler as null, so it gets a problem response instead of a framework error.
         if (command?.Items is null || !command.Items.Any())
         {
-            return TypedResults.Problem("The order draft must contain at least one item.", statusCode: StatusCodes.Status400BadRequest);
+            return TypedResults.Problem(detail: "The order draft must contain at least one item.", statusCode: StatusCodes.Status400BadRequest);
         }
 
         services.Logger.LogInformation(

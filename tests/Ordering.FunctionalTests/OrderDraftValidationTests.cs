@@ -34,7 +34,6 @@ public sealed class OrderDraftValidationTests
 
         // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        Assert.NotEqual(HttpStatusCode.InternalServerError, response.StatusCode);
         Assert.False(string.IsNullOrWhiteSpace(body));
     }
 
