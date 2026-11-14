@@ -16,7 +16,7 @@ public class Order
     public Buyer Buyer { get; }
 
     public OrderStatus OrderStatus { get; private set; }
-
+    
     public string Description { get; private set; }
 
     public string DeliveryNote { get; private set; }
@@ -31,7 +31,7 @@ public class Order
     // so OrderItems cannot be added from "outside the AggregateRoot" directly to the collection,
     // but only through the method OrderAggregateRoot.AddOrderItem() which includes behavior.
     private readonly List<OrderItem> _orderItems;
-
+   
     public IReadOnlyCollection<OrderItem> OrderItems => _orderItems.AsReadOnly();
 
     public int? PaymentId { get; private set; }
@@ -98,7 +98,7 @@ public class Order
         BuyerId = buyerId;
         PaymentId = paymentId;
     }
-
+    
     public void SetAwaitingValidationStatus()
     {
         if (OrderStatus == OrderStatus.Submitted)
