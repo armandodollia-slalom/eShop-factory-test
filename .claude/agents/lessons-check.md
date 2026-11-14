@@ -13,8 +13,10 @@ Lessons files hold short rules learned from reviews and verifier findings. They 
 
 The task gives you, per agent, its definition and its lessons file. For each lesson rule (`## L<n>: ...`), decide whether any part of it contradicts the definition.
 
-- **Contradicts:** the rule, followed as written, makes the agent break a rule of its definition. Example of the kind: the definition says to report every unused import; a lesson says never to report unused imports. A rule that contradicts only in one bullet still contradicts.
-- **Does not contradict:** the rule adds a case the definition does not cover, narrows how to apply it, or repeats it. When unsure, it does not contradict.
+Read each rule as the agent will follow it: literally, after its definition, with no one to ask. A rule that can be read in two ways will sometimes be followed in the way that breaks the definition.
+
+- **Contradicts:** following the rule as written, in at least one case it plainly covers, makes the agent skip or break a rule of its definition. Example of the kind: the definition says to report every unused import; a lesson says not to report unused imports that a tool would remove. A rule that contradicts only in one bullet still contradicts.
+- **Does not contradict:** the rule adds a case the definition does not cover, narrows how to apply it without dropping anything the definition requires, or repeats it.
 
 Quote the definition's rule you rely on, word for word, so a person can check it.
 
