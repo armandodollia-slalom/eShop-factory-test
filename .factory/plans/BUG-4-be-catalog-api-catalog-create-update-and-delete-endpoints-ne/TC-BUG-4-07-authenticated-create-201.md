@@ -2,7 +2,7 @@
 id: TC-BUG-4-07
 type: happy
 layer: e2e
-covers: ["Expected: authorized callers can change the catalog (create)", "Acceptance Criteria 2: the rest of the file still passes"]
+covers: ["Expected: authorized callers can change the catalog (create)", "Decisions: catalog scope unused; a token from the issuer for another scope is accepted", "Acceptance Criteria 2: the rest of the file still passes"]
 priority: P0
 ---
 
@@ -10,7 +10,7 @@ priority: P0
 
 ## Why
 
-- The fix must lock out anonymous callers without locking out legitimate ones: if JWT validation is misconfigured (wrong `Identity__Url` / issuer on the test stack), every write would return `401` and the catalog could no longer be managed. Only the test stack issues real Identity.API tokens to a deployed catalog-api.
+- The fix must lock out anonymous callers without locking out legitimate ones: if JWT validation is misconfigured (wrong `Identity__Url` / issuer on the test stack), every write would return `401` and the catalog could no longer be managed. Only the test stack issues real Identity.API tokens to a deployed catalog-api. The story's Decisions state that no client may request the `catalog` scope yet and that writes accept any token from the issuer (`ValidateAudience=false`), so this case deliberately uses an `orders`-scoped token: a `401` here would mean catalog-api started checking the scope or audience, which would lock out every client.
 
 ## Preconditions
 

@@ -1,15 +1,15 @@
 ---
 story: BUG-4
 story-issue: "https://github.com/armandodollia-slalom/eShop-factory-test/issues/95"
-story-sha: d68711f5c456
-plan-sha: d99de51fa2f7
-verified-score: 10
-verified-at: "2026-11-14T22:17:58.106Z"
-verified-by: test-planner@476d82b5/27d172f2
-automation-sha: d73af93b0e81
-automation-plan-sha: d99de51fa2f7
+story-sha: 5cd3a2004ae3
+automation-sha: 63b8a365aeac
+automation-plan-sha: 4acc04a23e77
 automation-score: 9
-automation-verified-at: "2026-11-14T22:35:04.564Z"
+automation-verified-at: "2026-11-14T22:48:34.360Z"
+plan-sha: 4acc04a23e77
+verified-score: 10
+verified-at: "2026-11-14T22:44:54.297Z"
+verified-by: test-planner@476d82b5/27d172f2
 ---
 # Test plan: BUG-4 [BE - Catalog.API] - Catalog create, update and delete endpoints need no authentication
 
@@ -25,7 +25,7 @@ Run order in the spec: TC-BUG-4-01 to 05 and 12 (anonymous, no state change), th
 | TC-BUG-4-04 | Anonymous DELETE /api/catalog/items/1 returns 401 and item 1 still exists | sad | e2e | Steps to Reproduce 2 (DELETE); Expected 401; AC 1 |
 | TC-BUG-4-05 | POST with a malformed bearer token returns 401 and creates no item | sad | e2e | Expected 401 (caller not authenticated) |
 | TC-BUG-4-06 | Anonymous price change publishes no ProductPriceChangedIntegrationEvent | sad | functional | Actual: price change publishes ProductPriceChangedIntegrationEvent |
-| TC-BUG-4-07 | Authenticated POST creates an item (201 with Location) | happy | e2e | Expected: authorized callers can change the catalog; AC 2 (rest of the file passes) |
+| TC-BUG-4-07 | Authenticated POST creates an item (201 with Location) | happy | e2e | Expected: authorized callers can change the catalog; Decisions: token for another scope accepted; AC 2 (rest of the file passes) |
 | TC-BUG-4-08 | Authenticated v2 PUT changes the price of item 99 (201) | happy | e2e | Expected: authorized callers can change the catalog |
 | TC-BUG-4-09 | Authenticated DELETE removes item 101 (204, then 404) | happy | e2e | Expected: authorized callers can change the catalog |
 | TC-BUG-4-10 | Catalog reads stay anonymous after the fix | happy | e2e | Implementation code map: reads unchanged and anonymous |
@@ -36,11 +36,11 @@ Run order in the spec: TC-BUG-4-01 to 05 and 12 (anonymous, no state change), th
 
 - `testing/flows/` bugs-table row removal and the `catalog-edge` scenario / `testing/teststack` script: they do not exist in this repository (dogfood copy, see story header and Deviations). The cases use scenario `default`.
 - Removing a `test.fixme` marker: `e2e/teststack/catalog-admin.spec.ts` does not exist yet; feature verification writes it from this plan (cases 01 to 05, 07 to 10, 12).
+- The `catalog` scope being requestable by a client, and the regenerated OpenAPI documents (`Catalog.API.json`, `Catalog.API_v2.json`) advertising 401/403 and oauth2 security: the story's Decisions say no client lists `catalog` in `AllowedScopes` until the admin-role follow-up, and the OpenAPI changes are build output named only in the code map, not a requirement. Case 07 covers the stated behavior that a token for another scope (`orders`) is accepted.
 - v1 `POST` and v1 `DELETE`: they are the same endpoint mappings (`api` group, versions 1.0 and 2.0) as the v2 calls in cases 01 and 04; the story's steps name `api-version=2.0` only.
 
 ## Open questions
 
 - **Admin role:** Expected says "only an admin role can change the catalog", but Identity.API seeds no roles and the implementation allows any authenticated caller (Implementation Notes, Decisions). No case asserts that a non-admin user (`bob`) gets `403`; that belongs to the recorded follow-up. Cases 07 to 09 assert only that an authenticated caller is not rejected.
-- **Scope / audience:** the story does not say whether a token must carry the `catalog` scope or audience. `AddDefaultAuthentication` sets `ValidateAudience = false`, and no Identity client is allowed the `catalog` scope, so the happy cases use an `orders`-scoped token. Whether a token without the `catalog` scope should be rejected is undefined.
 - **401 response body and headers:** the story names only the status code; no case asserts a body or a `WWW-Authenticate` value.
 - **Expired or wrongly signed tokens:** only a malformed token (case 05) is planned; the story defines no distinct behavior for expired tokens.
