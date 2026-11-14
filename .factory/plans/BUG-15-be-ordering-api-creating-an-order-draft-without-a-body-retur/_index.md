@@ -6,10 +6,10 @@ plan-sha: d0fad113f2fd
 verified-score: 9
 verified-at: "2026-11-14T16:08:17.073Z"
 verified-by: test-planner@476d82b5/27d172f2
-automation-sha: 48f192f17ccd
+automation-sha: b911e212b6b0
 automation-plan-sha: d0fad113f2fd
 automation-score: 10
-automation-verified-at: "2026-11-14T16:26:43.287Z"
+automation-verified-at: "2026-11-14T16:39:04.798Z"
 ---
 # Test plan: BUG-15 [BE - Ordering.API] - Creating an order draft without a body returns 500
 
