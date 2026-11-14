@@ -164,16 +164,28 @@ public class BasketState(
             // Get details for the items in the basket and the saved products
             var productIds = quantities.Select(row => row.ProductId).Distinct();
             var catalogItems = (await catalogService.GetCatalogItems(productIds)).ToDictionary(k => k.Id, v => v);
-            return (ToBasketItems(contents.Items, catalogItems), ToBasketItems(contents.SavedItems, catalogItems));
+            // Saved products are long-lived and may have left the catalog; skip those instead of breaking the cart
+            return (
+                ToBasketItems(contents.Items, catalogItems, skipMissing: false),
+                ToBasketItems(contents.SavedItems, catalogItems, skipMissing: true));
         }
     }
 
-    private static List<BasketItem> ToBasketItems(IEnumerable<BasketQuantity> quantities, Dictionary<int, CatalogItem> catalogItems)
+    private static List<BasketItem> ToBasketItems(IEnumerable<BasketQuantity> quantities, Dictionary<int, CatalogItem> catalogItems, bool skipMissing)
     {
         var basketItems = new List<BasketItem>();
         foreach (var item in quantities)
         {
-            var catalogItem = catalogItems[item.ProductId];
+            if (!catalogItems.TryGetValue(item.ProductId, out var catalogItem))
+            {
+                if (skipMissing)
+                {
+                    continue;
+                }
+
+                throw new KeyNotFoundException($"Product {item.ProductId} is not in the catalog.");
+            }
+
             var orderItem = new BasketItem
             {
                 Id = Guid.NewGuid().ToString(), // TODO: this value is meaningless, use ProductId instead.
