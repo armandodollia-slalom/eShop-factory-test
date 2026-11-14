@@ -1,0 +1,5 @@
+description: BUG-6 Basket.API scope check; needs only the demo users alice and bob (Pass123$) with empty baskets, and no extra rows.
+extends: default
+
+# No extra rows: TC-BUG-6-01 and TC-BUG-6-02 sign in as alice through Identity.API's implicit-flow clients
+# (orderingswaggerui for an orders-only token, basketswaggerui for a basket token) and start from her empty basket.

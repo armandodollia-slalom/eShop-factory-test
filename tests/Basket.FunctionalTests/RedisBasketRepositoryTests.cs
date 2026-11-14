@@ -1,7 +1,10 @@
 namespace eShop.Basket.FunctionalTests;
 
-public sealed class RedisBasketRepositoryTests(RedisFixture fixture) : IClassFixture<RedisFixture>
+[Collection(BasketApiCollection.Name)]
+public sealed class RedisBasketRepositoryTests(BasketApiFixture apiFixture)
 {
+    private readonly RedisFixture fixture = apiFixture.Redis;
+
     [Fact]
     public async Task UpdateGetAndDeleteRoundTrip()
     {
