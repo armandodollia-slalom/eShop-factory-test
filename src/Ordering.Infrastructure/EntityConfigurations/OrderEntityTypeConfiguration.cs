@@ -21,6 +21,10 @@ class OrderEntityTypeConfiguration : IEntityTypeConfiguration<Order>
             .HasMaxLength(30);
 
         orderConfiguration
+            .Property(o => o.DeliveryNote)
+            .HasMaxLength(200);
+
+        orderConfiguration
             .Property(o => o.PaymentId)
             .HasColumnName("PaymentMethodId");
 
