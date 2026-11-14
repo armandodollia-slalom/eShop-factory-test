@@ -7,7 +7,8 @@ namespace eShop.Webhooks.FunctionalTests;
 
 // BUG-16: Webhooks.API must accept only the defined WebhookType names as the subscription event.
 [Trait("Story", "BUG-16")]
-public sealed class Bug16Tests(WebhooksApiFixture fixture) : IClassFixture<WebhooksApiFixture>
+[Collection(WebhooksApiCollection.Name)]
+public sealed class Bug16Tests(WebhooksApiFixture fixture)
 {
     private HttpClient CreateClient(string userId)
     {
