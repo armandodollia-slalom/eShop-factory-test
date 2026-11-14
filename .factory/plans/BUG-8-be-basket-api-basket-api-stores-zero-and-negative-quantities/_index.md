@@ -6,10 +6,10 @@ plan-sha: 5e96d8f3975e
 verified-score: 9
 verified-at: "2026-11-14T10:43:40.024Z"
 verified-by: test-planner@476d82b5/27d172f2
-automation-sha: 7dd204f1f150
+automation-sha: 7496ae03c71f
 automation-plan-sha: 5e96d8f3975e
 automation-score: 9
-automation-verified-at: "2026-11-14T11:02:56.484Z"
+automation-verified-at: "2026-11-14T11:16:17.136Z"
 ---
 # Test plan: BUG-8 [BE - Basket.API] - Basket.API stores zero and negative quantities
 
