@@ -31,6 +31,13 @@ public abstract class IdentifiedCommandHandler<T, R> : IRequestHandler<Identifie
     protected abstract R CreateResultForDuplicateRequest();
 
     /// <summary>
+    /// When true, business rule violations (<see cref="OrderingDomainException"/>) reach the caller instead of
+    /// becoming a default result, and the request id is recorded only after the command succeeds, so a failed
+    /// request can be retried with the same id instead of being answered as a duplicate.
+    /// </summary>
+    protected virtual bool ReportsFailuresToCaller => false;
+
+    /// <summary>
     /// This method handles the command. It just ensures that no other request exists with the same ID, and if this is the case
     /// just enqueues the original inner command.
     /// </summary>
@@ -45,7 +52,11 @@ public abstract class IdentifiedCommandHandler<T, R> : IRequestHandler<Identifie
         }
         else
         {
-            await _requestManager.CreateRequestForCommandAsync<T>(message.Id);
+            if (!ReportsFailuresToCaller)
+            {
+                await _requestManager.CreateRequestForCommandAsync<T>(message.Id);
+            }
+
             try
             {
                 var command = message.Command;
@@ -94,7 +105,17 @@ public abstract class IdentifiedCommandHandler<T, R> : IRequestHandler<Identifie
                     commandId,
                     command);
 
+                // A default result means the command failed; only a successful command makes the id a duplicate.
+                if (ReportsFailuresToCaller && !EqualityComparer<R>.Default.Equals(result, default))
+                {
+                    await _requestManager.CreateRequestForCommandAsync<T>(message.Id);
+                }
+
                 return result;
+            }
+            catch (OrderingDomainException) when (ReportsFailuresToCaller)
+            {
+                throw;
             }
             catch
             {
