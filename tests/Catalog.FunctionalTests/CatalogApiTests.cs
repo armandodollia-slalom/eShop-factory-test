@@ -690,17 +690,18 @@ public sealed class CatalogApiTests : IClassFixture<CatalogApiFixture>
     public async Task TC_BUG_18_03_PostWithUnusedExplicitIdReturns201AndKeepsId()
     {
         var client = CreateHttpClient(new ApiVersion(2.0));
+        var id = Random.Shared.Next(1_000_000, int.MaxValue);
 
-        var response = await client.PostAsync("/api/catalog/items", Json($"{{\"id\":5000,\"name\":\"Explicit id item\",{RestOfBody},\"description\":\"Plan case\"}}"), TestContext.Current.CancellationToken);
+        var response = await client.PostAsync("/api/catalog/items", Json($"{{\"id\":{id},\"name\":\"Explicit id item\",{RestOfBody},\"description\":\"Plan case\"}}"), TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         Assert.NotNull(response.Headers.Location);
-        Assert.EndsWith("/api/catalog/items/5000", response.Headers.Location.ToString());
+        Assert.EndsWith($"/api/catalog/items/{id}", response.Headers.Location.ToString());
 
-        var get = await client.GetAsync("/api/catalog/items/5000", TestContext.Current.CancellationToken);
+        var get = await client.GetAsync($"/api/catalog/items/{id}", TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, get.StatusCode);
         using var doc = JsonDocument.Parse(await get.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
-        Assert.Equal(5000, doc.RootElement.GetProperty("id").GetInt32());
+        Assert.Equal(id, doc.RootElement.GetProperty("id").GetInt32());
         Assert.Equal("Explicit id item", doc.RootElement.GetProperty("name").GetString());
     }
 
@@ -710,13 +711,14 @@ public sealed class CatalogApiTests : IClassFixture<CatalogApiFixture>
     public async Task TC_BUG_18_04_PostingSameNewIdTwiceReturns409TheSecondTime()
     {
         var client = CreateHttpClient(new ApiVersion(2.0));
+        var id = Random.Shared.Next(1_000_000, int.MaxValue);
 
-        var first = await client.PostAsync("/api/catalog/items", Json($"{{\"id\":5001,\"name\":\"First of two\",{RestOfBody},\"description\":\"Plan case\"}}"), TestContext.Current.CancellationToken);
-        var second = await client.PostAsync("/api/catalog/items", Json($"{{\"id\":5001,\"name\":\"Second of two\",{RestOfBody},\"description\":\"Plan case\"}}"), TestContext.Current.CancellationToken);
+        var first = await client.PostAsync("/api/catalog/items", Json($"{{\"id\":{id},\"name\":\"First of two\",{RestOfBody},\"description\":\"Plan case\"}}"), TestContext.Current.CancellationToken);
+        var second = await client.PostAsync("/api/catalog/items", Json($"{{\"id\":{id},\"name\":\"Second of two\",{RestOfBody},\"description\":\"Plan case\"}}"), TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.Created, first.StatusCode);
         Assert.Equal(HttpStatusCode.Conflict, second.StatusCode);
-        Assert.Equal("First of two", await GetItemNameAsync(client, 5001));
+        Assert.Equal("First of two", await GetItemNameAsync(client, id));
     }
 
     [Fact]
