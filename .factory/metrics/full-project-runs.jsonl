@@ -10,3 +10,5 @@
 {"ts":"2026-11-14T20:30:34.440Z","story":"BUG-15","unit":"tests/Ordering.UnitTests","why":"covers ordering-api","argv":"dotnet test --project tests/Ordering.UnitTests --no-build","status":0,"timedOut":false}
 {"ts":"2026-11-14T20:36:07.552Z","story":"BUG-15","unit":"tests/Ordering.FunctionalTests","why":"holds the story's tests","argv":"dotnet test --project tests/Ordering.FunctionalTests --no-build","status":0,"timedOut":false}
 {"ts":"2026-11-14T20:36:11.477Z","story":"BUG-15","unit":"tests/Ordering.UnitTests","why":"covers ordering-api","argv":"dotnet test --project tests/Ordering.UnitTests --no-build","status":0,"timedOut":false}
+{"ts":"2026-11-14T22:22:24.885Z","story":"BUG-6","unit":"tests/Basket.FunctionalTests","why":"holds the story's tests","argv":"dotnet test --project tests/Basket.FunctionalTests --no-build","status":0,"timedOut":false}
+{"ts":"2026-11-14T22:22:28.992Z","story":"BUG-6","unit":"tests/Basket.UnitTests","why":"covers basket-api","argv":"dotnet test --project tests/Basket.UnitTests --no-build","status":0,"timedOut":false}
