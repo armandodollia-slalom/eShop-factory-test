@@ -1,0 +1,4 @@
+description: BUG-5 sign-in return URL handling; needs only the demo users (alice / Pass123$) and the demo catalog (item 99).
+extends: default
+
+# No extra rows: every case signs in as the seeded user alice and item 99 comes from the default catalog.
