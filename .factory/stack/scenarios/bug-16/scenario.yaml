@@ -1,0 +1,4 @@
+description: BUG-16 webhook event validation; needs only the seeded users alice and bob and no webhook subscriptions.
+extends: default
+
+# No extra rows: every case posts its own subscription as alice (Pass123$) and expects an empty subscription list at the start.

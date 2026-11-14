@@ -354,7 +354,7 @@
   "retro": {
     "factory": {
       "enabled": true,
-      "source": "/Users/armando.dollia/code/ai-app-factory",
+      "source": "https://github.com/armandodollia-slalom/ai-app-factory.git",
       "evidence": "summary"
     }
   }
