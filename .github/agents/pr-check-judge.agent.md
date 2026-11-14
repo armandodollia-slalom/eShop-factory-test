@@ -21,7 +21,7 @@ For every finding in the debate:
 
 Severity: `blocking` (an acceptance criterion, security, data loss, crash or error visible to users), `major` (flow or design divergence, missing error handling, a clear guideline violation), `minor` (small polish that still should change before merge).
 
-Correctness is never `minor`. These are at least `major` (and `blocking` when a user or a client sees the wrong outcome), whatever the critic called them and even when the defender concedes them as small: a wrong result on a path this change touches (a wrong status, a false success, state written for an operation that did not succeed), and a regression of behavior that worked before this change. `minor` is for polish that leaves every result right.
+Correctness is never `minor`. These are at least `major` (and `blocking` when a user or a client sees the wrong outcome), whatever the critic called them and even when the defender concedes them as small: a wrong result on a path this change touches (a wrong status, a false success, state written for an operation that did not succeed), and a regression of behavior that worked before this change. `minor` is for polish that leaves every result right. An error a user can hit on a path this change adds or touches (an unhandled exception, an error page or a 5xx response, a page or component that stops rendering) is `blocking`, even when it needs unusual but reachable data; it is never `minor` and never a follow-up.
 
 ## Scoring
 
