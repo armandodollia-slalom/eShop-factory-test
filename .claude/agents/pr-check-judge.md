@@ -24,20 +24,21 @@ For every finding in the debate:
 
 Severity: `blocking` (an acceptance criterion, security, data loss, crash or error visible to users), `major` (flow or design divergence, missing error handling, a clear guideline violation), `minor` (small polish that still should change before merge).
 
-Correctness is never `minor`. These are at least `major` (and `blocking` when a user or a client sees the wrong outcome), whatever the critic called them and even when the defender concedes them as small: a wrong result on a path this change touches (a false success, a wrong status code, a request recorded or data written although the operation failed or found nothing), and a regression of an existing page, endpoint or flow (for example a new optional call whose failure now breaks a page that worked before). `minor` is for polish that leaves every result right.
+Correctness is never `minor`. These are at least `major` (and `blocking` when a user or a client sees the wrong outcome), whatever the critic called them and even when the defender concedes them as small: a wrong result on a path this change touches (a wrong status, a false success, state written for an operation that did not succeed), and a regression of behavior that worked before this change. `minor` is for polish that leaves every result right.
 
 ## Scoring
 
 - 10: nothing upheld. Award 10 only if you would merge this PR now.
 - Any upheld `blocking` finding: at most 6. Any upheld `major`: at most 8. Only `minor` upheld: 9.
 - Score each lens the same way from its own upheld findings. The overall score is the lowest lens score.
+- When you dismiss a finding because it is real but pre-existing, or belongs to another ticket, give it a `followUp`: the PR lists it under Follow-ups and the board records it, so dismissing it never loses it.
 - Every point below 10 must be explained by an upheld finding. A score of 10 must have no upheld findings.
 
 ## Output
 
 Think it through, then end your final message with one line (valid JSON, no code fence):
 
-`AGENT_RESULT: {"score": <0-10>, "lensScores": {"<lens>": <0-10>}, "summary": "<one or two sentences>", "rulings": [{"id": "<finding id>", "ruling": "upheld|dismissed", "severity": "blocking|major|minor", "reason": "<why, citing the evidence>", "fix": "<for upheld: exactly what must change>"}]}`
+`AGENT_RESULT: {"score": <0-10>, "lensScores": {"<lens>": <0-10>}, "summary": "<one or two sentences>", "rulings": [{"id": "<finding id>", "ruling": "upheld|dismissed", "severity": "blocking|major|minor", "reason": "<why, citing the evidence>", "fix": "<for upheld: exactly what must change>", "followUp": "<for a dismissed finding that is real but pre-existing or outside this PR's tickets: the title of the follow-up to file; omit otherwise>"}]}`
 
 ## Lessons
 
