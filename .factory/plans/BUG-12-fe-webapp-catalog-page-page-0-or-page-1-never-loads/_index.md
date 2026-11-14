@@ -6,10 +6,10 @@ plan-sha: 6e4ec18ada03
 verified-score: 10
 verified-at: "2026-11-14T20:01:50.329Z"
 verified-by: test-planner@476d82b5/27d172f2
-automation-sha: 0366c386a724
+automation-sha: 27352d3ff085
 automation-plan-sha: 6e4ec18ada03
-automation-score: 9
-automation-verified-at: "2026-11-14T20:08:43.718Z"
+automation-score: 10
+automation-verified-at: "2026-11-14T20:20:05.251Z"
 ---
 # Test plan: BUG-12 [FE - WebApp] - Catalog page ?page=0 or ?page=-1 never loads
 
