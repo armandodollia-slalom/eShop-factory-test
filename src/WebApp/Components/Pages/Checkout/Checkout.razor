@@ -49,6 +49,13 @@
                         <ValidationMessage For="@(() => Info.Country)" />
                     </label>
                 </div>
+                <div>
+                    <label>
+                        Delivery note (optional)
+                        <InputTextArea @bind-Value="@Info.DeliveryNote" rows="3" />
+                        <ValidationMessage For="@(() => Info.DeliveryNote)" />
+                    </label>
+                </div>
             </div>
             <div class="form-section">
                 <div class="form-buttons">
@@ -122,6 +129,11 @@
         if ((await Basket.GetBasketItemsAsync()).Count == 0)
         {
             extraMessages.Add(new FieldIdentifier(Info, ""), "Your cart is empty");
+        }
+
+        if (Info.DeliveryNote?.Trim().Length > 200)
+        {
+            extraMessages.Add(new FieldIdentifier(Info, nameof(BasketCheckoutInfo.DeliveryNote)), "Delivery note must be 200 characters or fewer");
         }
     }
 
