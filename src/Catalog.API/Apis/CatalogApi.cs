@@ -462,10 +462,10 @@ public static class CatalogApi
         return TypedResults.Created($"/api/catalog/items/{id}");
     }
 
+    // ProblemHttpResult adds no response metadata of its own, so the OpenAPI document keeps the
+    // application/problem+json content type the attributes below declare.
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, "application/problem+json")]
-    // ProblemHttpResult adds no response metadata of its own, so the OpenAPI document keeps the
-    // application/problem+json content type the attributes above declare.
     public static async Task<Results<Created, ProblemHttpResult>> CreateItem(
         [AsParameters] CatalogServices services,
         CatalogItem product)
