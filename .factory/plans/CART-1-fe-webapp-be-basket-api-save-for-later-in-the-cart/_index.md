@@ -6,10 +6,10 @@ plan-sha: e6530018e022
 verified-score: 9
 verified-at: "2026-11-14T16:09:43.225Z"
 verified-by: test-planner@476d82b5/27d172f2
-automation-sha: ea35ab1a73ce
+automation-sha: fc955937d9bd
 automation-plan-sha: e6530018e022
 automation-score: 9
-automation-verified-at: "2026-11-14T16:51:47.030Z"
+automation-verified-at: "2026-11-14T17:17:34.247Z"
 ---
 # Test plan: CART-1 [FE - WebApp, BE - Basket.API] Save for later in the cart
 
