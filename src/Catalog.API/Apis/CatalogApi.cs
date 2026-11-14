@@ -24,7 +24,7 @@ public static class CatalogApi
             .WithSummary("List catalog items")
             .WithDescription("Get a paginated list of items in the catalog.")
             .WithTags("Items");
-        v2.MapGet("/items", GetAllItems)
+        v2.MapGet("/items", GetAllItemsV2)
             .WithName("ListItems-V2")
             .WithSummary("List catalog items")
             .WithDescription("Get a paginated list of items in the catalog.")
@@ -133,12 +133,36 @@ public static class CatalogApi
     }
 
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
+    public static async Task<Results<Ok<PaginatedItems<CatalogItem>>, ValidationProblem>> GetAllItemsV2(
+        [AsParameters] PaginationRequest paginationRequest,
+        [AsParameters] CatalogServices services,
+        [Description("The name of the item to return")] string? name,
+        [Description("The types of items to return. Repeat the parameter to filter by multiple types.")] int[]? type,
+        [Description("The brands of items to return. Repeat the parameter to filter by multiple brands.")] int[]? brand,
+        [Description("When true, return only items that are in stock. Accepts true or false.")] string? onlyAvailable)
+    {
+        // Bound as text so an invalid value gets a problem response naming the parameter
+        // instead of the framework's generic binding failure.
+        var available = false;
+        if (onlyAvailable is not null && !bool.TryParse(onlyAvailable, out available))
+        {
+            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
+            {
+                [nameof(onlyAvailable)] = [$"The value '{onlyAvailable}' is not valid for {nameof(onlyAvailable)}. Use true or false."]
+            });
+        }
+
+        return await GetAllItems(paginationRequest, services, name, type, brand, available);
+    }
+
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
     public static async Task<Ok<PaginatedItems<CatalogItem>>> GetAllItems(
         [AsParameters] PaginationRequest paginationRequest,
         [AsParameters] CatalogServices services,
         [Description("The name of the item to return")] string? name,
         [Description("The types of items to return. Repeat the parameter to filter by multiple types.")] int[]? type,
-        [Description("The brands of items to return. Repeat the parameter to filter by multiple brands.")] int[]? brand)
+        [Description("The brands of items to return. Repeat the parameter to filter by multiple brands.")] int[]? brand,
+        bool onlyAvailable = false)
     {
         var pageSize = paginationRequest.PageSize;
         var pageIndex = paginationRequest.PageIndex;
@@ -156,6 +180,10 @@ public static class CatalogApi
         if (brand is { Length: > 0 })
         {
             root = root.Where(c => brand.Contains(c.CatalogBrandId));
+        }
+        if (onlyAvailable)
+        {
+            root = root.Where(c => c.AvailableStock > 0);
         }
 
         var totalItems = await root
