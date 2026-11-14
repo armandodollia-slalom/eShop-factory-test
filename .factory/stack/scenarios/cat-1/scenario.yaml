@@ -1,0 +1,34 @@
+description: Brand-mate fixtures for CAT-1 (More from this brand) on top of the demo catalog.
+extends: default
+
+# Brands 14 to 17 and items 1001 to 1014; every row exists for a case of the CAT-1 test plan.
+postgres:
+  catalogdb:
+    - table: public.CatalogBrand
+      rows:
+        - { Id: 14, Brand: Peak Gear }
+        - { Id: 15, Brand: Solo Gear }
+        - { Id: 16, Brand: Trail Co }
+        - { Id: 17, Brand: Twin Gear }
+    - table: public.Catalog
+      rows:
+        # Peak Gear: item under test, sits inside the first four by name so self-exclusion is visible
+        - { Id: 1001, Name: Charlie Rope, Description: Charlie Rope description, Price: 20.00, PictureFileName: 1.webp, CatalogTypeId: 1, CatalogBrandId: 14, AvailableStock: 10, RestockThreshold: 5, MaxStockThreshold: 200, OnReorder: false }
+        - { Id: 1002, Name: Beta Stove, Description: Beta Stove description, Price: 30.00, PictureFileName: 2.webp, CatalogTypeId: 1, CatalogBrandId: 14, AvailableStock: 10, RestockThreshold: 5, MaxStockThreshold: 200, OnReorder: false }
+        - { Id: 1003, Name: Delta Lamp, Description: Delta Lamp description, Price: 15.50, PictureFileName: 3.webp, CatalogTypeId: 1, CatalogBrandId: 14, AvailableStock: 10, RestockThreshold: 5, MaxStockThreshold: 200, OnReorder: false }
+        # out of stock: must still be returned
+        - { Id: 1004, Name: Echo Boots, Description: Echo Boots description, Price: 45.00, PictureFileName: 4.webp, CatalogTypeId: 1, CatalogBrandId: 14, AvailableStock: 0, RestockThreshold: 5, MaxStockThreshold: 200, OnReorder: false }
+        - { Id: 1005, Name: Foxtrot Mat, Description: Foxtrot Mat description, Price: 25.00, PictureFileName: 5.webp, CatalogTypeId: 1, CatalogBrandId: 14, AvailableStock: 10, RestockThreshold: 5, MaxStockThreshold: 200, OnReorder: false }
+        - { Id: 1006, Name: Zulu Pack, Description: Zulu Pack description, Price: 60.00, PictureFileName: 6.webp, CatalogTypeId: 1, CatalogBrandId: 14, AvailableStock: 10, RestockThreshold: 5, MaxStockThreshold: 200, OnReorder: false }
+        # lowercase name: last in ordinal order, first in a culture-aware order
+        - { Id: 1007, Name: alpha Tent, Description: alpha Tent description, Price: 120.00, PictureFileName: 7.webp, CatalogTypeId: 1, CatalogBrandId: 14, AvailableStock: 10, RestockThreshold: 5, MaxStockThreshold: 200, OnReorder: false }
+        # Solo Gear: the only item of its brand
+        - { Id: 1008, Name: Lone Compass, Description: Lone Compass description, Price: 12.00, PictureFileName: 8.webp, CatalogTypeId: 1, CatalogBrandId: 15, AvailableStock: 10, RestockThreshold: 5, MaxStockThreshold: 200, OnReorder: false }
+        # Trail Co: three items, so item 1009 has two brand-mates
+        - { Id: 1009, Name: Kilo Stick, Description: Kilo Stick description, Price: 18.00, PictureFileName: 9.webp, CatalogTypeId: 1, CatalogBrandId: 16, AvailableStock: 10, RestockThreshold: 5, MaxStockThreshold: 200, OnReorder: false }
+        - { Id: 1010, Name: Juliet Cup, Description: Juliet Cup description, Price: 9.50, PictureFileName: 10.webp, CatalogTypeId: 1, CatalogBrandId: 16, AvailableStock: 10, RestockThreshold: 5, MaxStockThreshold: 200, OnReorder: false }
+        - { Id: 1011, Name: India Rope, Description: India Rope description, Price: 22.00, PictureFileName: 11.webp, CatalogTypeId: 1, CatalogBrandId: 16, AvailableStock: 10, RestockThreshold: 5, MaxStockThreshold: 200, OnReorder: false }
+        # Twin Gear: 1013 and 1014 share a name, the id breaks the tie
+        - { Id: 1012, Name: Anchor, Description: Anchor description, Price: 5.00, PictureFileName: 12.webp, CatalogTypeId: 1, CatalogBrandId: 17, AvailableStock: 10, RestockThreshold: 5, MaxStockThreshold: 200, OnReorder: false }
+        - { Id: 1013, Name: Twin Mug, Description: Twin Mug description, Price: 7.00, PictureFileName: 13.webp, CatalogTypeId: 1, CatalogBrandId: 17, AvailableStock: 10, RestockThreshold: 5, MaxStockThreshold: 200, OnReorder: false }
+        - { Id: 1014, Name: Twin Mug, Description: Twin Mug description, Price: 8.00, PictureFileName: 14.webp, CatalogTypeId: 1, CatalogBrandId: 17, AvailableStock: 10, RestockThreshold: 5, MaxStockThreshold: 200, OnReorder: false }

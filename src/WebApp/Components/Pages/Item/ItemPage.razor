@@ -1,9 +1,11 @@
 ﻿@page "/item/{itemId:int}"
 @using System.Net
+@using System.Text.Json
 @inject CatalogService CatalogService
 @inject BasketState BasketState
 @inject NavigationManager Nav
 @inject IProductImageUrlProvider ProductImages
+@inject ILogger<ItemPage> Logger
 
 @if (item is not null)
 {
@@ -70,6 +72,19 @@
             </div>
         </div>
 
+        @if (brandMates.Count > 0)
+        {
+            <section class="item-brand-mates" aria-labelledby="item-brand-mates-heading">
+                <h2 id="item-brand-mates-heading" class="item-brand-mates-heading">More from @item.CatalogBrand?.Brand</h2>
+                <div class="item-brand-mates-grid">
+                    @foreach (var mate in brandMates)
+                    {
+                        <CatalogListItem Item="@mate" />
+                    }
+                </div>
+            </section>
+        }
+
         <dialog class="item-lightbox" data-zoom-dialog aria-label="Enlarged image of @item.Name">
             <button type="button" class="item-lightbox-close" data-zoom-close aria-label="Close image">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -93,6 +108,7 @@ else if (notFound)
 
 @code {
     private CatalogItem? item;
+    private List<CatalogItem> brandMates = [];
     private int numInCart;
     private bool isLoggedIn;
     private bool notFound;
@@ -118,6 +134,26 @@ else if (notFound)
         {
             HttpContext!.Response.StatusCode = 404;
             notFound = true;
+        }
+
+        if (item is not null)
+        {
+            brandMates = await LoadBrandMatesAsync();
+        }
+    }
+
+    // The brand mates are a secondary section: if they cannot be loaded the
+    // product page still renders, just without the section.
+    private async Task<List<CatalogItem>> LoadBrandMatesAsync()
+    {
+        try
+        {
+            return await CatalogService.GetBrandMates(ItemId);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
+        {
+            Logger.LogWarning(ex, "Could not load the brand mates of catalog item {ItemId}", ItemId);
+            return [];
         }
     }
 

@@ -15,13 +15,14 @@ You may run shell commands (the browser automation tool, curl, the mockup diff h
 ## Code exploration
 
 - **graphify first** (when the repository has a knowledge graph) to find the pages, components and endpoints involved: `graphify explain "<symbol>"`, `graphify query "<question>" --budget 1500`; read only the line ranges they name.
-- **Language servers, if the LSP MCP tools are available (read-only ones: references, hover, diagnostics):** run find-references on every public or internal signature the diff changes and report callers that were not updated. If they are unavailable, use graphify and grep.
+- **Language servers (the `lsp` MCP server, read-only tools; in Claude Code they are named `mcp__lsp__lsp_*` and are in your tool list):** call `lsp_find_references` on every public or internal signature the diff changes and report callers that were not updated. Only if the tools are not in your list (code intelligence off) or a call answers that the language server is unavailable, use graphify and grep.
 
 ## Driving the app
 
 - Use the browser automation tool the Project context names, with the commands it gives. Without one, use whatever headless browser tooling the repository already depends on, and say which in your summary.
 - Quick look: take a full-page screenshot of `<url>/<path>` into `<screenshots dir>/<name>.png`.
 - Flows (sign-in, forms, multi-step journeys): write a small script in the screenshots directory and run it, reusing the repository's sign-in helpers and test users (the Project context says where they are). Take a screenshot at each step that matters, named after the criterion (`ac2-coupon-applied.png`).
+- Data the criterion needs (a user with a particular basket, a record in a given state): the stack slot has the scenario the task names loaded, if any. Set up anything else yourself through the slot's own services or stores (the app's API, or `factory teststack --slot <n> compose exec <service> ...`), as a test would; never change source files to get it. Say in your summary what you set up.
 - If a page fails to load or the stack looks broken, capture it (screenshot plus the error text) and report it as a blocking finding; the harness passes it to the implementer.
 
 ## Comparing with the mockups

@@ -20,7 +20,7 @@ You implement one subtask of a story in this repository. The **Project context**
 ## Code exploration
 
 - **graphify first, always** (when the repository has a knowledge graph). `graphify explain "<symbol>"` for a focused lookup, `graphify query "<question>" --budget 1500` for broad questions, `graphify path "<A>" "<B>"` for how two things connect. Read only the line ranges the graph returns; `grep` only for exact text in files the graph already named. If `graphify-out/graph.json` is missing, build it first with `factory graphify-build`.
-- **Language servers, if the LSP MCP tools are available:** use them for precise work at the locations graphify found. Before changing existing code, confirm it with go-to-definition and its signature and callers; run find-references before changing any signature and update every caller you own (report the others); check diagnostics after each edit; use rename for renames. If they are unavailable, fall back to graphify and grep.
+- **Language servers (the `lsp` MCP server; in Claude Code its tools are named `mcp__lsp__lsp_*` and are in your tool list, not behind a search):** use them for precise work at the locations graphify found; the harness records the calls. Before changing existing code, confirm it with `lsp_goto_definition` and `lsp_hover`; call `lsp_find_references` on every signature you change, before you change it, and update every caller you own (report the others); call `lsp_diagnostics` on each file you edited after your last edit to it; use `lsp_rename` for renames. Only if the tools are not in your list (code intelligence off) or a call answers that the language server is unavailable, fall back to graphify and grep (do not retry in a loop).
 
 ## Nits and scope
 
@@ -37,6 +37,8 @@ When your task lists mockups, they are the design you build to: read the README 
 ## Conventions
 
 Copy the nearest working example rather than inventing a pattern, and follow the conventions and rules in the Project context: which existing code to follow per concern, where dependency versions are declared, the stack-specific rules, and the generated files you must not edit by hand. When it points at another file (for example the implementer's addendum, `.factory/agents/implementer.md`), read that file. Set up your shell the way the Project context says. Keep logic testable: dependencies injected, no hidden global state, no direct reads of the system clock. Create and edit files with your file edit tools.
+
+Keep the diff minimal and in the file's own idiom: no whitespace-only or formatting edits to lines you do not otherwise change, no renamed or reordered code the story does not need, keep the file's existing idioms (for example `nameof(...)` where it uses it, `using` directives rather than fully qualified names), make new constants and helpers as private as their use allows, and never name another ticket, story key or PR in code or comments (comments say why the code is the way it is, not which ticket changed it). Read your own diff before you finish and remove what the story does not need.
 
 ## Each round
 

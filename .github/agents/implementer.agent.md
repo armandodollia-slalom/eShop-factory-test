@@ -66,7 +66,7 @@ In every headless mode (self mode, takeover, integration, conflict resolution, a
    - The one exception: a file you are copying as a template for a new one (e.g. the entry point of an existing service for a new service) may be read in full — say so in the report.
    - `grep` only for exact text inside files graphify already named (e.g. a config key), never to discover where something lives.
    - Put these rules in any subagent prompt that explores code.
-   - **Language servers, if the LSP MCP tools are available:** graphify stays the entry point (where to look, how things connect). Use the LSP tools for precise work at the locations graphify found: go-to-definition and signatures to confirm existing code before you change it, find-references before changing any signature (update every caller), diagnostics after each edit, and rename for safe renames. If they are unavailable, fall back to graphify and grep.
+   - **Language servers (the `lsp` MCP server; in Claude Code its tools are named `mcp__lsp__lsp_*` and are in your tool list, not behind a search):** graphify stays the entry point (where to look, how things connect). Then use the LSP tools for precise work at the locations graphify found. These calls are part of the job, not optional extras, and the harness records them: `lsp_goto_definition` and `lsp_hover` to confirm existing code before you change it; `lsp_find_references` on every method, constructor or type whose signature or behavior you change, before you change it (update every caller; the run is flagged "signature changed without find-references" otherwise); `lsp_diagnostics` on each file you edited, after your last edit to it; `lsp_rename` (`dry_run: true` first) for renames. Only if the tools are not in your list (code intelligence off) or a call answers that the language server is unavailable, fall back to graphify and grep (do not retry in a loop).
 7. Verify every file/line reference in the story's Technical Notes against the code. Stories can be wrong; the code wins. Note any mismatch in your report.
 8. If `.factory/lessons/implementer.md` exists, read it and follow every rule in it. They come from mistakes that architecture reviews and PR checks blocked in earlier stories.
 
@@ -76,6 +76,7 @@ Follow existing conventions — copy the nearest working example rather than inv
 
 Rules:
 - Implement exactly the story's acceptance criteria. No extra features; list nice-to-haves in the report instead.
+- Keep the diff minimal and in the file's own idiom: no whitespace-only or formatting edits to lines you do not otherwise change, no renamed or reordered code the story does not need, keep the file's existing idioms (for example `nameof(...)` where it uses it, `using` directives rather than fully qualified names), make new constants and helpers as private as their use allows, and never name another ticket, story key or PR in code or comments (comments say why the code is the way it is, not which ticket changed it). Read your own diff before you finish and remove what the story does not need.
 - Keep each acceptance criterion traceable to the code that implements it — `test-automation` works from that mapping.
 - Keep logic testable: pure functions or domain methods for rules and math, dependencies injected, no hidden global state and no direct reads of the system clock (inject a clock; the Project context names the abstraction to use).
 - Declare dependencies and their versions where the repository already does (the Project context names the manifest); never pin a version anywhere else.
@@ -104,7 +105,7 @@ If the Project context lists generated files that depend on what you changed, re
 Don't run functional tests, `factory teststack up` or `load`, or end-to-end tests. If a check fails, fix it; after three failed attempts on the same failure, stop and report the output.
 
 Then:
-- `graphify update .` (code changed), when the repository uses graphify.
+- `graphify update .` from the repository root (code changed), when the repository uses graphify; never `graphify update <dir>`, which writes a second graph into that folder.
 - Don't run the graph's semantic extraction (`factory graphify-build --extract`) from a worktree: the cache folder is keyed by checkout path, so it duplicates the shared cache and re-extracts unrelated docs at API cost. List changed `.md` files in the report; the main checkout extracts after merge. Never commit anything in `graphify-out/`.
 - Run the lint and format commands in the Project context and fix what they report (use their auto-fix mode where there is one), since CI runs the same checks.
 
