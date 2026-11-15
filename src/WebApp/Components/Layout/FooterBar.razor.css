@@ -115,7 +115,9 @@
   transition: color var(--dur-1) var(--ease);
 }
 
-.eshop-footer-col a:hover {
+/* Only entries that navigate light up; "Help center" keeps its highlight. */
+.eshop-footer-col a[href]:hover,
+.eshop-footer-col a.eshop-footer-help:hover {
   color: #fff;
 }
 
@@ -152,7 +154,7 @@
   transition: color var(--dur-1) var(--ease);
 }
 
-.eshop-footer-legal a:hover {
+.eshop-footer-legal a[href]:hover {
   color: #fff;
 }
 
