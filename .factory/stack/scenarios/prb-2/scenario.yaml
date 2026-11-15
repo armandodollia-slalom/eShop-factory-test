@@ -1,0 +1,6 @@
+description: PRB-2 orders page heading and tab title; needs only the seeded user alice with an empty basket and no orders.
+extends: default
+
+# No extra rows: TC-PRB-2-01 to -04 open alice's orders page while she has no orders (the empty state),
+# TC-PRB-2-05 places alice's single order itself through the WebApp checkout (item 99 "Adventurer GPS Watch"
+# from the default catalog), and TC-PRB-2-06 opens the page anonymously.
