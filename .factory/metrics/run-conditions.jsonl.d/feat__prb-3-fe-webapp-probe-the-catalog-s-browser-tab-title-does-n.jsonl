@@ -1,3 +1,6 @@
 {"ts":"2026-11-15T17:57:11.568Z","story":"PRB-3","kind":"stack-slot","stage":"UI verifier (self)","slot":3,"waitedSec":0,"outcome":"leased","delivery":"epic"}
 {"ts":"2026-11-15T18:03:21.637Z","story":"PRB-3","kind":"stack-slot","stage":"automation pass","slot":3,"waitedSec":1,"outcome":"leased","poolSize":null}
 {"ts":"2026-11-15T18:08:40.150Z","story":"PRB-3","kind":"stack-slot","stage":"precheck","slot":3,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":5}
+{"ts":"2026-11-15T18:13:46.639Z","story":"PRB-3","kind":"stack-slot","stage":"pr-check fixer","slot":2,"waitedSec":1,"outcome":"leased","poolSize":null}
+{"ts":"2026-11-15T18:18:53.790Z","story":"PRB-3","kind":"stack-slot","stage":"automation pass","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null}
+{"ts":"2026-11-15T18:21:08.461Z","story":"PRB-3","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":133}

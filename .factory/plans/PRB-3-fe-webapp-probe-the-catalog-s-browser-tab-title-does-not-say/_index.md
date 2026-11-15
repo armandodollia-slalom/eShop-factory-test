@@ -6,10 +6,10 @@ plan-sha: 084fbca175cc
 verified-score: 10
 verified-at: "2026-11-15T18:05:52.483Z"
 verified-by: test-planner@1edb523e/67b01306
-automation-sha: 8e015bcadd7d
+automation-sha: d2acf735e02e
 automation-plan-sha: 084fbca175cc
 automation-score: 10
-automation-verified-at: "2026-11-15T18:10:04.726Z"
+automation-verified-at: "2026-11-15T18:22:45.475Z"
 ---
 # Test plan: PRB-3 The catalog's browser tab title does not say which page it is
 
