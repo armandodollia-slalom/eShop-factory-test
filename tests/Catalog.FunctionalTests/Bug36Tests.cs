@@ -99,4 +99,14 @@ public sealed class Bug36Tests(CatalogApiFixture fixture)
     [Trait("TestCase", "TC-BUG-36-08")]
     public Task TC_BUG_36_08_V1ListWithPageIndex10AndPageSize10ReturnsLastPartialPage() =>
         AssertPage("/api/catalog/items?api-version=1.0&pageIndex=10&pageSize=10", pageIndex: 10, pageSize: 10, items: 1);
+
+    // The same pagination validation guards every other paginated catalog route.
+    [Theory]
+    [InlineData("/api/catalog/items/by/Wanderer?api-version=1.0")]
+    [InlineData("/api/catalog/items/withsemanticrelevance/Wanderer?api-version=1.0")]
+    [InlineData("/api/catalog/items/withsemanticrelevance?api-version=2.0&text=Wanderer")]
+    [InlineData("/api/catalog/items/type/3/brand/3?api-version=1.0")]
+    [InlineData("/api/catalog/items/type/all/brand/3?api-version=1.0")]
+    public Task OtherPaginatedRoutesWithNegativePageIndexAndPageSizeReturn400NamingBoth(string pathAndQuery) =>
+        AssertValidationProblem($"{pathAndQuery}&pageIndex=-1&pageSize=-1", named: [PageIndex, PageSize], notNamed: []);
 }
