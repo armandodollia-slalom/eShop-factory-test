@@ -14,9 +14,7 @@
     <SectionContent SectionName="page-header-subtitle">@item.CatalogBrand?.Brand</SectionContent>
 
     <div class="item-page">
-        <a class="item-back" href="@backHref">
-            <img role="presentation" src="icons/arrow-left.svg" /> Back to catalog
-        </a>
+        <CatalogBackLink />
 
         <div class="item-details">
             <div class="item-media" data-zoom>
@@ -101,7 +99,6 @@
     private List<CatalogItem> brandMates = [];
     private int numInCart;
     private bool isLoggedIn;
-    private string backHref = "";
 
     [Parameter]
     public int ItemId { get; set; }
@@ -111,8 +108,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        backHref = CatalogBackLink.Href(HttpContext, Nav);
-
         // Catalog ids start at 1, so a non-positive id cannot name a product.
         if (ItemId <= 0)
         {

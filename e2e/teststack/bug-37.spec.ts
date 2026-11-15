@@ -49,6 +49,15 @@ async function expectNotFoundPage(page: Page, demo: Demo, id: number) {
 test('TC-BUG-37-01 unknown product id 999999 answers 404 with the Not found page', async ({ page, demo }) => {
   await demo.chapter('Unknown product id 999999', 'The reference answer: 404 and the Not found page');
   await expectNotFoundPage(page, demo, 999999);
+
+  // The Not found page's own route exists only for the router; opened directly it must not answer 200.
+  const direct = await test.step('open /item/not-found directly', () => page.goto(`${BASE_URL}/item/not-found`));
+  await test.step('/item/not-found answers 404, never a normal 200 page', async () => {
+    expect(direct?.status()).toBe(404);
+    await expect(page.locator('form.add-to-cart')).toHaveCount(0);
+    await expect(page.getByText(SERVER_ERROR_TEXT)).toHaveCount(0);
+    await demo.caption('/item/not-found opened directly: status 404');
+  });
 });
 
 test('TC-BUG-37-02 product id 0 answers 404 with the same Not found page', async ({ page, demo }) => {

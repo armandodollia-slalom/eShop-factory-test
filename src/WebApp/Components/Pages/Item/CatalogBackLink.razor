@@ -1,15 +1,27 @@
-﻿using Microsoft.AspNetCore.Components;
+@inject NavigationManager Nav
 
-namespace eShop.WebApp.Components.Pages.Item;
+@* The "Back to catalog" link shared by the product page and its not-found page. *@
+<a class="item-back" href="@href">
+    <img role="presentation" src="icons/arrow-left.svg" /> Back to catalog
+</a>
 
-internal static class CatalogBackLink
-{
+@code {
+    private string href = "";
+
+    [CascadingParameter]
+    public HttpContext? HttpContext { get; set; }
+
+    protected override void OnInitialized()
+    {
+        href = Href(HttpContext, Nav);
+    }
+
     // Return the shopper to the catalog they came from, preserving any active
     // brand/type/page filters. The catalog navigation is server rendered, so the
     // Referer header carries the exact filtered URL. Falls back to the catalog
     // root when the referrer is not the filtered catalog (deep link, external
     // navigation, or an unfiltered listing) so behaviour is unchanged there.
-    public static string Href(HttpContext? httpContext, NavigationManager nav)
+    private static string Href(HttpContext? httpContext, NavigationManager nav)
     {
         var referer = httpContext?.Request.Headers.Referer.ToString();
         if (!string.IsNullOrEmpty(referer)
