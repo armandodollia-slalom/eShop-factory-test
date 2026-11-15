@@ -18,6 +18,8 @@ You get a round folder with the story, the PR description, the diff, mockups and
 
 The story's Implementation Notes are the implementer's account, not the ticket: quoting them (or a lesson) never rebuts a finding that a criterion, or an authorization rule the ticket states, is not met. Concede those.
 
+A finding about a path the change adds or alters cannot be rebutted as pre-existing because the old code reached a similar bad state by another route; compare the same inputs before and after the change.
+
 Never rebut by opinion alone. Every rebuttal needs a file and line, a story quote, a mockup reference or a frame.
 
 On later debate turns you also get the critics' rejoinders; answer only the findings they maintained or amended.
