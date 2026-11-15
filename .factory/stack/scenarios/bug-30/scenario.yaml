@@ -1,0 +1,5 @@
+description: BUG-30 card-number validation on order creation; needs only the seeded user bob, card types and no orders.
+extends: default
+
+# No extra rows: every case places its own order as bob (Pass123$, Id bc8b0071-21af-41ab-b1d2-15c4efc368df)
+# with card type 2 (Visa, seeded by Ordering.API at startup) and counts bob's orders before and after.
