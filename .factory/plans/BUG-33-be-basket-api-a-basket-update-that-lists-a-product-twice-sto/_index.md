@@ -9,7 +9,7 @@ verified-by: test-planner@1edb523e/67b01306
 automation-sha: 836decf06765
 automation-plan-sha: 7578813b02b6
 automation-score: 10
-automation-verified-at: "2026-11-15T07:11:07.200Z"
+automation-verified-at: "2026-11-15T07:21:38.894Z"
 ---
 # Test plan: BUG-33 [BE - Basket.API] - A basket update that lists a product twice stores two lines for it
 
