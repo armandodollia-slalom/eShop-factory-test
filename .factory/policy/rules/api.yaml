@@ -176,3 +176,41 @@ rules:
       references: []
     human_review_required: false
     tags: [idempotency, retries]
+
+  - id: API-005
+    title: Error responses a handler returns are in its API contract
+    category: api
+    severity: medium
+    status: active
+    version: 1.0.0
+    owner: architecture
+    description: >
+      A handler that returns ProblemHttpResult (TypedResults.Problem / Results.Problem) declares the status codes it
+      can return with ProducesProblem(...) or ProducesValidationProblem() on its endpoint. Results<...> unions make the
+      other result types part of the generated OpenAPI document, but a ProblemHttpResult carries no status code, so
+      without the declaration the contract silently omits the error. Checked on new code only.
+    rationale: >
+      Clients and generated SDKs read the OpenAPI document. An error the API returns but the contract omits is an
+      undocumented breaking behaviour.
+    applicability:
+      include: ["**/Apis/**/*.cs"]
+      project_types: [api]
+    checkpoints:
+      pre_commit:  { enabled: true, enforcement: block, scope: changed }
+      code_review: { enabled: true, enforcement: block, scope: changed }
+      testing:     { enabled: false }
+      ci:          { enabled: true, enforcement: block, scope: changed }
+    validation:
+      mode: deterministic
+      validators: [VAL-API-PROBLEM-CONTRACT]
+    patterns: [PAT-PROBLEM-DETAILS]
+    required_evidence:
+      - { type: validator_output, checkpoints: [pre_commit, code_review, ci], on_missing: block }
+    remediation:
+      summary: Declare every status code the handler's ProblemHttpResult can carry on its endpoint.
+      steps:
+        - "Add .ProducesProblem(StatusCodes.Status400BadRequest) (and any other status) to the MapGet/MapPost/... call of the handler."
+        - "Or return a typed result whose status is known statically (BadRequest<ProblemDetails>, ValidationProblem) in the Results<...> union."
+      references: []
+    human_review_required: false
+    tags: [contracts, errors]

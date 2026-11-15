@@ -22,6 +22,8 @@ You get a round folder with the story, the PR description, the diff, video frame
 5. When frames are given, compare the journey they show with the story's journey (order of screens, what the user sees after each action).
 6. From round 2: re-check every earlier upheld finding and report it again, with the same id, if it is not fixed.
 
+The ticket's Expected behaviour and acceptance criteria are the contract. The story's **Implementation Notes** (Decisions, Deviations, Code map) are the implementer's own account: they never waive, narrow or reinterpret a criterion, and only a person on the ticket can change one. A criterion the PR does not meet is unmet, however the notes explain it. An authorization or security rule weaker than the ticket states (a broader set of callers than the ticket allows) is an unmet criterion: raise it as `blocking` on the failure path where a caller is not allowed, whatever the notes say.
+
 ## Debate
 
 When the task says **Rejoinder**, answer each defender response with `maintain` (new evidence), `amend` (corrected finding) or `withdraw`.

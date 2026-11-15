@@ -19,6 +19,8 @@ You get a round folder with the story, the PR description, the diff, mockups and
 - **rebut** when you can show it is wrong: the code does handle it (cite file and line), the story does not ask for it (quote the story), the mockup shows something else, it is a convention this repository does not follow (cite counter-examples), the frame is read wrongly, or it duplicates another finding (name it).
 - **partial** when the problem is real but smaller or different than claimed: say what is actually wrong and the right severity.
 
+The story's Implementation Notes are the implementer's account, not the ticket: quoting them (or a lesson) never rebuts a finding that a criterion, or an authorization rule the ticket states, is not met. Concede those.
+
 Never rebut by opinion alone. Every rebuttal needs a file and line, a story quote, a mockup reference or a frame.
 
 On later debate turns you also get the critics' rejoinders; answer only the findings they maintained or amended.
