@@ -1,0 +1,5 @@
+description: PRB-3 catalog browser tab title; needs only the demo catalog of the default scenario.
+extends: default
+
+# No extra rows: every case browses the seeded demo catalog anonymously
+# (101 items; item 99 is "Adventurer GPS Watch", shown on page 1 of the catalog).
