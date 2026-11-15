@@ -18,7 +18,7 @@ app.MapDefaultEndpoints();
 var webHooks = app.NewVersionedApi("Web Hooks");
 
 webHooks.MapWebHooksApiV1()
-        .RequireAuthorization();
+        .RequireAuthorization(Extensions.WebhooksScopePolicy);
 
 app.UseDefaultOpenApi();
 app.Run();
