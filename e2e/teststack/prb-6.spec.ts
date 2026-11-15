@@ -121,7 +121,7 @@ test('TC-PRB-6-03 activating the remove button still removes the line from the s
     await demo.highlight(empty, `After reload: ${EMPTY_HEADING}`);
     const headerBag = page.getByRole('banner').getByRole('link', { name: 'Shopping bag', exact: true });
     await expect(headerBag).toBeVisible();
-    await demo.absent(headerBag, 'No bag count in header');
+    await demo.absent(headerBag, 'No bag count');
   });
 });
 
