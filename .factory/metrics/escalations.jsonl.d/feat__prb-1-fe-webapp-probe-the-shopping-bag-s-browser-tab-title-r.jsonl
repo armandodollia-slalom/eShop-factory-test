@@ -1,0 +1,1 @@
+{"ts":"2026-11-15T19:09:11.344Z","story":"pr-167","stage":"pr-check","title":"the fixer could not fix the upheld findings without a human decision","details":"- [major] CI-1 (flow) CI check fails on the PR: record: Make \"record\" pass on the PR's head; do not weaken or skip the check."}
