@@ -1,0 +1,32 @@
+description: Save for later (CART-1) - alice with an empty cart and one saved product, bob with a saved product that is no longer in the catalog.
+extends: default
+
+postgres:
+  catalogdb:
+    - table: public.Catalog
+      rows:
+        # Alpine Pack: in bob's cart x 1
+        - { Id: 2001, Name: Alpine Pack, Description: Alpine Pack description, Price: 40.00, PictureFileName: 1.webp, CatalogTypeId: 1, CatalogBrandId: 1, AvailableStock: 10, RestockThreshold: 5, MaxStockThreshold: 200, OnReorder: false }
+        # Basecamp Mug: saved for later by bob x 1
+        - { Id: 2002, Name: Basecamp Mug, Description: Basecamp Mug description, Price: 10.00, PictureFileName: 2.webp, CatalogTypeId: 1, CatalogBrandId: 1, AvailableStock: 10, RestockThreshold: 5, MaxStockThreshold: 200, OnReorder: false }
+        # Cedar Headlamp: saved for later by alice x 2
+        - { Id: 2003, Name: Cedar Headlamp, Description: Cedar Headlamp description, Price: 25.00, PictureFileName: 3.webp, CatalogTypeId: 1, CatalogBrandId: 1, AvailableStock: 10, RestockThreshold: 5, MaxStockThreshold: 200, OnReorder: false }
+        # Product 2999 "Retired Lantern" is deliberately not in the catalog
+
+redis:
+  # alice (Id 50ddac7e-...): empty cart, saved 2003 x 2
+  - key: /basket/50ddac7e-9b69-4d68-a91b-25100ef2e403
+    json:
+      BuyerId: 50ddac7e-9b69-4d68-a91b-25100ef2e403
+      Items: []
+      SavedItems:
+        - { Id: a-2003, ProductId: 2003, ProductName: Cedar Headlamp, UnitPrice: 25.0, OldUnitPrice: 0, Quantity: 2, PictureUrl: "" }
+  # bob (Id bc8b0071-...): cart 2001 x 1, saved 2002 x 1 and 2999 x 1 (2999 is not in the catalog)
+  - key: /basket/bc8b0071-21af-41ab-b1d2-15c4efc368df
+    json:
+      BuyerId: bc8b0071-21af-41ab-b1d2-15c4efc368df
+      Items:
+        - { Id: b-2001, ProductId: 2001, ProductName: Alpine Pack, UnitPrice: 40.0, OldUnitPrice: 0, Quantity: 1, PictureUrl: "" }
+      SavedItems:
+        - { Id: b-2002, ProductId: 2002, ProductName: Basecamp Mug, UnitPrice: 10.0, OldUnitPrice: 0, Quantity: 1, PictureUrl: "" }
+        - { Id: b-2999, ProductId: 2999, ProductName: Retired Lantern, UnitPrice: 15.0, OldUnitPrice: 0, Quantity: 1, PictureUrl: "" }

@@ -37,6 +37,8 @@ Scope: the Basket.API operations `SaveForLater`, `MoveToCart`, `RemoveSavedItem`
 | TC-CART-1-19 | Remove deletes the saved product and leaves the cart unchanged | happy | e2e | AC5 |
 | TC-CART-1-20 | Placing an order orders only cart items and keeps the saved product | happy | e2e | AC7 |
 | TC-CART-1-21 | Bob does not see alice's saved products | sad | e2e | AC10 |
+| TC-CART-1-22 | Move to cart from an empty cart puts the saved product with its quantity in the cart | happy | e2e | AC3 |
+| TC-CART-1-23 | A saved product no longer in the catalog is skipped and the cart page still renders | sad | e2e | Outputs: WebApp |
 
 ## Out of scope
 
