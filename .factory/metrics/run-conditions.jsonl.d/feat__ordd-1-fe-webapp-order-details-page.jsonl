@@ -6,3 +6,5 @@
 {"ts":"2026-11-15T07:35:26.801Z","story":"ORDD-1","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":129,"outcome":"leased","poolSize":null,"held":true,"upSec":129}
 {"ts":"2026-11-15T07:41:50.517Z","story":"ORDD-1","kind":"stack-slot","stage":"automation pass","slot":2,"waitedSec":0,"outcome":"leased","poolSize":null}
 {"ts":"2026-11-15T07:44:39.132Z","story":"ORDD-1","kind":"stack-slot","stage":"precheck","slot":2,"waitedSec":106,"outcome":"leased","poolSize":null,"held":true,"upSec":106}
+{"ts":"2026-11-15T08:51:15.839Z","story":"ORDD-1","kind":"stack-slot","stage":"pr-check fixer","slot":1,"waitedSec":1,"outcome":"leased","poolSize":null}
+{"ts":"2026-11-15T09:15:22.470Z","kind":"ci","pr":"https://github.com/armandodollia-slalom/eShop-factory-test/pull/120","state":"flaky","flaky":["[scenarios] › e2e/teststack/ordd-1.spec.ts:159:5 › TC-ORDD-1-06 order number that does not exist shows Order not found with 404","[scenarios] › e2e/teststack/ordd-1.spec.ts:218:5 › TC-ORDD-1-10 order number 0 shows Order not found with 404"],"fixed":false,"rounds":1}
