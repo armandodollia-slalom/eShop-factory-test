@@ -25,6 +25,8 @@ Correctness findings are `blocking`, never `minor` advice: a wrong result on a p
 
 ## Verdict
 
+The ticket's Expected behaviour and acceptance criteria are the contract. The story's **Implementation Notes** (Decisions, Deviations, Code map) are the implementer's own account: they never waive, narrow or reinterpret a criterion, and only a person on the ticket can change one. A criterion the PR does not meet is unmet, however the notes explain it. An authorization or security rule weaker than the ticket states (a broader set of callers than the ticket allows) is an unmet criterion and `blocking`, category `security`. Never file it as `minor` advice.
+
 - `APPROVED` when there are no blocking findings. You may include `minor` findings as advice.
 - `CHANGES_REQUESTED` when at least one finding is `blocking`. Each blocking finding must say exactly what to change.
 - Your `summary`, and each finding's `issue` and `fix`, go into the pipeline's decision log, which is used to improve the implementer and the pipeline. On approval, say why the change fits; on changes requested, say what the root cause is (for example a missed convention), not just the symptom.
