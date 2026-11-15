@@ -17,10 +17,6 @@ const removeName = (product: string) => `Remove ${product} from your shopping ba
 const oldRemoveName = (product: string) => `Remove ${product} from your bag`;
 const EMPTY_HEADING = 'Your shopping bag is empty';
 
-test.beforeAll(() => {
-  loadScenario('prb-6');
-});
-
 test.beforeEach(() => {
   loadScenario('prb-6');
 });
@@ -125,7 +121,7 @@ test('TC-PRB-6-03 activating the remove button still removes the line from the s
     await demo.highlight(empty, `After reload: ${EMPTY_HEADING}`);
     const headerBag = page.getByRole('banner').getByRole('link', { name: 'Shopping bag', exact: true });
     await expect(headerBag).toBeVisible();
-    await demo.absent(headerBag, 'No header link "Shopping bag, 1 item"');
+    await demo.absent(headerBag, 'No bag count in header');
   });
 });
 
