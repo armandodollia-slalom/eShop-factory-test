@@ -6,10 +6,10 @@ plan-sha: f53c011c07df
 verified-score: 9
 verified-at: "2026-11-15T02:48:44.381Z"
 verified-by: test-planner@aebddb93/f37226b9
-automation-sha: 7a8e0f264fff
+automation-sha: c328a64af93c
 automation-plan-sha: f53c011c07df
 automation-score: 9
-automation-verified-at: "2026-11-15T03:01:02.036Z"
+automation-verified-at: "2026-11-15T03:15:25.378Z"
 ---
 # Test plan: BUG-30 [BE - Ordering.API] - Placing an order with a missing or short card number returns 500
 
