@@ -124,6 +124,13 @@ else if (notFound)
     {
         backHref = ComputeBackHref();
 
+        // Catalog ids start at 1, so a non-positive id cannot name a product.
+        if (ItemId <= 0)
+        {
+            SetNotFound();
+            return;
+        }
+
         try
         {
             isLoggedIn = HttpContext?.User.Identity?.IsAuthenticated == true;
@@ -132,14 +139,19 @@ else if (notFound)
         }
         catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
         {
-            HttpContext!.Response.StatusCode = 404;
-            notFound = true;
+            SetNotFound();
         }
 
         if (item is not null)
         {
             brandMates = await LoadBrandMatesAsync();
         }
+    }
+
+    private void SetNotFound()
+    {
+        HttpContext!.Response.StatusCode = 404;
+        notFound = true;
     }
 
     // The brand mates are a secondary section: if they cannot be loaded the
