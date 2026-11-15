@@ -1,0 +1,5 @@
+description: BUG-34 Identity.API sign-in with a return URL to another site; needs only the seeded user alice.
+extends: default
+
+# No extra rows: every case signs in as the seeded user alice (Pass123$) through Identity.API's login form in a
+# fresh browser context; sign-in writes only cookies, nothing the other cases read.
