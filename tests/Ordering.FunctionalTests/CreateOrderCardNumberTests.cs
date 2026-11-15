@@ -84,7 +84,6 @@ public sealed class CreateOrderCardNumberTests
         using var problem = JsonDocument.Parse(body);
         Assert.True(problem.RootElement.GetProperty("errors").TryGetProperty(CardNumberKey, out var messages), $"errors has no {CardNumberKey} key: {body}");
         Assert.Equal(JsonValueKind.Array, messages.ValueKind);
-        Assert.NotEmpty(messages.EnumerateArray());
         Assert.Contains(messages.EnumerateArray(), m => !string.IsNullOrWhiteSpace(m.GetString()));
 
         Assert.Equal(before, (await GetOrdersAsync()).Length);

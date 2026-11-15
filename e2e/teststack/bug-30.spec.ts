@@ -4,7 +4,7 @@ import { loadScenario } from './scenario';
 
 // BUG-30: POST /api/orders answers 400 with a CardNumber validation problem for a missing or short card number and creates no order;
 // a valid card number still creates an order.
-// Scenario `bug-30` (.factory/stack/scenarios/bug-30): the demo users alice and bob (Pass123$), no orders.
+// Scenario `bug-30` (.factory/stack/scenarios/bug-30): the seeded user bob (Pass123$), card type 2 (Visa), no orders.
 test.describe.configure({ mode: 'serial' });
 
 const ORDERS = () => `${url('ordering')}/api/orders?api-version=1.0`;
