@@ -15,7 +15,7 @@ priority: P2
 
 ## Preconditions
 
-- Test stack running with scenario `default`; signed out.
+- Test stack running with scenario `bug-38` (extends `default`, adds no data); signed out.
 - Browser viewport 1280×720.
 
 ## Steps

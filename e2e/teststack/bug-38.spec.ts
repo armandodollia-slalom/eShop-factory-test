@@ -12,7 +12,8 @@ test.describe.configure({ mode: 'serial' });
 const COLUMN_REST = 'rgba(255, 255, 255, 0.66)';
 const LEGAL_REST = 'rgba(255, 255, 255, 0.55)';
 const HIGHLIGHT = 'rgb(255, 255, 255)';
-// Longer than the footer's colour transition.
+// Longer than the footer's colour transition. Negative hover checks wait this long first: toHaveCSS(rest colour)
+// would otherwise pass at once, before a would-be hover transition has even started.
 const SETTLE_MS = 500;
 
 const footer = (page: Page) => page.locator('footer.eshop-footer');
@@ -28,6 +29,9 @@ async function openFooter(page: Page) {
 
 // Moves the mouse to the top-left corner, away from the footer.
 const mouseAway = (page: Page) => page.mouse.move(0, 0);
+
+// The recording does not draw the mouse pointer, so captions show the cursor value measured on the element.
+const measuredCursor = (el: Locator) => el.evaluate(e => getComputedStyle(e).cursor);
 
 test.beforeAll(() => {
   loadScenario('bug-38');
@@ -53,7 +57,7 @@ test('TC-BUG-38-01 "Shop all", "Shopping bag" and "My orders" turn white with a 
       await link.hover();
       await expect(link).toHaveCSS('color', HIGHLIGHT);
       await expect(link).toHaveCSS('cursor', 'pointer');
-      await demo.highlight(link, `"${text}" (href="${href}") turns white, pointer cursor`);
+      await demo.highlight(link, `"${text}" (href="${href}") turns white, cursor: ${await measuredCursor(link)}`);
     });
   }
 });
@@ -73,9 +77,8 @@ test('TC-BUG-38-02 "New arrivals" keeps its colour and the default cursor on hov
     await page.waitForTimeout(SETTLE_MS);
     await expect(newArrivals).not.toHaveAttribute('href');
     await expect(newArrivals).toHaveCSS('color', COLUMN_REST);
-    await expect(newArrivals).not.toHaveCSS('color', HIGHLIGHT);
     await expect(newArrivals).toHaveCSS('cursor', 'default');
-    await demo.highlight(newArrivals, '"New arrivals" hovered: no href, colour unchanged, default cursor');
+    await demo.highlight(newArrivals, `"New arrivals" hovered: no href, colour unchanged, cursor: ${await measuredCursor(newArrivals)}`);
   });
 });
 
@@ -91,9 +94,8 @@ test('TC-BUG-38-03 "Privacy" keeps its colour and the default cursor on hover', 
     await page.waitForTimeout(SETTLE_MS);
     await expect(privacy).not.toHaveAttribute('href');
     await expect(privacy).toHaveCSS('color', LEGAL_REST);
-    await expect(privacy).not.toHaveCSS('color', HIGHLIGHT);
     await expect(privacy).toHaveCSS('cursor', 'default');
-    await demo.highlight(privacy, '"Privacy" hovered: no href, colour unchanged, default cursor');
+    await demo.highlight(privacy, `"Privacy" hovered: no href, colour unchanged, cursor: ${await measuredCursor(privacy)}`);
   });
 });
 
@@ -112,7 +114,6 @@ test('TC-BUG-38-04 every other footer entry with no page keeps its colour and th
     { list: legal, text: 'Terms', rest: LEGAL_REST },
     { list: legal, text: 'Cookies', rest: LEGAL_REST },
   ];
-  expect(entries).toHaveLength(12);
   // 12 hovers, each held on screen for the video.
   test.setTimeout(90_000);
   await test.step('open / and scroll the footer into view', async () => {
@@ -126,7 +127,7 @@ test('TC-BUG-38-04 every other footer entry with no page keeps its colour and th
       await expect(link).not.toHaveAttribute('href');
       await expect(link).toHaveCSS('color', rest);
       await expect(link).toHaveCSS('cursor', 'default');
-      await demo.highlight(link, `"${text}" hovered: no href, colour unchanged, default cursor`, 800);
+      await demo.highlight(link, `"${text}" hovered: no href, colour unchanged, cursor: ${await measuredCursor(link)}`, 800);
     });
   }
 });
@@ -146,7 +147,7 @@ test('TC-BUG-38-05 "Help center" turns white on hover and keeps the default curs
     await helpCenter.hover();
     await expect(helpCenter).toHaveCSS('color', HIGHLIGHT);
     await expect(helpCenter).toHaveCSS('cursor', 'default');
-    await demo.highlight(helpCenter, '"Help center" hovered: turns white, default cursor');
+    await demo.highlight(helpCenter, `"Help center" hovered: turns white, cursor: ${await measuredCursor(helpCenter)}`);
   });
 });
 
@@ -166,7 +167,6 @@ test('TC-BUG-38-06 clicking "New arrivals" leaves the page where it is', async (
   await test.step('wait 1000 ms', async () => {
     await page.waitForTimeout(1000);
     expect(page.url()).toBe(startUrl);
-    expect(new URL(page.url()).pathname).toBe('/');
     expect(page.context().pages()).toHaveLength(1);
     await expect(footer(page)).toBeVisible();
     await expect(newArrivals).not.toHaveAttribute('href');
