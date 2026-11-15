@@ -1,0 +1,5 @@
+description: BUG-32 order draft API contract; needs only the seeded user alice and no orders.
+extends: default
+
+# No extra rows: TC-BUG-32-01 reads the served OpenAPI document and TC-BUG-32-04 posts its own item-less draft
+# as alice (Pass123$); nothing is read from or written to the database.
