@@ -23,7 +23,7 @@ test.beforeAll(() => {
   loadScenario('prb-1');
 });
 
-async function signIn(page: Page, demo: Demo,username: string) {
+async function signIn(page: Page, demo: Demo, username: string) {
   await page.goto(BASE_URL);
   await page.getByLabel('Sign in').click();
   await expect(page.getByRole('heading', { name: 'Login' })).toBeVisible();
