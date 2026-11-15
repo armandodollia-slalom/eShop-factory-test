@@ -95,23 +95,12 @@
         </dialog>
     </div>
 }
-else if (notFound)
-{
-    <SectionContent SectionName="page-header-title">Not found</SectionContent>
-    <div class="item-page">
-        <a class="item-back" href="@backHref">
-            <img role="presentation" src="icons/arrow-left.svg" /> Back to catalog
-        </a>
-        <p class="item-notfound">Sorry, we couldn't find any such product.</p>
-    </div>
-}
 
 @code {
     private CatalogItem? item;
     private List<CatalogItem> brandMates = [];
     private int numInCart;
     private bool isLoggedIn;
-    private bool notFound;
     private string backHref = "";
 
     [Parameter]
@@ -122,7 +111,7 @@ else if (notFound)
 
     protected override async Task OnInitializedAsync()
     {
-        backHref = ComputeBackHref();
+        backHref = CatalogBackLink.Href(HttpContext, Nav);
 
         // Catalog ids start at 1, so a non-positive id cannot name a product.
         if (ItemId <= 0)
@@ -148,11 +137,9 @@ else if (notFound)
         }
     }
 
-    private void SetNotFound()
-    {
-        HttpContext!.Response.StatusCode = 404;
-        notFound = true;
-    }
+    // Renders the router's NotFoundPage (ItemNotFound) with a 404. Setting the
+    // status code directly makes .NET 10 send an empty 404 body instead.
+    private void SetNotFound() => Nav.NotFound();
 
     // The brand mates are a secondary section: if they cannot be loaded the
     // product page still renders, just without the section.
@@ -167,27 +154,6 @@ else if (notFound)
             Logger.LogWarning(ex, "Could not load the brand mates of catalog item {ItemId}", ItemId);
             return [];
         }
-    }
-
-    // Return the shopper to the catalog they came from, preserving any active
-    // brand/type/page filters. The catalog navigation is server rendered, so the
-    // Referer header carries the exact filtered URL. Falls back to the catalog
-    // root when the referrer is not the filtered catalog (deep link, external
-    // navigation, or an unfiltered listing) so behaviour is unchanged there.
-    private string ComputeBackHref()
-    {
-        var referer = HttpContext?.Request.Headers.Referer.ToString();
-        if (!string.IsNullOrEmpty(referer)
-            && Uri.TryCreate(referer, UriKind.Absolute, out var refUri)
-            && Uri.TryCreate(Nav.BaseUri, UriKind.Absolute, out var baseUri)
-            && string.Equals(refUri.Authority, baseUri.Authority, StringComparison.OrdinalIgnoreCase)
-            && string.Equals(refUri.AbsolutePath.TrimEnd('/'), baseUri.AbsolutePath.TrimEnd('/'), StringComparison.OrdinalIgnoreCase)
-            && !string.IsNullOrEmpty(refUri.Query))
-        {
-            return refUri.PathAndQuery;
-        }
-
-        return "";
     }
 
     private async Task AddToCartAsync()

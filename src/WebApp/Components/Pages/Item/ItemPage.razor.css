@@ -160,11 +160,6 @@
     text-underline-offset: 2px;
 }
 
-.item-notfound {
-    color: var(--color-ink-2);
-    font-size: var(--text-lg);
-}
-
 /* "More from {brand}": the catalog's product cards below the details. */
 .item-brand-mates {
     margin-top: clamp(3rem, 6vw, 5rem);
