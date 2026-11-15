@@ -57,7 +57,7 @@ test('TC-BUG-38-01 "Shop all", "Shopping bag" and "My orders" turn white with a 
       await link.hover();
       await expect(link).toHaveCSS('color', HIGHLIGHT);
       await expect(link).toHaveCSS('cursor', 'pointer');
-      await demo.highlight(link, `"${text}" (href="${href}") turns white, cursor: ${await measuredCursor(link)}`);
+      await demo.highlight(link, `"${text}": white, cursor ${await measuredCursor(link)}`);
     });
   }
 });
@@ -78,7 +78,7 @@ test('TC-BUG-38-02 "New arrivals" keeps its colour and the default cursor on hov
     await expect(newArrivals).not.toHaveAttribute('href');
     await expect(newArrivals).toHaveCSS('color', COLUMN_REST);
     await expect(newArrivals).toHaveCSS('cursor', 'default');
-    await demo.highlight(newArrivals, `"New arrivals" hovered: no href, colour unchanged, cursor: ${await measuredCursor(newArrivals)}`);
+    await demo.highlight(newArrivals, `"New arrivals": same colour, cursor ${await measuredCursor(newArrivals)}`);
   });
 });
 
@@ -95,7 +95,7 @@ test('TC-BUG-38-03 "Privacy" keeps its colour and the default cursor on hover', 
     await expect(privacy).not.toHaveAttribute('href');
     await expect(privacy).toHaveCSS('color', LEGAL_REST);
     await expect(privacy).toHaveCSS('cursor', 'default');
-    await demo.highlight(privacy, `"Privacy" hovered: no href, colour unchanged, cursor: ${await measuredCursor(privacy)}`);
+    await demo.highlight(privacy, `"Privacy": same colour, cursor ${await measuredCursor(privacy)}`);
   });
 });
 
@@ -127,9 +127,12 @@ test('TC-BUG-38-04 every other footer entry with no page keeps its colour and th
       await expect(link).not.toHaveAttribute('href');
       await expect(link).toHaveCSS('color', rest);
       await expect(link).toHaveCSS('cursor', 'default');
-      await demo.highlight(link, `"${text}" hovered: no href, colour unchanged, cursor: ${await measuredCursor(link)}`, 800);
+      // The measured values go in the bottom caption: a label under an entry at the right edge would be clipped.
+      await demo.caption(`"${text}" hovered: no href, colour unchanged, cursor: ${await measuredCursor(link)}`);
+      await demo.highlight(link, `"${text}"`, 800);
     });
   }
+  await demo.caption('');
 });
 
 test('TC-BUG-38-05 "Help center" turns white on hover and keeps the default cursor', async ({ page, demo }) => {
@@ -147,7 +150,7 @@ test('TC-BUG-38-05 "Help center" turns white on hover and keeps the default curs
     await helpCenter.hover();
     await expect(helpCenter).toHaveCSS('color', HIGHLIGHT);
     await expect(helpCenter).toHaveCSS('cursor', 'default');
-    await demo.highlight(helpCenter, `"Help center" hovered: turns white, cursor: ${await measuredCursor(helpCenter)}`);
+    await demo.highlight(helpCenter, `"Help center": white, cursor ${await measuredCursor(helpCenter)}`);
   });
 });
 
@@ -194,10 +197,10 @@ test('TC-BUG-38-07 footer shows the same entries in the same order with the same
       const nav = column(page, label);
       await expect(nav.locator('h2')).toHaveText(label);
       await expect(nav.locator('a')).toHaveText([...links]);
-      await demo.highlight(nav, `${label}: ${links.join(', ')}`, 1000);
+      await demo.highlight(nav, `${label}: ${links.length} entries unchanged`, 1000);
     }
     await expect(legal(page).locator('a')).toHaveText(legalLinks);
-    await demo.highlight(legal(page), `Legal: ${legalLinks.join(', ')}`, 1000);
+    await demo.highlight(legal(page), `Legal: ${legalLinks.length} entries unchanged`, 1000);
 
     const lists = footer(page).locator('nav[aria-label="Shop"], nav[aria-label="Support"], nav[aria-label="Company"], ul[aria-label="Legal"]');
     const anchors = lists.locator('a');
@@ -228,6 +231,9 @@ test('TC-BUG-38-08 social icons keep their hover highlight', async ({ page, demo
     await instagram.hover();
     await expect(instagram).toHaveCSS('background-color', HIGHLIGHT);
     await expect(instagram).toHaveCSS('cursor', 'pointer');
-    await demo.highlight(instagram, 'Instagram hovered: white background, pointer cursor');
+    // The measured values go in the bottom caption: a label under the left-most icon would be clipped.
+    await demo.caption(`Instagram hovered: white background, cursor: ${await measuredCursor(instagram)}`);
+    await demo.highlight(instagram, 'Instagram');
+    await demo.caption('');
   });
 });
