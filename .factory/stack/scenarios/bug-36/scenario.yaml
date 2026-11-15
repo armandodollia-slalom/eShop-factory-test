@@ -1,0 +1,5 @@
+description: BUG-36 catalog list paging validation; needs only the seeded catalog (101 items) and no extra rows.
+extends: default
+
+# No extra rows: every case lists GET /api/catalog/items (v1 and v2) anonymously and reads only the 101 items of
+# the default catalog (count = 101; page 10 of size 10 holds exactly one item). Nothing is written.

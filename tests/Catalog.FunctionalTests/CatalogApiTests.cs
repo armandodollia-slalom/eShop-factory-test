@@ -10,7 +10,8 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace eShop.Catalog.FunctionalTests;
 
-public sealed class CatalogApiTests : IClassFixture<CatalogApiFixture>
+[Collection(CatalogApiCollection.Name)]
+public sealed class CatalogApiTests
 {
     private readonly WebApplicationFactory<Program> _webApplicationFactory;
     private readonly JsonSerializerOptions _jsonSerializerOptions = new(JsonSerializerDefaults.Web);
@@ -422,15 +423,22 @@ public sealed class CatalogApiTests : IClassFixture<CatalogApiFixture>
         var response = await _httpClient.PostAsJsonAsync("/api/catalog/items", bodyContent, TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
 
-        // Act - 2
-        response = await _httpClient.GetAsync($"/api/catalog/items/{id}", TestContext.Current.CancellationToken);
-        response.EnsureSuccessStatusCode();
-        var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-        var addedItem = JsonSerializer.Deserialize<CatalogItem>(body, _jsonSerializerOptions);
+        try
+        {
+            // Act - 2
+            response = await _httpClient.GetAsync($"/api/catalog/items/{id}", TestContext.Current.CancellationToken);
+            response.EnsureSuccessStatusCode();
+            var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            var addedItem = JsonSerializer.Deserialize<CatalogItem>(body, _jsonSerializerOptions);
 
-        // Assert - 1
-        Assert.Equal(bodyContent.Id, addedItem.Id);
-
+            // Assert - 1
+            Assert.Equal(bodyContent.Id, addedItem.Id);
+        }
+        finally
+        {
+            // Restore the seeded catalog: other tests in the collection read its item count.
+            await _httpClient.DeleteAsync($"/api/catalog/items/{id}", TestContext.Current.CancellationToken);
+        }
     }
 
     [Theory]
@@ -446,17 +454,30 @@ public sealed class CatalogApiTests : IClassFixture<CatalogApiFixture>
             _ => 0
         };
 
+        var seededItem = await _httpClient.GetFromJsonAsync<CatalogItem>($"/api/catalog/items/{id}", _jsonSerializerOptions, TestContext.Current.CancellationToken);
+
         //Act - 1
         var response = await _httpClient.DeleteAsync($"/api/catalog/items/{id}", TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
 
-        // Act - 2
-        var response1 = await _httpClient.GetAsync($"/api/catalog/items/{id}", TestContext.Current.CancellationToken);
-        var responseStatus = response1.StatusCode;
+        try
+        {
+            // Act - 2
+            var response1 = await _httpClient.GetAsync($"/api/catalog/items/{id}", TestContext.Current.CancellationToken);
+            var responseStatus = response1.StatusCode;
 
-        // Assert - 1
-        Assert.Equal("NoContent", response.StatusCode.ToString());
-        Assert.Equal("NotFound", responseStatus.ToString());
+            // Assert - 1
+            Assert.Equal("NoContent", response.StatusCode.ToString());
+            Assert.Equal("NotFound", responseStatus.ToString());
+        }
+        finally
+        {
+            // Restore the seeded item: other tests in the collection read the catalog's item count.
+            seededItem.CatalogType = null;
+            seededItem.CatalogBrand = null;
+            var restoreResponse = await _httpClient.PostAsJsonAsync("/api/catalog/items", seededItem, TestContext.Current.CancellationToken);
+            restoreResponse.EnsureSuccessStatusCode();
+        }
     }
 
     [Theory]
