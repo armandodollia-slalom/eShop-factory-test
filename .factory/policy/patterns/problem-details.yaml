@@ -10,6 +10,7 @@ rules:
 - ERR-002
 - ERR-003
 - ERR-004
+- API-005
 guidance:
 - Register AddProblemDetails() and the exception handler middleware.
 - Return TypedResults.Problem/ValidationProblem/NotFound from endpoints.

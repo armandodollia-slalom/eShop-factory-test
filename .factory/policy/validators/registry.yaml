@@ -709,3 +709,27 @@ validators:
         files:
           tests/Orders.UnitTests/X.cs: "[TestMethod]\n[Ignore(\"Flaky on CI - AB#123\")]\npublic void T() {}"
         expect: pass
+
+  - id: VAL-API-PROBLEM-CONTRACT
+    name: Problem responses declared in the API contract
+    type: deterministic
+    implementation: text_validators:required_pattern
+    description: New code that returns ProblemHttpResult must declare the status codes it carries with ProducesProblem / ProducesValidationProblem, or the generated OpenAPI document omits them.
+    checkpoints: [pre_commit, code_review, ci]
+    params:
+      file_globs: ["**/Apis/**/*.cs"]   # TUNE: the endpoint files of this codebase (same as the rule's include)
+      trigger: 'ProblemHttpResult|TypedResults\.Problem\(|Results\.Problem\('
+      trigger_on: added
+      require:
+        - regex: '\.Produces(Validation)?Problem\('
+          message: A handler returns a ProblemHttpResult but no endpoint declares ProducesProblem(status); the OpenAPI document does not list that error response.
+    self_tests:
+      - name: new problem result without a declaration fails
+        files:
+          src/Ordering.Api/Apis/OrdersApi.cs: 'api.MapPost("/draft", Draft); static Results<Ok, ProblemHttpResult> Draft() => TypedResults.Problem(statusCode: 400);'
+        expect: fail
+      - name: declared problem response passes
+        files:
+          src/Ordering.Api/Apis/OrdersApi.cs: 'api.MapPost("/draft", Draft).ProducesProblem(StatusCodes.Status400BadRequest); static Results<Ok, ProblemHttpResult> Draft() => TypedResults.Problem(statusCode: 400);'
+        expect: pass
+
