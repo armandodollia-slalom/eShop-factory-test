@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { test, expect } from '../demo';
+import { createDemo, test, expect } from '../demo';
 import { url } from './ports';
 import { loadScenario } from './scenario';
 
@@ -69,7 +69,7 @@ test('TC-WHK-1-01 each registered webhook row has exactly one button labeled Rem
   const A = 'whk1-01-a';
   const B = 'whk1-01-b';
   await setUp(page, 'alice', [A, B]);
-  await test.step('open / as alice', async () => {
+  await test.step('the list shows the two registered rows', async () => {
     await expect(rows(page)).toHaveCount(2);
     expect((await tokenCells(page)).sort()).toEqual([A, B]);
   });
@@ -78,7 +78,6 @@ test('TC-WHK-1-01 each registered webhook row has exactly one button labeled Rem
       const buttons = row(page, token).getByRole('button');
       await expect(buttons).toHaveCount(1);
       await expect(buttons).toHaveText('Remove', { useInnerText: true });
-      expect((await buttons.textContent())?.trim()).toBe('Remove');
     }
     await expect(removeButtons(page)).toHaveCount(2);
     await demo.highlight(page.locator('table'), 'Two rows, each with one Remove button');
@@ -103,6 +102,24 @@ test('TC-WHK-1-02 removing one of two webhooks removes its row in place and keep
     expect(loads).toBe(0);
     await expect(alert(page).filter({ hasText: NO_LONGER_EXISTS })).toHaveCount(0);
     await demo.highlight(page.locator('table'), `Only ${KEEP} remains, same page`);
+  });
+});
+
+// Regression (PR check FLOW-1-2): a second click while the first DELETE is in flight must not send a second DELETE
+// that gets 404 and shows "This webhook no longer exists." after the user's own successful removal.
+test('WHK-1 double-clicking Remove removes the webhook without the no-longer-exists message', async ({ page, demo }) => {
+  const KEEP = 'whk1-dbl-keep';
+  const REMOVE = 'whk1-dbl-remove';
+  await setUp(page, 'alice', [KEEP, REMOVE]);
+  await test.step(`double-click Remove on the ${REMOVE} row`, async () => {
+    await row(page, REMOVE).getByRole('button', { name: 'Remove', exact: true }).dblclick();
+  });
+  await test.step('the row is removed and no message is shown', async () => {
+    await expect(row(page, REMOVE)).toHaveCount(0);
+    await expect(rows(page)).toHaveCount(1);
+    await page.waitForTimeout(1000);
+    await expect(alert(page)).toHaveCount(0);
+    await demo.highlight(page.locator('table'), `Only ${KEEP} remains, no error message`);
   });
 });
 
@@ -139,22 +156,28 @@ test('TC-WHK-1-04 removing the last webhook shows None registered', async ({ pag
   });
 });
 
-test('TC-WHK-1-05 alice removing her webhook leaves bob\'s webhook registered', async ({ browser, demo }) => {
+// Narrates on alice's and bob's own pages (createDemo per page) instead of the `demo` fixture, which would draw on
+// the fixture's default page that this case never uses.
+test('TC-WHK-1-05 alice removing her webhook leaves bob\'s webhook registered', async ({ browser }) => {
   const ALICE = 'whk1-05-alice';
   const BOB = 'whk1-05-bob';
   const contextA = await browser.newContext();
   const contextB = await browser.newContext();
   const pageA = await contextA.newPage();
   const pageB = await contextB.newPage();
+  const demoA = createDemo(pageA);
+  const demoB = createDemo(pageB);
   try {
     await setUp(pageA, 'alice', [ALICE]);
     await setUp(pageB, 'bob', [BOB]);
     await test.step(`in context A, open / and click Remove on the ${ALICE} row`, async () => {
       await pageA.bringToFront();
-      await clickRemove(pageA, ALICE, demo);
+      await clickRemove(pageA, ALICE, demoA);
     });
     await test.step('in context A, wait until the page shows None registered', async () => {
-      await expect(pageA.getByText('None registered', { exact: true })).toBeVisible();
+      const placeholder = pageA.getByText('None registered', { exact: true });
+      await expect(placeholder).toBeVisible();
+      await demoA.highlight(placeholder, 'Alice: None registered');
     });
     await test.step('in context B, open /', async () => {
       await pageB.bringToFront();
@@ -165,9 +188,11 @@ test('TC-WHK-1-05 alice removing her webhook leaves bob\'s webhook registered', 
       expect(await tokenCells(pageB)).toEqual([BOB]);
       await expect(row(pageB, BOB).getByRole('button', { name: 'Remove', exact: true })).toHaveCount(1);
       await expect(pageB.getByText('None registered', { exact: true })).toHaveCount(0);
-      await demo.highlight(row(pageB, BOB), `Bob's ${BOB} is still registered`);
+      await demoB.highlight(row(pageB, BOB), `Bob's ${BOB} is still registered`);
     });
   } finally {
+    await demoA.dispose().catch(() => {});
+    await demoB.dispose().catch(() => {});
     await contextA.close();
     await contextB.close();
   }
@@ -193,7 +218,6 @@ test('TC-WHK-1-07 removing a webhook already deleted in another tab shows the me
   await test.step('tab 1 shows the message and the reloaded list', async () => {
     const message = alert(page);
     await expect(message).toHaveText(NO_LONGER_EXISTS);
-    expect((await message.textContent())?.trim()).toBe(NO_LONGER_EXISTS);
     await expect(row(page, STALE)).toHaveCount(0);
     await expect(rows(page)).toHaveCount(1);
     expect(await tokenCells(page)).toEqual([KEEP]);
