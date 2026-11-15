@@ -9,7 +9,7 @@ verified-by: test-planner@1edb523e/67b01306
 automation-sha: 3cad65d21d98
 automation-plan-sha: 4bcbbea57d80
 automation-score: 10
-automation-verified-at: "2026-11-15T10:28:01.254Z"
+automation-verified-at: "2026-11-15T10:33:51.008Z"
 ---
 # Test plan: BUG-37 Opening the product page for item 0 or a negative id shows a server error
 
