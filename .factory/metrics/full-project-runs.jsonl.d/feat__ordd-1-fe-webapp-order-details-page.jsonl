@@ -8,3 +8,5 @@
 {"ts":"2026-11-15T14:13:13.984Z","story":"ORDD-1","unit":"tests/Ordering.UnitTests","why":"covers ordering-api","argv":"dotnet test --project tests/Ordering.UnitTests --no-build","status":0,"timedOut":false}
 {"ts":"2026-11-15T14:25:11.685Z","story":"ORDD-1","unit":"tests/Ordering.FunctionalTests","why":"holds the story's tests","argv":"dotnet test --project tests/Ordering.FunctionalTests --no-build","status":0,"timedOut":false}
 {"ts":"2026-11-15T14:25:22.780Z","story":"ORDD-1","unit":"tests/Ordering.UnitTests","why":"covers ordering-api","argv":"dotnet test --project tests/Ordering.UnitTests --no-build","status":0,"timedOut":false}
+{"ts":"2026-11-15T14:31:53.804Z","story":"ORDD-1","unit":"tests/Ordering.FunctionalTests","why":"holds the story's tests","argv":"dotnet test --project tests/Ordering.FunctionalTests --no-build","status":0,"timedOut":false}
+{"ts":"2026-11-15T14:32:07.852Z","story":"ORDD-1","unit":"tests/Ordering.UnitTests","why":"covers ordering-api","argv":"dotnet test --project tests/Ordering.UnitTests --no-build","status":0,"timedOut":false}
