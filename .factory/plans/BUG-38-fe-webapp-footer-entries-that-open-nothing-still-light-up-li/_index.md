@@ -2,14 +2,14 @@
 story: BUG-38
 story-issue: "https://github.com/armandodollia-slalom/eShop-factory-test/issues/144"
 story-sha: af9269017bb0
-plan-sha: 0d00814cb101
-verified-score: 10
-verified-at: "2026-11-15T13:01:16.114Z"
-verified-by: test-planner@1edb523e/67b01306
-automation-sha: 90b20b5a6851
-automation-plan-sha: 0d00814cb101
+plan-sha: 1652214faae9
+verified-score: 9
+verified-at: "2026-11-15T13:40:18.990Z"
+verified-by: as-is/67b01306
+automation-sha: 797736586d9c
+automation-plan-sha: 1652214faae9
 automation-score: 10
-automation-verified-at: "2026-11-15T13:09:24.107Z"
+automation-verified-at: "2026-11-15T13:43:27.948Z"
 ---
 # Test plan: BUG-38 [FE - WebApp] - Footer entries that open nothing still light up like links on hover
 
