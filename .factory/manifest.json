@@ -20,7 +20,7 @@
     },
     ".claude/agents/implementer.md": {
       "kind": "file",
-      "sha": "82f5712fe0b38940"
+      "sha": "795e6730aa5477eb"
     },
     ".claude/agents/lessons-check.md": {
       "kind": "file",
@@ -28,7 +28,7 @@
     },
     ".claude/agents/pair-implementer.md": {
       "kind": "file",
-      "sha": "f0d5aa4d69b41e5a"
+      "sha": "9586b7e629f17952"
     },
     ".claude/agents/pair-ui-verifier.md": {
       "kind": "file",
@@ -92,7 +92,7 @@
     },
     ".claude/agents/test-planner.md": {
       "kind": "file",
-      "sha": "9b64f246466439ac"
+      "sha": "cec7f251a2fa1a62"
     },
     ".claude/settings.json": {
       "kind": "json",
@@ -184,7 +184,7 @@
     },
     ".github/agents/implementer.agent.md": {
       "kind": "file",
-      "sha": "95068a46eb37315e"
+      "sha": "81bc1de46f000c18"
     },
     ".github/agents/lessons-check.agent.md": {
       "kind": "file",
@@ -192,7 +192,7 @@
     },
     ".github/agents/pair-implementer.agent.md": {
       "kind": "file",
-      "sha": "31b748af2c5a0ecd"
+      "sha": "58da9e42899a95f2"
     },
     ".github/agents/pair-ui-verifier.agent.md": {
       "kind": "file",
@@ -256,7 +256,7 @@
     },
     ".github/agents/test-planner.agent.md": {
       "kind": "file",
-      "sha": "9b64f246466439ac"
+      "sha": "cec7f251a2fa1a62"
     },
     ".github/CODEOWNERS": {
       "kind": "block",

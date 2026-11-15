@@ -2,7 +2,7 @@
 
 Rules learned from this repository's reviews, verifier findings and PR checks; they are appended to the test-automation-verifier agent's instructions on every run.
 
-## L1: Check test code style before scoring 10
-<!-- category: passed-but-upheld; subtype: style; added: 2026-11-14 -->
+## L2: Check that each video identifies its case before scoring 10
+<!-- category: passed-but-upheld; subtype: video; added: 2026-11-15 -->
 
-The PR check later upheld style findings on tests you passed. Before scoring 10, check each new test file for: inline fully qualified type names where a `using` exists, helpers duplicated apart from one parameter, scenarios looped in a single test instead of `DataRow`, inconsistent `BASE_URL` handling versus the neighbouring spec, and scenario names in specs or plans that do not exist in the repository. List each as a gap.
+The PR check's video critic keeps upholding findings on suites you passed. For each UI case open its keyframes and list as a gap: no frame or caption shows the requested URL or the URL after a redirect (the recording has no address bar); the input that makes the case distinct (`999999`, `?city=red`) never appears; a step the case relies on (the pager, page 1's last card) is never in view; a caption is clipped at the viewport edge; or a value the video cannot show (the pointer `cursor`) is not narrated from a measurement.
