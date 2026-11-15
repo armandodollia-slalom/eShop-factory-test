@@ -40,7 +40,7 @@
     },
     ".claude/agents/pr-check-acceptance.md": {
       "kind": "file",
-      "sha": "85a82b0b8278b935"
+      "sha": "558c86de39b1a843"
     },
     ".claude/agents/pr-check-defender.md": {
       "kind": "file",
@@ -56,11 +56,11 @@
     },
     ".claude/agents/pr-check-flow.md": {
       "kind": "file",
-      "sha": "fffa75034dc28694"
+      "sha": "1e10d793db163fe0"
     },
     ".claude/agents/pr-check-judge.md": {
       "kind": "file",
-      "sha": "357397fbe16673d2"
+      "sha": "d977e9180ff049c7"
     },
     ".claude/agents/pr-check-style.md": {
       "kind": "file",
@@ -204,7 +204,7 @@
     },
     ".github/agents/pr-check-acceptance.agent.md": {
       "kind": "file",
-      "sha": "703ee159591f5682"
+      "sha": "80c8b02cfd8058ee"
     },
     ".github/agents/pr-check-defender.agent.md": {
       "kind": "file",
@@ -220,11 +220,11 @@
     },
     ".github/agents/pr-check-flow.agent.md": {
       "kind": "file",
-      "sha": "91a500ae7c99ccf9"
+      "sha": "685e75025149a883"
     },
     ".github/agents/pr-check-judge.agent.md": {
       "kind": "file",
-      "sha": "a7dbea263ef6cdb7"
+      "sha": "e953bd7dffab187e"
     },
     ".github/agents/pr-check-style.agent.md": {
       "kind": "file",
