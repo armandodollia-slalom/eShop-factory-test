@@ -2,10 +2,10 @@
 story: BUG-4
 story-issue: "https://github.com/armandodollia-slalom/eShop-factory-test/issues/95"
 story-sha: d68711f5c456
-automation-sha: 1b4cab388b90
+automation-sha: 6da21b768df4
 automation-plan-sha: 6989be9569f1
 automation-score: 10
-automation-verified-at: "2026-11-15T02:08:05.902Z"
+automation-verified-at: "2026-11-15T02:20:58.751Z"
 plan-sha: 6989be9569f1
 verified-score: 9
 verified-at: "2026-11-15T01:50:12.001Z"
