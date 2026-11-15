@@ -45,7 +45,7 @@ const row = (page: Page, token: string) =>
   rows(page).filter({ has: page.getByRole('cell', { name: token, exact: true }) });
 const removeButtons = (page: Page) => page.getByRole('button', { name: 'Remove', exact: true });
 const alert = (page: Page) => page.getByRole('alert');
-const tokenCells = async (page: Page) => (await rows(page).locator('td:nth-child(3)').allTextContents()).map((t) => t.trim());
+const tokenCells = (page: Page) => rows(page).locator('td:nth-child(3)');
 
 /** Signs in, registers the given tokens in order and leaves `/` open (interactive) showing them. */
 async function setUp(page: Page, user: string, tokens: string[]) {
@@ -71,7 +71,7 @@ test('TC-WHK-1-01 each registered webhook row has exactly one button labeled Rem
   await setUp(page, 'alice', [A, B]);
   await test.step('the list shows the two registered rows', async () => {
     await expect(rows(page)).toHaveCount(2);
-    expect((await tokenCells(page)).sort()).toEqual([A, B]);
+    expect((await tokenCells(page).allTextContents()).map((t) => t.trim()).sort()).toEqual([A, B]);
   });
   await test.step('each row has exactly one Remove button and the page has two', async () => {
     for (const token of [A, B]) {
@@ -133,10 +133,12 @@ test('TC-WHK-1-03 a removed webhook is still gone after the page is reloaded', a
   });
   await test.step('reload the page', async () => {
     await page.reload();
+    // Wait for the interactive render: QuickGrid re-renders its rows when the circuit starts after prerendering.
+    await expect(page.locator('header h1')).toBeFocused({ timeout: 30_000 });
     await expect(rows(page)).toHaveCount(1);
   });
   await test.step(`after the reload only ${KEEP} is listed`, async () => {
-    expect(await tokenCells(page)).toEqual([KEEP]);
+    await expect(tokenCells(page)).toHaveText([KEEP]);
     await expect(row(page, REMOVE)).toHaveCount(0);
     await demo.highlight(page.locator('table'), `After reload: only ${KEEP}`);
   });
@@ -185,7 +187,7 @@ test('TC-WHK-1-05 alice removing her webhook leaves bob\'s webhook registered', 
       await expect(rows(pageB)).toHaveCount(1);
     });
     await test.step(`bob still has ${BOB} with its Remove button`, async () => {
-      expect(await tokenCells(pageB)).toEqual([BOB]);
+      await expect(tokenCells(pageB)).toHaveText([BOB]);
       await expect(row(pageB, BOB).getByRole('button', { name: 'Remove', exact: true })).toHaveCount(1);
       await expect(pageB.getByText('None registered', { exact: true })).toHaveCount(0);
       await demoB.highlight(row(pageB, BOB), `Bob's ${BOB} is still registered`);
@@ -220,7 +222,7 @@ test('TC-WHK-1-07 removing a webhook already deleted in another tab shows the me
     await expect(message).toHaveText(NO_LONGER_EXISTS);
     await expect(row(page, STALE)).toHaveCount(0);
     await expect(rows(page)).toHaveCount(1);
-    expect(await tokenCells(page)).toEqual([KEEP]);
+    await expect(tokenCells(page)).toHaveText([KEEP]);
     expect(new URL(page.url()).pathname).toBe('/');
     await demo.highlight(message, NO_LONGER_EXISTS);
     await demo.highlight(page.locator('table'), `Reloaded list: only ${KEEP}`);

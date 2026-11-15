@@ -6,10 +6,10 @@ plan-sha: 77a46d8d354c
 verified-score: 9
 verified-at: "2026-11-15T02:57:10.615Z"
 verified-by: test-planner@aebddb93/f37226b9
-automation-sha: 47504318ad40
+automation-sha: dddc0029c37f
 automation-plan-sha: 77a46d8d354c
 automation-score: 10
-automation-verified-at: "2026-11-15T03:08:06.082Z"
+automation-verified-at: "2026-11-15T03:36:51.603Z"
 ---
 # Test plan: WHK-1 [FE - WebhookClient] - Remove a registered webhook from the webhooks client
 
