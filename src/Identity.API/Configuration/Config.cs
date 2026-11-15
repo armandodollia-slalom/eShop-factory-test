@@ -160,6 +160,21 @@
                 },
                 new Client
                 {
+                    ClientId = "catalogswaggerui",
+                    ClientName = "Catalog Swagger UI",
+                    AllowedGrantTypes = GrantTypes.Implicit,
+                    AllowAccessTokensViaBrowser = true,
+
+                    RedirectUris = { $"{configuration["CatalogApiClient"]}/swagger/oauth2-redirect.html" },
+                    PostLogoutRedirectUris = { $"{configuration["CatalogApiClient"]}/swagger/" },
+
+                    AllowedScopes =
+                    {
+                        "catalog"
+                    }
+                },
+                new Client
+                {
                     ClientId = "orderingswaggerui",
                     ClientName = "Ordering Swagger UI",
                     AllowedGrantTypes = GrantTypes.Implicit,

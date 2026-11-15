@@ -3,6 +3,7 @@ using System.Security.Claims;
 
 using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
+using eShop.Catalog.API;
 
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -14,6 +15,12 @@ public sealed class CatalogApiFixture : WebApplicationFactory<Program>, IAsyncLi
 {
     /// <summary>A request with this header is sent as an anonymous caller: no test identity is attached.</summary>
     public const string AnonymousHeader = "X-Test-Anonymous";
+
+    /// <summary>A request with this header is sent as an authenticated customer: catalog scope, no admin role.</summary>
+    public const string NonAdminHeader = "X-Test-Non-Admin";
+
+    /// <summary>A request with this header is sent as an admin whose token lacks the catalog scope.</summary>
+    public const string NoCatalogScopeHeader = "X-Test-No-Catalog-Scope";
 
     private readonly IHost _app;
 
@@ -39,7 +46,7 @@ public sealed class CatalogApiFixture : WebApplicationFactory<Program>, IAsyncLi
                 { $"ConnectionStrings:{Postgres.Resource.Name}", _postgresConnectionString },
                 });
         });
-        // Catalog writes require an authenticated caller; the existing tests exercise them as one.
+        // Catalog writes require a catalog admin; the existing tests exercise them as one.
         builder.ConfigureServices(services =>
         {
             services.AddSingleton<IStartupFilter>(new AutoAuthorizeStartupFilter());
@@ -75,9 +82,20 @@ public sealed class CatalogApiFixture : WebApplicationFactory<Program>, IAsyncLi
             {
                 builder.Use((context, nextMiddleware) =>
                 {
-                    if (!context.Request.Headers.ContainsKey(AnonymousHeader))
+                    var headers = context.Request.Headers;
+                    if (!headers.ContainsKey(AnonymousHeader))
                     {
-                        context.User.AddIdentity(new ClaimsIdentity([new Claim("sub", "catalog-functional-tests")], "tests"));
+                        List<Claim> claims = [new Claim("sub", "catalog-functional-tests")];
+                        if (!headers.ContainsKey(NoCatalogScopeHeader))
+                        {
+                            claims.Add(new Claim("scope", CatalogApi.Scope));
+                        }
+                        if (!headers.ContainsKey(NonAdminHeader))
+                        {
+                            claims.Add(new Claim(ClaimTypes.Role, CatalogApi.AdminRole));
+                        }
+                        // Replace (not append to) the anonymous principal: a failed policy then answers 403, not 401.
+                        context.User = new ClaimsPrincipal(new ClaimsIdentity(claims, "tests"));
                     }
                     return nextMiddleware(context);
                 });

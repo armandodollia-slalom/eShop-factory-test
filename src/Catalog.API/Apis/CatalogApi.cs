@@ -10,6 +10,11 @@ namespace eShop.Catalog.API;
 
 public static class CatalogApi
 {
+    /// <summary>Policy for catalog writes: a caller in the <see cref="AdminRole"/> role whose token carries the <see cref="Scope"/> scope.</summary>
+    public const string AdminPolicy = "CatalogAdmin";
+    public const string AdminRole = "Admin";
+    public const string Scope = "catalog";
+
     public static IEndpointRouteBuilder MapCatalogApi(this IEndpointRouteBuilder app)
     {
         // RouteGroupBuilder for catalog endpoints
@@ -107,23 +112,23 @@ public static class CatalogApi
             .WithSummary("Create or replace a catalog item")
             .WithDescription("Create or replace a catalog item")
             .WithTags("Items")
-            .RequireAuthorization();
+            .RequireAuthorization(AdminPolicy);
         v2.MapPut("/items/{id:int}", UpdateItem)
             .WithName("UpdateItem-V2")
             .WithSummary("Create or replace a catalog item")
             .WithDescription("Create or replace a catalog item")
             .WithTags("Items")
-            .RequireAuthorization();
+            .RequireAuthorization(AdminPolicy);
         api.MapPost("/items", CreateItem)
             .WithName("CreateItem")
             .WithSummary("Create a catalog item")
             .WithDescription("Create a new item in the catalog")
-            .RequireAuthorization();
+            .RequireAuthorization(AdminPolicy);
         api.MapDelete("/items/{id:int}", DeleteItemById)
             .WithName("DeleteItem")
             .WithSummary("Delete catalog item")
             .WithDescription("Delete the specified catalog item")
-            .RequireAuthorization();
+            .RequireAuthorization(AdminPolicy);
 
         return app;
     }

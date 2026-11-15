@@ -3,30 +3,53 @@ import { getAccessToken } from './identity-token';
 import { url } from './ports';
 import { loadScenario } from './scenario';
 
-// BUG-4: catalog create, update and delete answer 401 to callers without a valid bearer token and change nothing;
-// a token issued by Identity.API still creates, updates and deletes items, and reads stay anonymous.
-// Scenario `bug-4` (.factory/stack/scenarios/bug-4): the seeded catalog (items 1-101) and the demo user alice (Pass123$).
+// BUG-4: catalog create, update and delete answer 401 to callers without a valid bearer token and 403 to signed-in
+// callers who are not catalog admins (admin role and catalog scope), and change nothing; the admin user's catalog
+// token still creates, updates and deletes items, and reads stay anonymous.
+// Scenario `bug-4` (.factory/stack/scenarios/bug-4): the seeded catalog (items 1-101), the demo user alice and the
+// seeded catalog admin `admin` (both Pass123$).
 test.describe.configure({ mode: 'serial' });
 
 const ITEMS = () => `${url('catalog')}/api/catalog/items`;
-// The only redirect URI identity registers for this client on the stack (OrderingApiClient); it resolves only inside the compose network.
-const REDIRECT = 'http://ordering-api:8080/swagger/oauth2-redirect.html';
+// The only redirect URIs identity registers for these clients on the stack (CatalogApiClient, OrderingApiClient);
+// they resolve only inside the compose network.
+const CATALOG_CLIENT = {
+  clientId: 'catalogswaggerui',
+  scope: 'catalog',
+  redirectUri: 'http://catalog-api:8080/swagger/oauth2-redirect.html',
+  state: 'bug4',
+};
+const ORDERS_CLIENT = {
+  clientId: 'orderingswaggerui',
+  scope: 'orders',
+  redirectUri: 'http://ordering-api:8080/swagger/oauth2-redirect.html',
+  state: 'bug4',
+};
+const ADMIN = 'admin';
+const CUSTOMER = 'alice';
 const ITEM_1_NAME = 'Wanderer Black Hiking Boots';
 const ITEM_1_PRICE = 109.99;
 
-let token = '';
+let adminToken = '';
+let customerCatalogToken = '';
+let adminOrdersToken = '';
 
 test.beforeAll(() => {
   loadScenario('bug-4');
 });
 
-// The "orderingswaggerui" client uses the implicit flow: signing in as alice returns an access token in the redirect fragment.
+// The swagger UI clients use the implicit flow: signing in returns an access token in the redirect fragment.
 test.beforeAll(async ({ browser }) => {
-  token = await getAccessToken(browser, { clientId: 'orderingswaggerui', scope: 'orders', redirectUri: REDIRECT, state: 'bug4' });
-  expect(token).not.toBe('');
+  adminToken = await getAccessToken(browser, CATALOG_CLIENT, ADMIN);
+  customerCatalogToken = await getAccessToken(browser, CATALOG_CLIENT, CUSTOMER);
+  adminOrdersToken = await getAccessToken(browser, ORDERS_CLIENT, ADMIN);
+  expect(adminToken).not.toBe('');
+  expect(customerCatalogToken).not.toBe('');
+  expect(adminOrdersToken).not.toBe('');
 });
 
-const auth = () => ({ Authorization: `Bearer ${token}` });
+const bearer = (token: string) => ({ Authorization: `Bearer ${token}` });
+const auth = () => bearer(adminToken);
 
 const item = (id: number, name: string, description: string, price: number, extra: Record<string, unknown> = {}) => ({
   id,
@@ -141,8 +164,44 @@ test('TC-BUG-4-10 catalog reads stay anonymous after the fix', async ({ request 
   });
 });
 
+const FORBIDDEN_CALLERS = [
+  { id: 'TC-BUG-4-13', who: 'a signed-in customer (alice: catalog scope, no admin role)', token: () => customerCatalogToken },
+  { id: 'TC-BUG-4-14', who: 'the admin with a token for another API (orders scope only)', token: () => adminOrdersToken },
+];
+
+for (const caller of FORBIDDEN_CALLERS) {
+  test(`${caller.id} writes by ${caller.who} return 403 and change nothing`, async ({ request }) => {
+    const headers = bearer(caller.token());
+    const description = `Forbidden change ${caller.id}`;
+    await test.step('POST item 10104 returns 403 and creates no item', async () => {
+      const response = await request.post(`${ITEMS()}?api-version=2.0`, {
+        headers,
+        data: item(10104, 'BUG-4 Forbidden Item', 'Created by a non-admin', 10.0),
+      });
+      expect(response.status()).toBe(403);
+      expect((await request.get(`${ITEMS()}/10104?api-version=2.0`)).status()).toBe(404);
+    });
+    await test.step('PUT item 1 (v2, then v1) with price 3.00 returns 403', async () => {
+      const v2 = await request.put(`${ITEMS()}/1?api-version=2.0`, { headers, data: item1Change(description, 3.0) });
+      expect(v2.status()).toBe(403);
+      const v1 = await request.put(`${ITEMS()}?api-version=1.0`, { headers, data: item1Change(description, 3.0) });
+      expect(v1.status()).toBe(403);
+    });
+    await test.step('DELETE item 1 returns 403', async () => {
+      expect((await request.delete(`${ITEMS()}/1?api-version=2.0`, { headers })).status()).toBe(403);
+    });
+    await test.step('GET item 1 anonymously: still there, price still 109.99', async () => {
+      const response = await request.get(`${ITEMS()}/1?api-version=2.0`);
+      expect(response.status()).toBe(200);
+      const body = await response.json();
+      expect(body.price).toBe(ITEM_1_PRICE);
+      expect(body.description).not.toBe(description);
+    });
+  });
+}
+
 test('TC-BUG-4-07 authenticated POST creates an item (201 with Location)', async ({ request }) => {
-  await test.step('POST item 10103 as alice', async () => {
+  await test.step('POST item 10103 as the catalog admin', async () => {
     const response = await request.post(`${ITEMS()}?api-version=2.0`, {
       headers: auth(),
       data: item(10103, 'BUG-4 Admin Item', 'Created by an authenticated caller', 25.5),
@@ -162,7 +221,7 @@ test('TC-BUG-4-07 authenticated POST creates an item (201 with Location)', async
 
 test('TC-BUG-4-08 authenticated v2 PUT changes the price of item 99 (201)', async ({ request }) => {
   const description = 'Updated by an authenticated caller';
-  await test.step('PUT item 99 (v2) with price 189.99 as alice', async () => {
+  await test.step('PUT item 99 (v2) with price 189.99 as the catalog admin', async () => {
     const response = await request.put(`${ITEMS()}/99?api-version=2.0`, {
       headers: auth(),
       data: item(99, 'Adventurer GPS Watch', description, 189.99, {
@@ -187,7 +246,7 @@ test('TC-BUG-4-08 authenticated v2 PUT changes the price of item 99 (201)', asyn
 });
 
 test('TC-BUG-4-09 authenticated DELETE removes item 101 (204, then 404)', async ({ request }) => {
-  await test.step('DELETE item 101 as alice', async () => {
+  await test.step('DELETE item 101 as the catalog admin', async () => {
     const response = await request.delete(`${ITEMS()}/101?api-version=2.0`, { headers: auth() });
     expect(response.status()).toBe(204);
   });

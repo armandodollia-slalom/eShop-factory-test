@@ -5,6 +5,11 @@ public static class Extensions
     public static void AddApplicationServices(this IHostApplicationBuilder builder)
     {
         builder.AddDefaultAuthentication();
+        builder.Services.AddAuthorizationBuilder()
+            .AddPolicy(CatalogApi.AdminPolicy, policy => policy
+                .RequireAuthenticatedUser()
+                .RequireClaim("scope", CatalogApi.Scope)
+                .RequireRole(CatalogApi.AdminRole));
 
         // Avoid loading full database config and migrations if startup
         // is being invoked from build-time OpenAPI generation
