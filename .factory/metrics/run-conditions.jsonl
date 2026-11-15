@@ -6,3 +6,5 @@
 {"ts":"2026-11-15T02:46:01.739Z","story":"BUG-31","kind":"lsp","worktree":"bug-31","missing":["csharp (all 3 leased language server slots are in use (/Users/armando.dollia/code/eShop-factory-test-worktrees/cart-1 (csharp), /Users/armando.dollia/code/eShop-factory-test-worktrees/whk-1 (csharp), /Users/armando.dollia/code/eShop-factory-test-worktrees/bug-30 (csharp)))"]}
 {"ts":"2026-11-15T02:51:40.667Z","story":"BUG-31","kind":"stack-slot","stage":"automation pass","slot":3,"waitedSec":1,"outcome":"leased","poolSize":null}
 {"ts":"2026-11-15T03:03:51.662Z","story":"BUG-31","kind":"stack-slot","stage":"precheck","slot":3,"waitedSec":4,"outcome":"leased","poolSize":null,"held":true,"upSec":4}
+{"ts":"2026-11-15T03:28:04.843Z","story":"BUG-31","kind":"stack-slot","stage":"automation pass","slot":2,"waitedSec":0,"outcome":"leased","poolSize":null}
+{"ts":"2026-11-15T03:29:53.399Z","story":"BUG-31","kind":"stack-slot","stage":"precheck","slot":2,"waitedSec":105,"outcome":"leased","poolSize":null,"held":true,"upSec":105}

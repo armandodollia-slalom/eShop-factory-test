@@ -2,14 +2,14 @@
 story: BUG-31
 story-issue: "https://github.com/armandodollia-slalom/eShop-factory-test/issues/103"
 story-sha: feee67487cdb
-plan-sha: 41f81c8fe919
-verified-score: 10
-verified-at: "2026-11-15T02:54:46.564Z"
-verified-by: test-planner@aebddb93/f37226b9
 automation-sha: 1ac168986ff4
-automation-plan-sha: 41f81c8fe919
+automation-plan-sha: 0a3d66ed52d5
 automation-score: 10
-automation-verified-at: "2026-11-15T03:05:26.208Z"
+automation-verified-at: "2026-11-15T03:30:54.401Z"
+plan-sha: 0a3d66ed52d5
+verified-score: 9
+verified-at: "2026-11-15T03:28:03.807Z"
+verified-by: test-planner@aebddb93/f37226b9
 ---
 # Test plan: BUG-31 Webhooks.API accepts access tokens issued for other APIs
 
@@ -35,7 +35,7 @@ Shared setup used by the cases:
 
 - "Changed" in the Expected section: Webhooks.API has no update endpoint (`GET`, `GET /{id}`, `POST`, `DELETE` only), so there is nothing to change; `POST` and `DELETE` cover the writes.
 - Audience validation in `src/eShop.ServiceDefaults` and token issuing in `src/Identity.API`: unchanged by this fix.
-- Functional-layer cases for the `scope` claim formats the implementation accepts (one `scope` claim per scope, or one `scope` claim with a space-separated value): these are implementation details from the notes, not requirements of the ticket; the real tokens in TC-01, TC-02 and TC-03 to TC-06 exercise the form Identity.API actually issues.
+- Functional-layer cases for the claim formats the implementation notes say the policy accepts (claim type `scope` and its mapped form `http://schemas.microsoft.com/identity/claims/scope`, each as one claim per scope or as one space-delimited value): these are implementation details from the notes, not requirements of the ticket; the real tokens in TC-01, TC-02 and TC-03 to TC-06 exercise the form Identity.API actually issues.
 - Ownership (bob reading alice's subscription) and validation of the subscription body: unchanged by this bug and covered by existing tests.
 
 ## Open questions
