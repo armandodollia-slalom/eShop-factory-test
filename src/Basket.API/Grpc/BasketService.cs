@@ -97,13 +97,24 @@ public class BasketService(
             BuyerId = userId
         };
 
+        // A product listed more than once becomes one line holding the sum of its quantities,
+        // kept at the position where the product first appears.
+        var itemsByProductId = new Dictionary<int, Model.BasketItem>();
         foreach (var item in customerBasketRequest.Items)
         {
-            response.Items.Add(new()
+            if (itemsByProductId.TryGetValue(item.ProductId, out var existing))
+            {
+                existing.Quantity += item.Quantity;
+                continue;
+            }
+
+            var basketItem = new Model.BasketItem
             {
                 ProductId = item.ProductId,
                 Quantity = item.Quantity,
-            });
+            };
+            itemsByProductId.Add(item.ProductId, basketItem);
+            response.Items.Add(basketItem);
         }
 
         return response;
