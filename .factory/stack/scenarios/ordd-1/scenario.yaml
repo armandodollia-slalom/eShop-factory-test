@@ -1,0 +1,34 @@
+description: ORDD-1 order details page; bob owns order 1 (two items), alice owns order 2, no order 0 or 999999.
+extends: default
+
+# Users come from `default`: bob (Pass123$, Id bc8b0071-21af-41ab-b1d2-15c4efc368df) and alice (Pass123$, Id 50ddac7e-9b69-4d68-a91b-25100ef2e403).
+# Statuses Shipped and Cancelled are final: OrderProcessor's grace-period job only moves Submitted orders,
+# so the status TC-ORDD-1-02 asserts cannot change under the test.
+postgres:
+  orderingdb:
+    - table: ordering.buyers
+      rows:
+        # bob: owner of order 1 (TC-ORDD-1-01..06, 10 sign in as bob)
+        - { Id: 1, IdentityGuid: bc8b0071-21af-41ab-b1d2-15c4efc368df, Name: Bob }
+        # alice: owner of order 2, the foreign order bob must not see (TC-ORDD-1-07)
+        - { Id: 2, IdentityGuid: 50ddac7e-9b69-4d68-a91b-25100ef2e403, Name: Alice }
+    - table: ordering.paymentmethods
+      rows:
+        # one card (type 1, Amex from _base) per buyer, referenced by their order
+        - { Id: 1, BuyerId: 1, Alias: Bob card, CardHolderName: Bob Smith, CardNumber: "378282246310005", CardTypeId: 1, Expiration: "2030-12-31T00:00:00Z" }
+        - { Id: 2, BuyerId: 2, Alias: Alice card, CardHolderName: Alice Smith, CardNumber: "371449635398431", CardTypeId: 1, Expiration: "2030-12-31T00:00:00Z" }
+    - table: ordering.orders
+      rows:
+        # order 1, bob's: summary (TC-ORDD-1-02, total 309.97), address with a distinct value per field (TC-ORDD-1-03)
+        - { Id: 1, BuyerId: 1, PaymentMethodId: 1, OrderStatus: Shipped, OrderDate: "2026-11-01T10:00:00Z", Description: null, Address_Street: 15703 NE 61st Ct, Address_City: Redmond, Address_State: WA, Address_Country: U.S., Address_ZipCode: "98052" }
+        # order 2, alice's: none of its address may appear to bob (TC-ORDD-1-07), total 239.97
+        - { Id: 2, BuyerId: 2, PaymentMethodId: 2, OrderStatus: Cancelled, OrderDate: "2026-11-02T09:00:00Z", Description: null, Address_Street: 100 Alice Lane, Address_City: Seattle, Address_State: WA, Address_Country: U.S., Address_ZipCode: "98101" }
+    - table: ordering.orderItems
+      rows:
+        # order 1: two rows, one with 2 units so the line total (219.98) differs from the unit price (TC-ORDD-1-04)
+        - { Id: 1, OrderId: 1, ProductId: 1, ProductName: Wanderer Black Hiking Boots, UnitPrice: 109.99, Units: 2, Discount: 0, PictureUrl: null }
+        - { Id: 2, OrderId: 1, ProductId: 2, ProductName: Summit Pro Harness, UnitPrice: 89.99, Units: 1, Discount: 0, PictureUrl: null }
+        # order 2: alice's item, must not appear to bob (TC-ORDD-1-07); 79.99 x 3 = 239.97
+        - { Id: 3, OrderId: 2, ProductId: 3, ProductName: Alpine Fusion Goggles, UnitPrice: 79.99, Units: 3, Discount: 0, PictureUrl: null }
+    # The HiLo sequences are standalone (no column owns them): move them past the ids above so orders placed later do not collide.
+    - sql: sequences.sql
