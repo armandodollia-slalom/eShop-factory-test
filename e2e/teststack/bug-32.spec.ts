@@ -4,7 +4,7 @@ import { loadScenario } from './scenario';
 
 // BUG-32: Ordering.API's OpenAPI document lists the 400 application/problem+json response of POST /api/orders/draft,
 // matching what the endpoint returns for a draft with no items.
-// Scenario `bug-32` (.factory/stack/scenarios/bug-32): the demo users alice and bob (Pass123$), no orders.
+// Scenario `bug-32` (.factory/stack/scenarios/bug-32): the seeded user alice (Pass123$), no orders.
 // TC-BUG-32-02, -03 and -05 run in-process in tests/Ordering.FunctionalTests/OrderDraftContractTests.cs.
 test.describe.configure({ mode: 'serial' });
 
