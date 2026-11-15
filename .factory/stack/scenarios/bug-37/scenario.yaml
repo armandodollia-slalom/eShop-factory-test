@@ -1,0 +1,5 @@
+description: BUG-37 product page for non-positive ids; needs only the seeded catalog (101 items, ids 1 to 101) and no extra rows.
+extends: default
+
+# No extra rows: cases open /item/999999, /item/0 and /item/-1 (no such items) and /item/1
+# (Wanderer Black Hiking Boots, Daybird, 109.99) as an anonymous visitor.

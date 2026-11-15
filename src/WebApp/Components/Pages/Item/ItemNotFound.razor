@@ -1,0 +1,24 @@
+@page "/item/not-found"
+@layout Layout.MainLayout
+@inject NavigationManager Nav
+
+@* The router's NotFoundPage: rendered with a 404 when ItemPage calls NavigationManager.NotFound(). *@
+<SectionContent SectionName="page-header-title">Not found</SectionContent>
+<div class="item-page">
+    <a class="item-back" href="@backHref">
+        <img role="presentation" src="icons/arrow-left.svg" /> Back to catalog
+    </a>
+    <p class="item-notfound">Sorry, we couldn't find any such product.</p>
+</div>
+
+@code {
+    private string backHref = "";
+
+    [CascadingParameter]
+    public HttpContext? HttpContext { get; set; }
+
+    protected override void OnInitialized()
+    {
+        backHref = CatalogBackLink.Href(HttpContext, Nav);
+    }
+}
