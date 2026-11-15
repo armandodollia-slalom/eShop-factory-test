@@ -6,10 +6,10 @@ plan-sha: 1450fb86a0d4
 verified-score: 9
 verified-at: "2026-11-15T15:38:55.579Z"
 verified-by: test-planner@1edb523e/67b01306
-automation-sha: c21fdaf17cfe
+automation-sha: db441aef350b
 automation-plan-sha: 1450fb86a0d4
 automation-score: 9
-automation-verified-at: "2026-11-15T15:58:28.409Z"
+automation-verified-at: "2026-11-15T16:19:16.943Z"
 ---
 # Test plan: BUG-40 [FE - WebApp] - Sorting the catalog by price only reorders the products on the current page
 
