@@ -1,4 +1,5 @@
-import type { Locator, Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import type { Demo } from '../demo';
 import { test, expect } from '../demo';
 import { BASE_URL } from './ports';
 import { loadScenario } from './scenario';
@@ -11,7 +12,6 @@ test.describe.configure({ mode: 'serial' });
 
 const PASSWORD = 'Pass123$';
 const EXPECTED_TITLE = 'Shopping bag | AdventureWorks';
-const OLD_TITLE = 'Shopping Bag | AdventureWorks';
 const HEADING = 'Shopping bag';
 const EMPTY_HEADING = 'Your shopping bag is empty';
 const START_SHOPPING = 'Start shopping';
@@ -23,7 +23,7 @@ test.beforeAll(() => {
   loadScenario('prb-1');
 });
 
-async function signIn(page: Page, demo: { highlight: (l: Locator, label?: string) => Promise<void> }, username: string) {
+async function signIn(page: Page, demo: Demo,username: string) {
   await page.goto(BASE_URL);
   await page.getByLabel('Sign in').click();
   await expect(page.getByRole('heading', { name: 'Login' })).toBeVisible();
@@ -37,7 +37,6 @@ async function signIn(page: Page, demo: { highlight: (l: Locator, label?: string
 async function openCart(page: Page) {
   await page.goto(`${BASE_URL}/cart`);
   await expect(page).toHaveURL(/\/cart$/);
-  expect(new URL(page.url()).pathname).toBe('/cart');
 }
 
 const pageHeading = (page: Page) => page.locator('h1');
@@ -50,10 +49,7 @@ test('TC-PRB-1-01 shopping bag tab title reads "Shopping bag | AdventureWorks"',
   });
   await test.step('read the page title', async () => {
     await expect(page).toHaveTitle(EXPECTED_TITLE);
-    const title = await page.title();
-    expect(title).toBe(EXPECTED_TITLE);
-    expect(title).not.toBe(OLD_TITLE);
-    await demo.highlight(pageHeading(page), `Tab title: "${title}" on /cart`);
+    await demo.highlight(pageHeading(page), `Tab title: "${EXPECTED_TITLE}" on /cart`);
   });
 });
 
@@ -101,7 +97,6 @@ test('TC-PRB-1-03 tab title reads "Shopping bag | AdventureWorks" when the bag h
   });
   await test.step('read the page title and the page header h1', async () => {
     await expect(page).toHaveTitle(EXPECTED_TITLE);
-    expect(await page.title()).toBe(EXPECTED_TITLE);
     await expect(pageHeading(page)).toHaveText(HEADING);
     await demo.highlight(pageHeading(page), `Tab title: "${EXPECTED_TITLE}", h1: "${HEADING}"`);
   });
