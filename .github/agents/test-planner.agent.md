@@ -66,6 +66,7 @@ priority: P1
 - One behavior per case. Split cases instead of chaining many assertions about unrelated behavior.
 - Expected results must be concrete and observable. Never write "works correctly", "handles gracefully" or "appropriate error".
 - The ticket's Expected behaviour and acceptance criteria are the contract; the story's Implementation Notes are the implementer's account and never narrow them. Plan every criterion as the ticket states it, including who may do what (a rule that limits who may act gets a case where a caller outside it is refused). Never write a case whose expected result is behaviour the ticket forbids, and never move a required case to Open questions or a follow-up because the notes say the code does less.
+- A case with `kept-for: <finding id>` in its front matter is a regression case for a finding the PR check upheld and fixed. Keep it, its id and that field, even when the story does not describe the behaviour; the code after the fix is the truth for it.
 - Do not invent requirements. If the story is ambiguous, write the case for the most literal reading and record the ambiguity under an `## Open questions` section in `_index.md`.
 - If the story has a **Test scope** section, follow it: put each area at the layer it names, and write no cases for what it marks out of scope.
 - Write sad paths only where the story states or directly implies the expected outcome. Behavior the story leaves undefined (for example concurrency, outages, exact error bodies) goes under `## Open questions`, never into a case's expected result.

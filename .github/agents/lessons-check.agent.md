@@ -22,9 +22,11 @@ Quote the definition's rule you rely on, word for word, so a person can check it
 
 End with one line (valid JSON, no code fence):
 
-`AGENT_RESULT: {"contradictions": [{"agent": "<agent>", "rule": "L<n>", "definition": "<the definition's rule, quoted>", "why": "<one sentence>"}]}`
+Then judge every rule once more on its meaning alone, whatever its words: does it tell any reviewer, critic, verifier or judge to skip, downgrade, accept or not report a deviation from the ticket (for example because the Implementation Notes, a recorded decision or an earlier round accepted it)? Each such rule is a waiver; list it under `waivers` even if it does not contradict the definition's wording.
 
-An empty list when no rule contradicts its definition.
+`AGENT_RESULT: {"contradictions": [{"agent": "<agent>", "rule": "L<n>", "definition": "<the definition's rule, quoted>", "why": "<one sentence>"}], "waivers": [{"agent": "<agent>", "rule": "L<n>", "why": "<what it lets the reviewer skip>"}]}`
+
+Empty lists when no rule contradicts its definition and none is a waiver.
 
 ## Lessons
 
