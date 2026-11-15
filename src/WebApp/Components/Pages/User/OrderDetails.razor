@@ -1,5 +1,6 @@
 @page "/user/orders/{orderNumber:int}"
 @attribute [Authorize]
+@attribute [BufferResponse]
 @inject OrderingService OrderingService
 
 <PageTitle>Order details | AdventureWorks</PageTitle>
@@ -103,7 +104,8 @@
         {
             notFound = true;
             // A 404 set during rendering makes the SSR endpoint send an empty body,
-            // so apply it only when the rendered response starts.
+            // so apply it only when the rendered response starts. [BufferResponse] makes that
+            // happen after rendering even when the layout's streaming cart menu is still loading.
             var httpContext = HttpContext!;
             httpContext.Response.OnStarting(() =>
             {
