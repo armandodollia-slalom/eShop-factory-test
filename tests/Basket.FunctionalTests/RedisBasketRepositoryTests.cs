@@ -1,4 +1,4 @@
-namespace eShop.Basket.FunctionalTests;
+﻿namespace eShop.Basket.FunctionalTests;
 
 [Collection(RedisCollection.Name)]
 public sealed class RedisBasketRepositoryTests(RedisFixture fixture)

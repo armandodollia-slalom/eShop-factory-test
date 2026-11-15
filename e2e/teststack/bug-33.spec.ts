@@ -131,8 +131,8 @@ function callBasket(method: 'GetBasket' | 'UpdateBasket' | 'DeleteBasket', messa
       client.close();
       const body = Buffer.concat(chunks);
       const status = Number(trailers['grpc-status'] ?? headers['grpc-status'] ?? -1);
-      const message = decodeURIComponent(String(trailers['grpc-message'] ?? headers['grpc-message'] ?? ''));
-      resolve({ status, message, items: body.length >= 5 ? decodeItems(body.subarray(5, 5 + body.readUInt32BE(1))) : [] });
+      const grpcMessage = decodeURIComponent(String(trailers['grpc-message'] ?? headers['grpc-message'] ?? ''));
+      resolve({ status, message: grpcMessage, items: body.length >= 5 ? decodeItems(body.subarray(5, 5 + body.readUInt32BE(1))) : [] });
     });
     stream.end(frame);
   });
