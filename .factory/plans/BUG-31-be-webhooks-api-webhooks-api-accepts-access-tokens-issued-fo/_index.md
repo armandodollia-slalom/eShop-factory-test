@@ -35,7 +35,7 @@ Shared setup used by the cases:
 
 - "Changed" in the Expected section: Webhooks.API has no update endpoint (`GET`, `GET /{id}`, `POST`, `DELETE` only), so there is nothing to change; `POST` and `DELETE` cover the writes.
 - Audience validation in `src/eShop.ServiceDefaults` and token issuing in `src/Identity.API`: unchanged by this fix.
-- Functional-layer cases for the claim formats the implementation also accepts (the mapped claim type `http://schemas.microsoft.com/identity/claims/scope`, one space-delimited `scope` value): these are implementation details from the notes, not requirements of the ticket; the real tokens in TC-01, TC-02 and TC-03 to TC-06 exercise the form Identity.API actually issues.
+- Functional-layer cases for the `scope` claim formats the implementation accepts (one `scope` claim per scope, or one `scope` claim with a space-separated value): these are implementation details from the notes, not requirements of the ticket; the real tokens in TC-01, TC-02 and TC-03 to TC-06 exercise the form Identity.API actually issues.
 - Ownership (bob reading alice's subscription) and validation of the subscription body: unchanged by this bug and covered by existing tests.
 
 ## Open questions
