@@ -14,7 +14,8 @@ public static class OrdersApi
         api.MapGet("{orderId:int}", GetOrderAsync);
         api.MapGet("/", GetOrdersByUserAsync);
         api.MapGet("/cardtypes", GetCardTypesAsync);
-        api.MapPost("/draft", CreateOrderDraftAsync);
+        api.MapPost("/draft", CreateOrderDraftAsync)
+            .ProducesProblem(StatusCodes.Status400BadRequest);
         api.MapPost("/", CreateOrderAsync);
 
         return api;

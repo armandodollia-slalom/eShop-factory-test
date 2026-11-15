@@ -1,0 +1,2 @@
+{"ts":"2026-11-15T05:24:43.336Z","stage":"plan","story":"BUG-32","round":2,"agent_prompt_ver":"1edb523e","verifier_ver":"67b01306","cli":"claude","score":10,"passed":true,"gaps":0}
+{"ts":"2026-11-15T05:31:27.300Z","stage":"automation","story":"BUG-32","round":1,"agent_prompt_ver":"1c92a147","verifier_ver":"3dd540d1","cli":"claude","score":9,"passed":true,"gaps":1}
