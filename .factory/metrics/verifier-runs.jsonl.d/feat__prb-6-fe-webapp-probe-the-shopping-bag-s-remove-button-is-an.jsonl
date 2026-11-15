@@ -1,0 +1,2 @@
+{"ts":"2026-11-15T19:15:17.795Z","stage":"plan","story":"PRB-6","round":3,"agent_prompt_ver":"d8121b51","verifier_ver":"67b01306","cli":"claude","score":10,"passed":true,"gaps":0}
+{"ts":"2026-11-15T19:22:28.391Z","stage":"automation","story":"PRB-6","round":1,"agent_prompt_ver":"452b59bc","verifier_ver":"5b110a7e","cli":"claude","score":10,"passed":true,"gaps":0}

@@ -1,0 +1,7 @@
+description: PRB-6 shopping bag remove button accessible name; needs only the seeded user alice with an empty basket and the demo catalog.
+extends: default
+
+# No extra rows: every case signs in as alice (Pass123$), whose basket the default scenario leaves empty, and adds
+# catalog item 1 "Wanderer Black Hiking Boots" (and, for TC-PRB-6-04/-05, item 2 "Summit Pro Harness") from the
+# demo catalog through the WebApp. The spec reloads this scenario before each case so every case starts from an
+# empty basket.
