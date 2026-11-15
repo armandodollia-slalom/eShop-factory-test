@@ -1,6 +1,5 @@
 import type { Page } from '@playwright/test';
-import type { Demo } from '../demo';
-import { test, expect } from '../demo';
+import { test, expect, type Demo } from '../demo';
 import { BASE_URL } from './ports';
 import { loadScenario } from './scenario';
 
@@ -12,7 +11,6 @@ test.describe.configure({ mode: 'serial' });
 
 const PASSWORD = 'Pass123$';
 const EXPECTED_TITLE = 'Shopping bag | AdventureWorks';
-const OLD_TITLE = 'Shopping Bag | AdventureWorks';
 const HEADING = 'Shopping bag';
 const EMPTY_HEADING = 'Your shopping bag is empty';
 const START_SHOPPING = 'Start shopping';
@@ -51,8 +49,6 @@ test('TC-PRB-1-01 shopping bag tab title reads "Shopping bag | AdventureWorks"',
   await test.step('read the page title', async () => {
     await expect(page).toHaveTitle(EXPECTED_TITLE);
     const title = await page.title();
-    expect(title).toBe(EXPECTED_TITLE);
-    expect(title).not.toBe(OLD_TITLE);
     await demo.caption(`Opened ${page.url()} - tab title: "${title}"`);
     await demo.highlight(pageHeading(page), `Tab title: "${title}" on /cart`);
   });
@@ -105,7 +101,6 @@ test('TC-PRB-1-03 tab title reads "Shopping bag | AdventureWorks" when the bag h
   });
   await test.step('read the page title and the page header h1', async () => {
     await expect(page).toHaveTitle(EXPECTED_TITLE);
-    expect(await page.title()).toBe(EXPECTED_TITLE);
     await expect(pageHeading(page)).toHaveText(HEADING);
     await demo.caption(`Opened ${page.url()} - tab title: "${await page.title()}"`);
     await demo.highlight(pageHeading(page), `Tab title: "${EXPECTED_TITLE}", h1: "${HEADING}"`);
