@@ -5,7 +5,7 @@ test('place an order through checkout', async ({ page }) => {
   await emptyCart(page);
 
   await page.goto('/user/orders');
-  await expect(page.getByRole('heading', { name: 'Orders', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'My orders', exact: true })).toBeVisible();
   const existingOrderCount = await page.locator('.order-number').count();
 
   await addProductToCart(page, 'Adventurer GPS Watch');
@@ -19,6 +19,6 @@ test('place an order through checkout', async ({ page }) => {
   await page.getByRole('button', { name: 'Place order' }).click();
 
   await expect(page).toHaveURL(/\/user\/orders$/);
-  await expect(page.getByRole('heading', { name: 'Orders', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'My orders', exact: true })).toBeVisible();
   await expect(page.locator('.order-number')).toHaveCount(existingOrderCount + 1);
 });
