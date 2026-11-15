@@ -1,0 +1,2 @@
+{"ts":"2026-11-15T07:33:21.274Z","story":"BUG-34","unit":"tests/Application.UnitTests","why":"covers identity-api","argv":"dotnet test --project tests/Application.UnitTests --no-build","status":0,"timedOut":false}
+{"ts":"2026-11-15T07:33:47.268Z","story":"BUG-34","unit":"tests/Ordering.FunctionalTests","why":"covers identity-api","argv":"dotnet test --project tests/Ordering.FunctionalTests --no-build","status":0,"timedOut":false}

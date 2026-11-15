@@ -6,10 +6,10 @@ plan-sha: 0c71f77f93cf
 verified-score: 10
 verified-at: "2026-11-15T06:45:07.227Z"
 verified-by: test-planner@1edb523e/67b01306
-automation-sha: 5f96f6bc7ce3
+automation-sha: 75cc4ec81374
 automation-plan-sha: 0c71f77f93cf
 automation-score: 10
-automation-verified-at: "2026-11-15T07:03:42.089Z"
+automation-verified-at: "2026-11-15T07:35:09.343Z"
 ---
 # Test plan: BUG-34 [BE - Identity.API] - Signing in from a link to another site's return URL shows an error page
 
