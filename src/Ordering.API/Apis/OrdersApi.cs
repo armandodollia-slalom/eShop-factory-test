@@ -122,14 +122,14 @@ public static class OrdersApi
         return TypedResults.Ok(await services.Mediator.Send(command));
     }
 
-    public static async Task<Results<Ok, BadRequest<string>>> CreateOrderAsync(
+    public static async Task<Results<Ok, BadRequest<string>, ValidationProblem>> CreateOrderAsync(
         [FromHeader(Name = "x-requestid")] Guid requestId,
         CreateOrderRequest request,
         [AsParameters] OrderServices services)
     {
-        
+
         //mask the credit card number
-        
+
         services.Logger.LogInformation(
             "Sending command: {CommandName} - {IdProperty}: {CommandId}",
             request.GetGenericTypeName(),
@@ -140,6 +140,15 @@ public static class OrdersApi
         {
             services.Logger.LogWarning("Invalid IntegrationEvent - RequestId is missing - {@IntegrationEvent}", request);
             return TypedResults.BadRequest("RequestId is missing.");
+        }
+
+        // The masking below keeps the last four digits, so shorter numbers cannot be processed.
+        if (request.CardNumber is not { Length: >= 4 })
+        {
+            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
+            {
+                [nameof(request.CardNumber)] = ["Card number must contain at least 4 characters."]
+            });
         }
 
         using (services.Logger.BeginScope(new List<KeyValuePair<string, object>> { new("IdentifiedCommandId", requestId) }))
