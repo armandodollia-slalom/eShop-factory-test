@@ -190,6 +190,7 @@ Register it in every place, in one subtask: `src/eShop.AppHost/AppHost.cs` (`Add
 
 - No clock abstraction exists (direct `DateTime.UtcNow` calls); new code injects `TimeProvider` (register `TimeProvider.System`) so tests can control time. Leave existing calls alone.
 - WebApp pages are static server-side rendering with `[StreamRendering]` (`src/WebApp/Components/Pages/Catalog/Catalog.razor`); interactivity only where a component needs it (`@rendermode InteractiveServer`, as in `Pages/User/OrdersRefreshOnStatusChange.razor`). Forms on static pages use `EditForm ... FormName=... Enhance` with `[SupplyParameterFromForm]` (`Pages/Checkout/Checkout.razor`).
+- Not-found pages on static SSR: setting `HttpContext.Response.StatusCode = 404` while a page renders makes .NET 10 end the response with an empty body (blank page). Call `NavigationManager.NotFound()` and give the `Router` in `src/WebApp/Components/Routes.razor` a `NotFoundPage` that renders the message; make sure that component's own route also answers 404 when opened directly. Check the 404 response body contains the message.
 - The AI features are off unless configured: `CatalogAI.cs` (embeddings, `textEmbeddingModel`) and the WebApp chatbot (`chatModel`); code must keep working with them off.
 
 ### Planning subtasks

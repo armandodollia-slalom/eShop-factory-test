@@ -1,7 +1,7 @@
 ### Test layers in this codebase
 
 - `unit`: MSTest in `tests/<Service>.UnitTests` (NSubstitute mocks), in-process, no database.
-- `functional`: xUnit v3 in `tests/<Service>.FunctionalTests` (Catalog, Basket, Ordering, Webhooks): the service in-process (`WebApplicationFactory`) against a real Postgres/Redis that the test fixture starts (`CatalogApiFixture.cs`). Use it for API contracts and status codes.
+- `functional`: xUnit v3 in `tests/<Service>.FunctionalTests` (Catalog, Basket, Ordering, Webhooks): the service in-process (`WebApplicationFactory`) against a real Postgres/Redis that the test fixture starts (`CatalogApiFixture.cs`). Use it for API contracts and status codes. Limit: in the Ordering functional host, `IntegrationEventLogService` resolves event types from `Assembly.GetEntryAssembly()` (the test runner), so an order that passes validation cannot be saved there; a case that needs a created order goes on the `e2e` layer (API calls on the test stack as `alice` or `bob`). Rejections that stop before the order is saved stay functional.
 - `e2e`: Playwright specs in `e2e/teststack/` through the WebApp on the test stack.
 
 ### Test data
