@@ -1,0 +1,2 @@
+{"ts":"2026-11-15T10:02:17.971Z","story":"BUG-36","unit":"tests/Catalog.FunctionalTests","why":"holds the story's tests","argv":"dotnet test --project tests/Catalog.FunctionalTests --no-build","status":0,"timedOut":false}
+{"ts":"2026-11-15T10:02:30.057Z","story":"BUG-36","unit":"tests/Application.UnitTests","why":"covers catalog-api","argv":"dotnet test --project tests/Application.UnitTests --no-build","status":0,"timedOut":false}
