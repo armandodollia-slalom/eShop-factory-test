@@ -35,10 +35,10 @@ const ALICE_ORDER = 2;
 const ALICE_CONTENT = ['Alpine Fusion Goggles', '100 Alice Lane', 'Seattle', '98101', '$239.97', '$79.99'];
 
 const headerTitle = (page: Page) => page.locator('.eshop-hero-intro h1');
-const summaryRow = (page: Page) => page.locator('.order-details-summary .order-details-row:not(.order-details-header)');
+const summaryRow = (page: Page) => page.locator('.order-details-summary .orders-item:not(.orders-header)');
 const addressSection = (page: Page) => page.locator('section', { has: page.getByRole('heading', { name: 'Delivery address' }) });
 const itemsSection = (page: Page) => page.locator('section', { has: page.getByRole('heading', { name: 'Items' }) });
-const itemRows = (page: Page) => itemsSection(page).locator('.order-details-items .order-details-row:not(.order-details-header)');
+const itemRows = (page: Page) => itemsSection(page).locator('.order-details-items .orders-item:not(.orders-header)');
 const myOrdersRow = (page: Page, orderNumber: number) =>
   page.locator('.orders-list .orders-item:not(.orders-header)').filter({ has: page.locator('.order-number', { hasText: new RegExp(`^\\s*${orderNumber}\\s*$`) }) });
 
@@ -165,7 +165,7 @@ test('TC-ORDD-1-06 order number that does not exist shows Order not found with 4
   await test.step('Order not found is shown and no order content', async () => {
     const notFound = page.locator('.order-details-notfound');
     await expect(notFound).toHaveText(NOT_FOUND_TEXT);
-    await demo.highlight(notFound, 'Order not found (HTTP 404)');
+    await demo.highlight(notFound, 'Order 999999: Order not found (HTTP 404)');
     await expect(page.locator('.order-details-summary')).toHaveCount(0);
     await expect(page.getByRole('heading', { name: 'Delivery address' })).toHaveCount(0);
     await expect(page.getByRole('heading', { name: 'Items' })).toHaveCount(0);
@@ -192,18 +192,26 @@ test('TC-ORDD-1-07 another shopper\'s order shows Order not found with 404 and n
   });
 });
 
-test('TC-ORDD-1-08 visitor not signed in is sent to the sign-in page', async ({ page, demo }) => {
-  await test.step('navigate to /user/orders/1 without signing in', async () => {
-    await page.goto(`${BASE_URL}${detailsPath(BOB_ORDER)}`);
-  });
-  await test.step('the Identity sign-in page is shown', async () => {
-    await expect(page).toHaveURL((u) => u.host === new URL(url('identity')).host && u.pathname === '/Account/Login');
-    await expect(page.getByPlaceholder('Username')).toBeVisible();
-    await expect(page.getByPlaceholder('Password')).toBeVisible();
-    await demo.highlight(page.locator('form', { has: page.getByPlaceholder('Username') }), 'Identity sign-in page');
-    await expect(page.getByText('Order details')).toHaveCount(0);
-    await expect(page.getByText(BOOTS.name)).toHaveCount(0);
-    await expect(page.getByText(BOB_ADDRESS.Street)).toHaveCount(0);
+// The Identity pages send a Content-Security-Policy that blocks inline styles, so the demo overlays rendered unstyled
+// and clipped at the top-left corner. Bypassing it only affects the narration, not the redirect under test.
+test.describe(() => {
+  test.use({ bypassCSP: true });
+
+  test('TC-ORDD-1-08 visitor not signed in is sent to the sign-in page', async ({ page, demo }) => {
+    await test.step('navigate to /user/orders/1 without signing in', async () => {
+      await page.goto(`${BASE_URL}${detailsPath(BOB_ORDER)}`);
+    });
+    await test.step('the Identity sign-in page is shown', async () => {
+      await expect(page).toHaveURL((u) => u.host === new URL(url('identity')).host && u.pathname === '/Account/Login');
+      await expect(page.getByPlaceholder('Username')).toBeVisible();
+      await expect(page.getByPlaceholder('Password')).toBeVisible();
+      const signIn = new URL(page.url());
+      await demo.caption(`Opened ${detailsPath(BOB_ORDER)} → sent to sign-in (${signIn.origin}${signIn.pathname})`);
+      await demo.highlight(page.locator('form', { has: page.getByPlaceholder('Username') }), `Opened ${detailsPath(BOB_ORDER)} → sign-in page`);
+      await expect(page.getByText('Order details')).toHaveCount(0);
+      await expect(page.getByText(BOOTS.name)).toHaveCount(0);
+      await expect(page.getByText(BOB_ADDRESS.Street)).toHaveCount(0);
+    });
   });
 });
 

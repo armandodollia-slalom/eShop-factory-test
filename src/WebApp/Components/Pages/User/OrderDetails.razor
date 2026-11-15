@@ -16,14 +16,14 @@
     }
     else if (order is not null)
     {
-        <ul class="order-details-summary">
-            <li class="order-details-header order-details-row">
+        <ul class="orders-list order-details-summary">
+            <li class="orders-header orders-item">
                 <div>Number</div>
                 <div>Date</div>
                 <div class="total-header">Total</div>
                 <div>Status</div>
             </li>
-            <li class="order-details-row">
+            <li class="orders-item">
                 <div class="order-number">
                     @order.OrderNumber
                 </div>
@@ -34,9 +34,7 @@
                     $@order.Total.ToPriceDisplay()
                 </div>
                 <div class="order-status">
-                    <span class="status @order.Status.ToLower()">
-                        @order.Status
-                    </span>
+                    <OrderStatusBadge Status="@order.Status" />
                 </div>
             </li>
         </ul>
@@ -59,8 +57,8 @@
 
         <section class="order-details-section" aria-labelledby="order-details-items-heading">
             <h2 id="order-details-items-heading">Items</h2>
-            <ul class="order-details-items">
-                <li class="order-details-header order-details-row">
+            <ul class="orders-list order-details-items">
+                <li class="orders-header orders-item">
                     <div>Product</div>
                     <div class="numeric-header">Unit price</div>
                     <div class="numeric-header">Units</div>
@@ -68,7 +66,7 @@
                 </li>
                 @foreach (var item in order.OrderItems)
                 {
-                    <li class="order-details-row">
+                    <li class="orders-item">
                         <div class="item-name">
                             @item.ProductName
                         </div>
