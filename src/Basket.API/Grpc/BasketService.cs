@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using eShop.Basket.API.Repositories;
 using eShop.Basket.API.Extensions;
 using eShop.Basket.API.Model;
-using eShop.Basket.API.Repositories;
 
 namespace eShop.Basket.API.Grpc;
 
@@ -75,7 +75,7 @@ public class BasketService(
     private static void ThrowBasketDoesNotExist(string userId) => throw new RpcException(new Status(StatusCode.NotFound, $"Basket with buyer id {userId} does not exist"));
 
     [DoesNotReturn]
-    private static void ThrowMergedQuantityOutOfRange(int productId) => throw new RpcException(new Status(StatusCode.InvalidArgument, $"The quantities listed for product {productId} add up to more than the largest quantity a basket line can hold."));
+    private static void ThrowMergedQuantityOutOfRange(int productId) => throw new RpcException(new Status(StatusCode.InvalidArgument, $"The quantities listed for product {productId} add up to a total outside the range a basket line can hold."));
 
     private static CustomerBasketResponse MapToCustomerBasketResponse(CustomerBasket customerBasket)
     {
