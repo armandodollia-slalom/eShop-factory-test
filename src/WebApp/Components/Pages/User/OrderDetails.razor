@@ -1,0 +1,110 @@
+@page "/user/orders/{orderNumber:int}"
+@attribute [Authorize]
+@inject OrderingService OrderingService
+
+<PageTitle>Order details | AdventureWorks</PageTitle>
+<SectionContent SectionName="page-header-title">Order details</SectionContent>
+
+<div class="order-details">
+    <a class="order-details-back" href="user/orders">
+        <img role="presentation" src="icons/arrow-left.svg" /> Back to my orders
+    </a>
+
+    @if (notFound)
+    {
+        <p class="order-details-notfound">Order not found</p>
+    }
+    else if (order is not null)
+    {
+        <ul class="order-details-summary">
+            <li class="order-details-header order-details-row">
+                <div>Number</div>
+                <div>Date</div>
+                <div class="total-header">Total</div>
+                <div>Status</div>
+            </li>
+            <li class="order-details-row">
+                <div class="order-number">
+                    @order.OrderNumber
+                </div>
+                <div class="order-date">
+                    @order.Date
+                </div>
+                <div class="order-total">
+                    $@order.Total.ToPriceDisplay()
+                </div>
+                <div class="order-status">
+                    <span class="status @order.Status.ToLower()">
+                        @order.Status
+                    </span>
+                </div>
+            </li>
+        </ul>
+
+        <section class="order-details-section" aria-labelledby="order-details-address-heading">
+            <h2 id="order-details-address-heading">Delivery address</h2>
+            <dl class="order-details-address">
+                <dt>Street</dt>
+                <dd>@order.Street</dd>
+                <dt>City</dt>
+                <dd>@order.City</dd>
+                <dt>State</dt>
+                <dd>@order.State</dd>
+                <dt>Country</dt>
+                <dd>@order.Country</dd>
+                <dt>Zip code</dt>
+                <dd>@order.Zipcode</dd>
+            </dl>
+        </section>
+
+        <section class="order-details-section" aria-labelledby="order-details-items-heading">
+            <h2 id="order-details-items-heading">Items</h2>
+            <ul class="order-details-items">
+                <li class="order-details-header order-details-row">
+                    <div>Product</div>
+                    <div class="numeric-header">Unit price</div>
+                    <div class="numeric-header">Units</div>
+                    <div class="numeric-header">Line total</div>
+                </li>
+                @foreach (var item in order.OrderItems)
+                {
+                    <li class="order-details-row">
+                        <div class="item-name">
+                            @item.ProductName
+                        </div>
+                        <div class="item-numeric">
+                            $@item.UnitPrice.ToPriceDisplay()
+                        </div>
+                        <div class="item-numeric">
+                            @item.Units
+                        </div>
+                        <div class="item-numeric item-line-total">
+                            $@((item.UnitPrice * item.Units).ToPriceDisplay())
+                        </div>
+                    </li>
+                }
+            </ul>
+        </section>
+    }
+</div>
+
+@code {
+    private OrderDetailRecord? order;
+    private bool notFound;
+
+    [Parameter]
+    public int OrderNumber { get; set; }
+
+    [CascadingParameter]
+    public HttpContext? HttpContext { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        order = await OrderingService.GetOrder(OrderNumber);
+        if (order is null)
+        {
+            notFound = true;
+            HttpContext!.Response.StatusCode = 404;
+        }
+    }
+}
