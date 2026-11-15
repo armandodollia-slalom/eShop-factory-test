@@ -6,6 +6,10 @@ plan-sha: 4bcbbea57d80
 verified-score: 10
 verified-at: "2026-11-15T09:51:46.103Z"
 verified-by: test-planner@1edb523e/67b01306
+automation-sha: 64c61cb21278
+automation-plan-sha: 4bcbbea57d80
+automation-score: 10
+automation-verified-at: "2026-11-15T10:14:15.216Z"
 ---
 # Test plan: BUG-37 Opening the product page for item 0 or a negative id shows a server error
 
