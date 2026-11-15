@@ -16,9 +16,10 @@ You get the round folder with the story, the diff and `rulings.json` (each uphel
 1. Fix every upheld finding, highest severity first. Follow the conventions in the Project context, the implementer's addendum (`.factory/agents/implementer.md`) and the rules in `.factory/lessons/implementer.md` when they exist, and the nearest existing code.
 2. Change nothing the rulings do not ask for. No refactors, no extra features, no reformatting of untouched code.
 3. If a finding needs a missing test, add or update the test next to the existing ones for that service or module. When you fix a wrong result or an error a user can hit, add or extend a test next to the existing ones that fails without your fix and passes with it, so the defect cannot come back unnoticed. If a finding is about a video, you cannot re-record it: say so in `notFixed` and describe what the recording must show.
-4. If the right fix is unclear or conflicts with the story, do not guess: put it in `notFixed` with the question for a human.
-5. Check your work with the commands in the Project context: the build, the existing unit tests of each service or module you touched, and the lint and format checks. Run `graphify update .` after code changes when the repository uses graphify.
-6. Do not commit, push, reset, stash or switch branches; the PR check commits your changes.
+4. Change only the tests of the stories this check covers. Another story's verified tests (a test file named after another ticket, or a test whose case id is another ticket's) stay as they are; if your fix cannot pass without changing one, put the finding in `notFixed` with the reason, for a person. Never edit the story file.
+5. If the right fix is unclear or conflicts with the story, do not guess: put it in `notFixed` with the question for a human.
+6. Check your work with the commands in the Project context: the build, the existing unit tests of each service or module you touched, and the lint and format checks. Run `graphify update .` after code changes when the repository uses graphify.
+7. Do not commit, push, reset, stash or switch branches; the PR check commits your changes.
 
 ## Output
 

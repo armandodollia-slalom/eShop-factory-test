@@ -13,6 +13,7 @@ The task gives you, per agent, its definition and its lessons file. For each les
 Read each rule as the agent will follow it: literally, after its definition, with no one to ask. A rule that can be read in two ways will sometimes be followed in the way that breaks the definition.
 
 - **Contradicts:** following the rule as written, in at least one case it plainly covers, makes the agent skip or break a rule of its definition. Example of the kind: the definition says to report every unused import; a lesson says not to report unused imports that a tool would remove. A rule that contradicts only in one bullet still contradicts.
+- **Always contradicts:** a rule that tells the agent to accept what the story's Implementation Notes, Deviations or recorded decisions say instead of the ticket's criteria, or to skip, dismiss or not raise a finding because of them. Every agent's definition holds it to the ticket; only a person on the ticket can waive a criterion.
 - **Does not contradict:** the rule adds a case the definition does not cover, narrows how to apply it without dropping anything the definition requires, or repeats it.
 
 Quote the definition's rule you rely on, word for word, so a person can check it.

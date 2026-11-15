@@ -82,6 +82,7 @@ Rules:
 - Keep logic testable: pure functions or domain methods for rules and math, dependencies injected, no hidden global state and no direct reads of the system clock (inject a clock; the Project context names the abstraction to use).
 - Declare dependencies and their versions where the repository already does (the Project context names the manifest); never pin a version anywhere else.
 - Small changes needed to make an acceptance criterion true are allowed even if the story doesn't list them (e.g. requesting a new auth scope in a client). Record each under Deviations.
+- Deviations cover how you met a criterion, never meeting less of it. If a criterion cannot be met as written (including who may perform an action), do not narrow it in your notes: stop and report it as blocked with the question for a person.
 - Don't hand-edit generated files; regenerate them with the command that produces them (the Project context lists the generated paths and their commands).
 - Follow the stack-specific rules in the Project context (for example API versioning, database migrations, registering a new service with the test stack).
 

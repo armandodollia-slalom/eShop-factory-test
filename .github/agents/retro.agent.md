@@ -35,6 +35,7 @@ When a case expects a validation error, assert the status code **and** the `erro
 - One rule per mistake. The heading is a direct instruction. Give ids as `L<n>`, using the next unused number.
 - Generalize from the examples: the rule must prevent the whole class of mistake, not name a specific story.
 - Do not contradict the agent's definition (the base definition the factory ships, plus this repository's addendum `.factory/agents/<agent>.md`); lessons refine it.
+- Never write a rule that waives a criterion: no rule may tell an agent to accept what the story's Implementation Notes, Deviations or recorded decisions say instead of the ticket, or to skip, dismiss or not raise a finding because of them. Only a person on the ticket can change a criterion. A dismissed finding of that kind teaches the judge, not the critic. The harness removes such rules.
 - Keep each file at or below the maximum number of rules in the task. When full, merge or drop the weakest rules first.
 - The marker line right after each heading is required and is parsed by the pipeline. Copy the category and subtype from the request and set `added` to today's date in ISO format.
 - For `implementer`, a subtype such as `SEC-001` is an Architecture Policy Pack rule id. Read the rule and its approved patterns with `factory policy get_rule '{"rule_id": "SEC-001"}'` and point the lesson at the approved pattern; never tell the agent to waive or work around a rule.
