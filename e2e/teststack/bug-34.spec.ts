@@ -48,9 +48,10 @@ async function signIn(page: Page, demo: Demo) {
   return post;
 }
 
-test('TC-BUG-34-01 sign-in with a return URL to another site redirects to the home page instead of returning 500', async ({ page, context, demo }) => {
+/** Opens the sign-in page with `returnUrl`, signs alice in and checks the 302 lands on Identity.API's `/` without contacting the other site. */
+async function expectRedirectedHome(page: Page, context: BrowserContext, demo: Demo, returnUrl: string, absentLabel: string) {
   const hosts = recordHosts(context);
-  const loginUrl = `${identity()}/Account/Login?ReturnUrl=${FOREIGN_RETURN_URL}`;
+  const loginUrl = `${identity()}/Account/Login?ReturnUrl=${returnUrl}`;
 
   await test.step(`open ${loginUrl}`, async () => {
     await page.goto(loginUrl);
@@ -67,12 +68,15 @@ test('TC-BUG-34-01 sign-in with a return URL to another site redirects to the ho
     expect(page.url()).toBe(identityHome());
     expect(hosts).not.toContain(FOREIGN_HOST);
     await demo.caption(`POST /Account/Login answered ${response.status()} Location: ${response.headers()['location']}; now at ${page.url()}`);
-    await demo.absent(page.locator('html'), `302 to / on Identity.API, no 500 and no request to ${FOREIGN_HOST}`);
+    await demo.absent(page.locator('html'), absentLabel);
   });
+}
+
+test('TC-BUG-34-01 sign-in with a return URL to another site redirects to the home page instead of returning 500', async ({ page, context, demo }) => {
+  await expectRedirectedHome(page, context, demo, FOREIGN_RETURN_URL, `302 to / on Identity.API, no 500 and no request to ${FOREIGN_HOST}`);
 });
 
 test('TC-BUG-34-02 sign-in with a return URL to another site leaves alice signed in', async ({ page, demo }) => {
-
   await test.step('open the sign-in page with ReturnUrl=https://example.com/landing', async () => {
     await page.goto(`${identity()}/Account/Login?ReturnUrl=${FOREIGN_RETURN_URL}`);
     await expect(page.getByPlaceholder('Username')).toBeVisible();
@@ -92,30 +96,10 @@ test('TC-BUG-34-02 sign-in with a return URL to another site leaves alice signed
 });
 
 test('TC-BUG-34-03 sign-in with a protocol-relative return URL to another site redirects to the home page', async ({ page, context, demo }) => {
-  const hosts = recordHosts(context);
-  const loginUrl = `${identity()}/Account/Login?ReturnUrl=${PROTOCOL_RELATIVE_RETURN_URL}`;
-
-  await test.step(`open ${loginUrl}`, async () => {
-    await page.goto(loginUrl);
-    await expect(page.getByPlaceholder('Username')).toBeVisible();
-  });
-  let response!: Response;
-  await test.step('fill alice / Pass123$ and click Login, capturing POST /Account/Login', async () => {
-    response = await signIn(page, demo);
-  });
-  await test.step('wait for the navigation that follows and check the redirect', async () => {
-    expect(response.status()).toBe(302);
-    expect(response.headers()['location']).toBe('/');
-    await page.waitForURL(identityHome());
-    expect(page.url()).toBe(identityHome());
-    expect(hosts).not.toContain(FOREIGN_HOST);
-    await demo.caption(`POST /Account/Login answered ${response.status()} Location: ${response.headers()['location']}; now at ${page.url()}`);
-    await demo.absent(page.locator('html'), `302 to / on Identity.API, //${FOREIGN_HOST} never followed`);
-  });
+  await expectRedirectedHome(page, context, demo, PROTOCOL_RELATIVE_RETURN_URL, `302 to / on Identity.API, //${FOREIGN_HOST} never followed`);
 });
 
 test('TC-BUG-34-04 sign-in with a local return URL still redirects to that Identity.API page', async ({ page, demo }) => {
-
   await test.step('open the sign-in page with ReturnUrl=/grants', async () => {
     await page.goto(`${identity()}/Account/Login?ReturnUrl=${LOCAL_RETURN_URL}`);
     await expect(page.getByPlaceholder('Username')).toBeVisible();
@@ -136,7 +120,6 @@ test('TC-BUG-34-04 sign-in with a local return URL still redirects to that Ident
 });
 
 test('TC-BUG-34-05 sign-in with no return URL still redirects to the home page', async ({ page, demo }) => {
-
   await test.step('open /Account/Login with no query string', async () => {
     await page.goto(`${identity()}/Account/Login`);
     await expect(page.getByPlaceholder('Username')).toBeVisible();
