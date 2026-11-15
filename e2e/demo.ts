@@ -124,3 +124,9 @@ export const test = withStepKeyframes(base.extend<{ demo: Demo }>({
 }));
 
 export { expect };
+
+// [PROBE] Council C8 live proof (post-CI-fix check): PRB-1's spec fails on its first attempt by design, so CI passes
+// only on Playwright's retry. Not for merging.
+test.beforeEach((_fixtures, testInfo) => {
+  if (testInfo.file.endsWith('prb-1.spec.ts') && testInfo.retry === 0) throw new Error('probe: fails on its first attempt by design');
+});
