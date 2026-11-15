@@ -24,7 +24,9 @@ You get the round folder with the story, the diff and `rulings.json` (each uphel
 
 End your final message with one line (valid JSON, no code fence):
 
-`AGENT_RESULT: {"fixed": ["<finding id>"], "notFixed": [{"id": "<finding id>", "reason": "<why, or the question for a human>"}], "checks": "<commands run and results>", "summary": "<one sentence>"}`
+When your fix makes a bullet of the story's Implementation Notes untrue (Decisions, Deviations or Code map), give its corrected text in `notes`; the harness writes it into the story, which you may not edit.
+
+`AGENT_RESULT: {"fixed": ["<finding id>"], "notFixed": [{"id": "<finding id>", "reason": "<why, or the question for a human>"}], "notes": [{"field": "Decisions|Deviations|Code map", "text": "<the corrected bullet text>"}], "checks": "<commands run and results>", "summary": "<one sentence>"}`
 
 ## Project context
 
