@@ -6,9 +6,6 @@ internal static class Extensions
 
     private const string WebhooksScope = "webhooks";
 
-    // The JWT handler may map "scope" to this claim type depending on its inbound claim map.
-    private const string MappedScopeClaimType = "http://schemas.microsoft.com/identity/claims/scope";
-
     public static void AddApplicationServices(this IHostApplicationBuilder builder)
     {
         builder.AddDefaultAuthentication();
@@ -33,7 +30,7 @@ internal static class Extensions
 
     // Scopes arrive either as one claim per scope or as a single space-delimited claim.
     private static bool HasScope(ClaimsPrincipal user, string scope) =>
-        user.FindAll(c => c.Type is "scope" or MappedScopeClaimType)
+        user.FindAll(c => c.Type == "scope")
             .SelectMany(c => c.Value.Split(' ', StringSplitOptions.RemoveEmptyEntries))
             .Contains(scope, StringComparer.Ordinal);
 
