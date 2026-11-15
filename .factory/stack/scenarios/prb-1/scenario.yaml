@@ -1,0 +1,6 @@
+description: PRB-1 shopping bag tab title; needs only the seeded users alice and bob with empty baskets and catalog item 99.
+extends: default
+
+# No extra rows: the default scenario already seeds everything the cases need.
+# - alice (Pass123$) with an empty basket: TC-PRB-1-01 and TC-PRB-1-02 read /cart in its empty-bag rendering.
+# - bob (Pass123$) with an empty basket: TC-PRB-1-03 adds catalog item 99 "Adventurer GPS Watch" and reads /cart with one item.
