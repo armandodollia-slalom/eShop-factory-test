@@ -9,7 +9,7 @@ verified-by: test-planner@1edb523e/67b01306
 automation-sha: c7b7f7150988
 automation-plan-sha: 71f18a897f7e
 automation-score: 9
-automation-verified-at: "2026-11-15T05:44:01.367Z"
+automation-verified-at: "2026-11-15T05:50:01.436Z"
 ---
 # Test plan: BUG-32 [BE - Ordering.API] - The API contract does not list the 400 that creating an order draft can return
 
