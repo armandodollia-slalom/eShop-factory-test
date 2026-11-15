@@ -1,4 +1,5 @@
-@page "/user/orders/{orderNumber:long}"
+@page "/user/orders/{orderNumber}"
+@using System.Globalization
 @attribute [Authorize]
 @attribute [BufferResponse]
 @inject OrderingService OrderingService
@@ -92,18 +93,20 @@
     private bool notFound;
 
     [Parameter]
-    // long, not int, so a whole number beyond the order id range still reaches this page
-    // and gets "Order not found" instead of the WebApp's bare 404 for an unmatched route.
-    public long OrderNumber { get; set; }
+    // A string, not a numeric route constraint, so any whole number (however long) still
+    // reaches this page and gets "Order not found" instead of the WebApp's bare 404 for an
+    // unmatched route.
+    public string? OrderNumber { get; set; }
 
     [CascadingParameter]
     public HttpContext? HttpContext { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        if (OrderNumber is >= 1 and <= int.MaxValue)
+        if (int.TryParse(OrderNumber, NumberStyles.None, CultureInfo.InvariantCulture, out var orderNumber)
+            && orderNumber >= 1)
         {
-            order = await OrderingService.GetOrder((int)OrderNumber);
+            order = await OrderingService.GetOrder(orderNumber);
         }
 
         if (order is null)
