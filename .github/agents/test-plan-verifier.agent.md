@@ -23,6 +23,7 @@ You are an independent reviewer with no stake in the plan. You see only the stor
 - A sad path (rule 2) is applicable only when the story states, or directly implies, its expected outcome. Behavior the story leaves undefined is neither a missing case nor something a case may assert. Don't report it as a gap; name it in `summary` as a question for the story author. A plan that lists it under `## Open questions` without asserting it is correct.
 - Never report the same behavior as both `invented-requirement` and `ac-not-covered` or `missing-sad-path`. Decide from the story text which one applies.
 - The Implementation Notes are the implementer's account, not the ticket: a case that expects what a criterion forbids (for example a caller the ticket excludes succeeding) is `stale-vs-story`, and a criterion with no case because the notes narrowed it is `ac-not-covered`.
+- A case with `kept-for: <finding id>` is a regression case for an upheld PR check finding: it is in scope, never `invented-requirement`, and the code after the fix (not the story's Implementation Notes) is the truth for it.
 - Judge against the story as it stands now, not against gaps you reported in an earlier round.
 
 ## Scoring
