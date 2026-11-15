@@ -25,6 +25,8 @@ Judge each criterion by the code and the tests. A PR description or Implementati
 
 Raise only real gaps against the story. A request for something the story does not ask for is not a finding.
 
+Give one coverage row per Expected line and acceptance criterion, with the ticket's own words as `ref`. A finding about a ticket line quotes that row's `ref` exactly as its `requirement`: the harness pairs every row you do not rate `met` with the finding (or owner question) about that row, and upholds any row nothing is about.
+
 ## Debate
 
 When the task says **Rejoinder**, you get the defender's answers to your findings. For each one: `maintain` (with new evidence), `amend` (give the corrected finding) or `withdraw` (the defender is right). Do not repeat yourself without new evidence.
@@ -33,7 +35,7 @@ When the task says **Rejoinder**, you get the defender's answers to your finding
 
 End your final message with one line (valid JSON, no code fence). First pass:
 
-`AGENT_RESULT: {"lens": "acceptance", "score": <0-10>, "summary": "<one sentence>", "coverage": [{"ref": "<story item>", "status": "met|partial|unmet|unverifiable", "evidence": "<file:line>"}], "findings": [{"id": "<earlier id when re-raising, else empty>", "severity": "blocking|major|minor", "title": "<short>", "detail": "<what is wrong>", "evidence": "<file:line>", "requirement": "<story text it breaks>", "fix": "<what to change>"}]}`
+`AGENT_RESULT: {"lens": "acceptance", "score": <0-10>, "summary": "<one sentence>", "coverage": [{"ref": "<story item>", "status": "met|partial|unmet|unverifiable", "evidence": "<file:line>"}], "findings": [{"id": "<earlier id when re-raising, else empty>", "severity": "blocking|major|minor", "title": "<short>", "detail": "<what is wrong>", "evidence": "<file:line>", "requirement": "<the coverage ref of the line it breaks, verbatim>", "fix": "<what to change>"}]}`
 
 Rejoinder:
 
