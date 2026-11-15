@@ -1,15 +1,15 @@
 ---
 story: BUG-31
 story-issue: "https://github.com/armandodollia-slalom/eShop-factory-test/issues/103"
-story-sha: feee67487cdb
+story-sha: ba3dc45f3033
 automation-sha: 1ac168986ff4
-automation-plan-sha: 0a3d66ed52d5
+automation-plan-sha: 09d22fce6e39
 automation-score: 10
-automation-verified-at: "2026-11-15T03:30:54.401Z"
-plan-sha: 0a3d66ed52d5
+automation-verified-at: "2026-11-15T05:22:51.538Z"
+plan-sha: 09d22fce6e39
 verified-score: 9
-verified-at: "2026-11-15T03:28:03.807Z"
-verified-by: test-planner@aebddb93/f37226b9
+verified-at: "2026-11-15T05:18:54.898Z"
+verified-by: test-planner@1edb523e/67b01306
 ---
 # Test plan: BUG-31 Webhooks.API accepts access tokens issued for other APIs
 
