@@ -1,5 +1,6 @@
 @page "/user/account"
 @attribute [Authorize]
+@using System.Security.Claims
 
 <PageTitle>My account | AdventureWorks</PageTitle>
 <SectionContent SectionName="page-header-title">My account</SectionContent>
@@ -32,7 +33,8 @@
     protected override void OnInitialized()
     {
         name = JoinNonEmpty(" ", ReadClaim("name"), ReadClaim("last_name"));
-        email = ReadClaim("email") ?? "";
+        // The OIDC handler's inbound claim map renames "email" to ClaimTypes.Email.
+        email = ReadClaim(ClaimTypes.Email) ?? ReadClaim("email") ?? "";
         address = JoinNonEmpty(", ",
             ReadClaim("address_street"),
             ReadClaim("address_city"),
