@@ -104,7 +104,14 @@
         if (order is null)
         {
             notFound = true;
-            HttpContext!.Response.StatusCode = 404;
+            // A 404 set during rendering makes the SSR endpoint send an empty body,
+            // so apply it only when the rendered response starts.
+            var httpContext = HttpContext!;
+            httpContext.Response.OnStarting(() =>
+            {
+                httpContext.Response.StatusCode = StatusCodes.Status404NotFound;
+                return Task.CompletedTask;
+            });
         }
     }
 }
