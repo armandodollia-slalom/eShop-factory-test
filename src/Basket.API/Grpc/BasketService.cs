@@ -74,6 +74,9 @@ public class BasketService(
     [DoesNotReturn]
     private static void ThrowBasketDoesNotExist(string userId) => throw new RpcException(new Status(StatusCode.NotFound, $"Basket with buyer id {userId} does not exist"));
 
+    [DoesNotReturn]
+    private static void ThrowMergedQuantityOutOfRange(int productId) => throw new RpcException(new Status(StatusCode.InvalidArgument, $"The quantities listed for product {productId} add up to more than the largest quantity a basket line can hold."));
+
     private static CustomerBasketResponse MapToCustomerBasketResponse(CustomerBasket customerBasket)
     {
         var response = new CustomerBasketResponse();
@@ -104,7 +107,13 @@ public class BasketService(
         {
             if (itemsByProductId.TryGetValue(item.ProductId, out var existing))
             {
-                existing.Quantity += item.Quantity;
+                var mergedQuantity = (long)existing.Quantity + item.Quantity;
+                if (mergedQuantity > int.MaxValue || mergedQuantity < int.MinValue)
+                {
+                    ThrowMergedQuantityOutOfRange(item.ProductId);
+                }
+
+                existing.Quantity = (int)mergedQuantity;
                 continue;
             }
 

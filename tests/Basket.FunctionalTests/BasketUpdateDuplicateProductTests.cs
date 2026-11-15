@@ -147,6 +147,25 @@ public sealed class BasketUpdateDuplicateProductTests(RedisFixture fixture)
     }
 
     [Fact]
+    public async Task UpdateBasketWhoseDuplicateQuantitiesSumPastIntMaxIsRejectedAndLeavesStoredBasketUnchanged()
+    {
+        const string buyerId = "bug33-overflow-bob";
+        var service = await StartWithNoBasketAsync(buyerId);
+        var context = ContextFor(buyerId);
+        await service.UpdateBasket(UpdateRequest((Product2, 4)), context);
+
+        var exception = await Assert.ThrowsAsync<RpcException>(() =>
+            service.UpdateBasket(UpdateRequest((Product1, 2_000_000_000), (Product1, 2_000_000_000)), context));
+
+        Assert.Equal(StatusCode.InvalidArgument, exception.StatusCode);
+        var stored = await _repository.GetBasketAsync(buyerId);
+        Assert.NotNull(stored);
+        var storedLine = Assert.Single(stored.Items);
+        Assert.Equal(Product2, storedLine.ProductId);
+        Assert.Equal(4, storedLine.Quantity);
+    }
+
+    [Fact]
     [Trait("TestCase", "TC-BUG-33-08")]
     public async Task TC_BUG_33_08_AnonymousUpdateListingProduct1TwiceIsRefusedAndStoresNothing()
     {
