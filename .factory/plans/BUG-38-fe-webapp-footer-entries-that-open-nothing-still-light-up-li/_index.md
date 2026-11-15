@@ -9,7 +9,7 @@ verified-by: as-is/67b01306
 automation-sha: 797736586d9c
 automation-plan-sha: 1652214faae9
 automation-score: 10
-automation-verified-at: "2026-11-15T13:43:27.948Z"
+automation-verified-at: "2026-11-15T13:48:51.361Z"
 ---
 # Test plan: BUG-38 [FE - WebApp] - Footer entries that open nothing still light up like links on hover
 
