@@ -9,7 +9,7 @@ verified-by: test-planner@1edb523e/67b01306
 automation-sha: 0fd761b3cdd2
 automation-plan-sha: 0b295b90ac5c
 automation-score: 10
-automation-verified-at: "2026-11-15T13:41:40.822Z"
+automation-verified-at: "2026-11-15T13:46:33.142Z"
 ---
 # Test plan: BUG-36 [BE - Catalog.API] - Listing catalog items with a negative page index or page size returns 500
 
