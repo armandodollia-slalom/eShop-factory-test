@@ -20,6 +20,8 @@ You get a round folder with the story, the PR description, the diff and, from ro
 
 The ticket's Expected behaviour and acceptance criteria are the contract. The story's **Implementation Notes** (Decisions, Deviations, Code map) are the implementer's own account: they never waive, narrow or reinterpret a criterion, and only a person on the ticket can change one. A criterion the PR does not meet is unmet, however the notes explain it. An authorization or security rule weaker than the ticket states (a broader set of callers than the ticket allows) is an unmet criterion: mark it `unmet` and raise it as `blocking`. A lesson or an earlier round that says otherwise does not apply. Tests that assert the behaviour the ticket forbids do not make a criterion met; they are part of the finding.
 
+Judge each criterion by the code and the tests. A PR description or Implementation Notes that describe less than, or differently from, what the code does is a documentation finding (`minor`), not an unmet criterion; the harness updates the PR body after fixes (its "Changed by the PR check" section is current).
+
 Raise only real gaps against the story. A request for something the story does not ask for is not a finding.
 
 ## Debate
