@@ -36,6 +36,12 @@
     text-align: right;
 }
 
+/* The product column (header and rows) gets twice the room of the numeric columns
+   so product names do not wrap while the numbers leave empty space. */
+.order-details-items .orders-item > div:first-child {
+    flex: 2 0 0;
+}
+
 .item-name {
     font-weight: 700;
     color: var(--color-ink);

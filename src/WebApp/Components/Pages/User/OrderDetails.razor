@@ -1,4 +1,4 @@
-@page "/user/orders/{orderNumber:int}"
+@page "/user/orders/{orderNumber:long}"
 @attribute [Authorize]
 @attribute [BufferResponse]
 @inject OrderingService OrderingService
@@ -92,14 +92,20 @@
     private bool notFound;
 
     [Parameter]
-    public int OrderNumber { get; set; }
+    // long, not int, so a whole number beyond the order id range still reaches this page
+    // and gets "Order not found" instead of the WebApp's bare 404 for an unmatched route.
+    public long OrderNumber { get; set; }
 
     [CascadingParameter]
     public HttpContext? HttpContext { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        order = await OrderingService.GetOrder(OrderNumber);
+        if (OrderNumber is >= 1 and <= int.MaxValue)
+        {
+            order = await OrderingService.GetOrder((int)OrderNumber);
+        }
+
         if (order is null)
         {
             notFound = true;

@@ -227,3 +227,17 @@ test('TC-ORDD-1-10 order number 0 shows Order not found with 404', async ({ page
     await demo.highlight(notFound, 'Order 0: Order not found (HTTP 404)');
   });
 });
+
+test('TC-ORDD-1-10 order number beyond the order id range shows Order not found with 404', async ({ page, demo }) => {
+  await signInAsBob(page);
+  await test.step('navigate to /user/orders/9999999999', async () => {
+    const response = await page.goto(`${BASE_URL}${detailsPath(9999999999)}`);
+    expect(response!.status()).toBe(404);
+  });
+  await test.step('Order not found is shown and no order content', async () => {
+    const notFound = page.locator('.order-details-notfound');
+    await expect(notFound).toHaveText(NOT_FOUND_TEXT);
+    await demo.highlight(notFound, 'Order 9999999999: Order not found (HTTP 404)');
+    await expect(page.locator('.order-details-summary')).toHaveCount(0);
+  });
+});
