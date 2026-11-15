@@ -2,7 +2,7 @@
 id: TC-CART-1-22
 type: happy
 layer: e2e
-covers: ["AC3"]
+covers: ["AC3", "AC2"]
 priority: P1
 ---
 
@@ -10,11 +10,11 @@ priority: P1
 
 ## Why
 
-- AC3 in the browser with the cart empty: the saved quantity is kept and the Saved for later section is no longer shown.
+- AC3 exactly as stated (cart empty, product saved with quantity 2): the saved quantity is kept and the Saved for later section is no longer shown. A separate scenario seeds the empty cart directly, so AC2's starting state is also read from storage on the first page load rather than built through the UI as in TC-CART-1-17.
 
 ## Preconditions
 
-- E2E on the test stack: `loadScenario('cart-1-saved')` in `beforeEach`. Scenario `cart-1-saved` (`extends: default`) adds catalog items 2001 "Alpine Pack" (40.00), 2002 "Basecamp Mug" (10.00) and 2003 "Cedar Headlamp" (25.00) and seeds Redis: alice (id 50ddac7e-9b69-4d68-a91b-25100ef2e403) has an empty cart and saved item 2003 x 2.
+- E2E on the test stack: `loadScenario('cart-1-saved')` in `beforeEach`. Scenario `cart-1-saved` (`extends: default`) adds brand-1/type-1 catalog items 2001 "Alpine Pack" (40.00), 2002 "Basecamp Mug" (10.00) and 2003 "Cedar Headlamp" (25.00) and seeds Redis: alice (id 50ddac7e-9b69-4d68-a91b-25100ef2e403) has an empty cart and saved item 2003 x 2.
 - Signed in as alice.
 
 ## Steps
