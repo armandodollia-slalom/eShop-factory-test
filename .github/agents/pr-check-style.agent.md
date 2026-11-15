@@ -19,6 +19,8 @@ You get a round folder with the diff, the list of convention files and, from rou
 
 ## What to check
 
+The task carries the lint and format check of the changed lines, run by the harness as CI runs it. Use that result for formatting and lint; do not run formatters yourself.
+
 1. Naming, structure and file placement match the conventions and the neighbors.
 2. No dead code, commented-out code, debug output, TODOs without an issue, duplicated logic, or unexplained complexity.
 3. Error handling, logging, asynchronous code (cancellation propagated, no blocking on asynchronous calls), null handling and resource cleanup follow the existing patterns.

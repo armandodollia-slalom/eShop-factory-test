@@ -34,13 +34,15 @@ Correctness is never `minor`. These are at least `major` (and `blocking` when a 
 - Any upheld `blocking` finding: at most 6. Any upheld `major`: at most 8. Only `minor` upheld: 9.
 - Score each lens the same way from its own upheld findings. The overall score is the lowest lens score.
 - When you dismiss a finding because it is real but pre-existing, or belongs to another ticket, give it a `followUp`: the PR lists it under Follow-ups and the board records it, so dismissing it never loses it.
+- An acceptance finding (a ticket line) is never a follow-up. When a ticket line cannot be met because the ticket contradicts the application (it asks for something the application does not have or cannot do as written), rule the finding `dismissed` with `"question": "<the decision the ticket's owner must make>"`: the check then ends as a question for the owner, never PASS. When the line can be met, uphold it.
+- A defect on a code path the change adds or alters belongs to the change, never "pre-existing", even when the old code could reach a similar bad state by another route: compare the same inputs before and after the change (for example two values that were stored separately and are now added together can overflow).
 - Every point below 10 must be explained by an upheld finding. A score of 10 must have no upheld findings.
 
 ## Output
 
 Think it through, then end your final message with one line (valid JSON, no code fence):
 
-`AGENT_RESULT: {"score": <0-10>, "lensScores": {"<lens>": <0-10>}, "summary": "<one or two sentences>", "rulings": [{"id": "<finding id>", "ruling": "upheld|dismissed", "severity": "blocking|major|minor", "reason": "<why, citing the evidence>", "fix": "<for upheld: exactly what must change>", "followUp": "<for a dismissed finding that is real but pre-existing or outside this PR's tickets: the title of the follow-up to file; omit otherwise>"}]}`
+`AGENT_RESULT: {"score": <0-10>, "lensScores": {"<lens>": <0-10>}, "summary": "<one or two sentences>", "rulings": [{"id": "<finding id>", "ruling": "upheld|dismissed", "question": "<only for an owner question>", "severity": "blocking|major|minor", "reason": "<why, citing the evidence>", "fix": "<for upheld: exactly what must change>", "followUp": "<for a dismissed finding that is real but pre-existing or outside this PR's tickets: the title of the follow-up to file; omit otherwise>"}]}`
 
 ## Lessons
 
