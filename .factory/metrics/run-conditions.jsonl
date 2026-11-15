@@ -9,3 +9,8 @@
 {"ts":"2026-11-15T03:24:03.711Z","story":"WHK-1","kind":"stack-slot","stage":"automation pass","slot":1,"waitedSec":1,"outcome":"leased","poolSize":null}
 {"ts":"2026-11-15T03:28:08.403Z","story":"WHK-1","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":157,"outcome":"leased","poolSize":null,"held":true,"upSec":157}
 {"ts":"2026-11-15T03:34:06.791Z","story":"WHK-1","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":4,"outcome":"leased","poolSize":null,"held":true,"upSec":4}
+{"ts":"2026-11-15T02:45:35.174Z","story":"BUG-30","kind":"stack-slot","stage":"automation pass","slot":2,"waitedSec":1,"outcome":"leased","poolSize":null}
+{"ts":"2026-11-15T02:59:16.982Z","story":"BUG-30","kind":"stack-slot","stage":"precheck","slot":2,"waitedSec":6,"outcome":"leased","poolSize":null,"held":true,"upSec":6}
+{"ts":"2026-11-15T03:05:47.502Z","story":"BUG-30","kind":"stack-slot","stage":"automation pass","slot":2,"waitedSec":0,"outcome":"leased","poolSize":null}
+{"ts":"2026-11-15T03:09:20.134Z","story":"BUG-30","kind":"stack-slot","stage":"precheck","slot":2,"waitedSec":146,"outcome":"leased","poolSize":null,"held":true,"upSec":146}
+{"ts":"2026-11-15T03:12:54.754Z","story":"BUG-30","kind":"stack-slot","stage":"precheck","slot":2,"waitedSec":6,"outcome":"leased","poolSize":null,"held":true,"upSec":6}

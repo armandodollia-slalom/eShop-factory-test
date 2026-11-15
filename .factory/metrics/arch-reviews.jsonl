@@ -4,3 +4,4 @@
 {"ts":"2026-11-14T16:50:51.737Z","story":"BUG-19","round":1,"verdict":"APPROVED","reviewer_ver":"45d37790","findings":[]}
 {"ts":"2026-11-14T20:02:39.380Z","story":"BUG-15","round":1,"verdict":"APPROVED","reviewer_ver":"987a6426","findings":[]}
 {"ts":"2026-11-15T02:53:28.945Z","story":"WHK-1","round":1,"verdict":"APPROVED","reviewer_ver":"a8bebc1a","findings":[{"severity":"minor","category":"resilience","file":"src/WebhookClient/Components/Pages/Home/RegisteredHooks.razor","line":46,"issue":"RemoveAsync does not catch transport failures (HttpRequestException or a timeout) from DeleteWebhookAsync or LoadAsync, so if Webhooks.API can't be reached the exception breaks the Blazor circuit instead of showing a message. This matches the existing AddWebhook pattern and the standard retry handle"}]}
+{"ts":"2026-11-15T02:45:34.076Z","story":"BUG-30","round":1,"verdict":"APPROVED","reviewer_ver":"a8bebc1a","findings":[]}
