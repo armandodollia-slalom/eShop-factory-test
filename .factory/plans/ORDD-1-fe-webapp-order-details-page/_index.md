@@ -9,7 +9,7 @@ verified-by: test-planner@1edb523e/67b01306
 automation-sha: 27638aeaad58
 automation-plan-sha: fe44b8a25c3d
 automation-score: 10
-automation-verified-at: "2026-11-15T07:38:11.415Z"
+automation-verified-at: "2026-11-15T07:46:56.835Z"
 ---
 # Test plan: ORDD-1 [FE - WebApp] - Order details page
 

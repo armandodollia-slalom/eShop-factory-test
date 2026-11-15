@@ -4,3 +4,5 @@
 {"ts":"2026-11-15T07:22:33.942Z","story":"ORDD-1","kind":"stack-slot","stage":"pr-check fixer","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null}
 {"ts":"2026-11-15T07:32:13.188Z","story":"ORDD-1","kind":"stack-slot","stage":"automation pass","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null}
 {"ts":"2026-11-15T07:35:26.801Z","story":"ORDD-1","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":129,"outcome":"leased","poolSize":null,"held":true,"upSec":129}
+{"ts":"2026-11-15T07:41:50.517Z","story":"ORDD-1","kind":"stack-slot","stage":"automation pass","slot":2,"waitedSec":0,"outcome":"leased","poolSize":null}
+{"ts":"2026-11-15T07:44:39.132Z","story":"ORDD-1","kind":"stack-slot","stage":"precheck","slot":2,"waitedSec":106,"outcome":"leased","poolSize":null,"held":true,"upSec":106}

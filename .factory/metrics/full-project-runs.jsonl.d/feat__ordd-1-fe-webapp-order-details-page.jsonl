@@ -2,3 +2,5 @@
 {"ts":"2026-11-15T07:17:22.769Z","story":"ORDD-1","unit":"tests/Ordering.UnitTests","why":"covers ordering-api","argv":"dotnet test --project tests/Ordering.UnitTests --no-build","status":0,"timedOut":false}
 {"ts":"2026-11-15T07:33:35.641Z","story":"ORDD-1","unit":"tests/Ordering.FunctionalTests","why":"holds the story's tests","argv":"dotnet test --project tests/Ordering.FunctionalTests --no-build","status":0,"timedOut":false}
 {"ts":"2026-11-15T07:33:41.038Z","story":"ORDD-1","unit":"tests/Ordering.UnitTests","why":"covers ordering-api","argv":"dotnet test --project tests/Ordering.UnitTests --no-build","status":0,"timedOut":false}
+{"ts":"2026-11-15T07:43:12.875Z","story":"ORDD-1","unit":"tests/Ordering.FunctionalTests","why":"holds the story's tests","argv":"dotnet test --project tests/Ordering.FunctionalTests --no-build","status":0,"timedOut":false}
+{"ts":"2026-11-15T07:43:20.841Z","story":"ORDD-1","unit":"tests/Ordering.UnitTests","why":"covers ordering-api","argv":"dotnet test --project tests/Ordering.UnitTests --no-build","status":0,"timedOut":false}
