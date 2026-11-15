@@ -15,7 +15,7 @@ priority: P2
 
 ## Preconditions
 
-- Test stack up with scenario `default`; item 999999 does not exist.
+- Test stack up with scenario `bug-4` loaded; item 999999 does not exist.
 
 ## Steps
 

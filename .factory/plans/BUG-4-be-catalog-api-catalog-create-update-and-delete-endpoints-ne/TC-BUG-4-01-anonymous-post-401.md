@@ -15,8 +15,8 @@ priority: P0
 
 ## Preconditions
 
-- Test stack up with scenario `default` loaded; catalog-api reachable at `url('catalog')`.
-- Item 10101 does not exist (scenario `default` has items 1 to 101 only).
+- Test stack up with scenario `bug-4` loaded; catalog-api reachable at `url('catalog')`.
+- Item 10101 does not exist (scenario `bug-4` has items 1 to 101 only).
 
 ## Steps
 

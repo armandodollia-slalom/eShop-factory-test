@@ -2,7 +2,7 @@ description: BUG-4 catalog write authorization; the seeded catalog (items 1-101)
 extends: default
 
 # The anonymous cases use item 1 (Wanderer Black Hiking Boots, 109.99) and the absent ids 10101, 10102 and 999999.
-# The forbidden cases (alice with a catalog token; admin with an orders token) try item 10104 and item 1.
+# The non-admin cases (alice with a catalog token, no admin role) try item 10104 and item 1.
 # The admin cases (admin / Pass123$, catalog token) create item 10103, update item 99 (Adventurer GPS Watch, 199.99)
 # and delete item 101.
 # The rows below are what Identity.API/UsersSeed.cs adds: the Admin role and the admin user in it (PasswordHash is the

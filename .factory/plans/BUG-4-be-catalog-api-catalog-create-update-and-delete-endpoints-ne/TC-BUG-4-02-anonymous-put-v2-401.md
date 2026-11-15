@@ -15,7 +15,7 @@ priority: P0
 
 ## Preconditions
 
-- Test stack up with scenario `default`; item 1 is "Wanderer Black Hiking Boots", price `109.99`, type 1, brand 1.
+- Test stack up with scenario `bug-4` loaded; item 1 is "Wanderer Black Hiking Boots", price `109.99`, type 1, brand 1.
 
 ## Steps
 

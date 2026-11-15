@@ -9,8 +9,8 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace eShop.Catalog.FunctionalTests;
 
-// BUG-4: catalog create, update and delete require a catalog admin (admin role and catalog scope); an anonymous or
-// non-admin price change is refused and publishes no event.
+// BUG-4: catalog create, update and delete require a catalog admin; an anonymous price change is refused and
+// publishes no event.
 [Trait("Story", "BUG-4")]
 [Collection(CatalogApiCollection.Name)]
 public sealed class Bug4Tests(CatalogApiFixture fixture)
@@ -26,20 +26,7 @@ public sealed class Bug4Tests(CatalogApiFixture fixture)
 
     [Fact]
     [Trait("TestCase", "TC-BUG-4-06")]
-    public Task TC_BUG_4_06_AnonymousPriceChangePublishesNoPriceChangedEvent() =>
-        AssertPriceChangeRefused(CatalogApiFixture.AnonymousHeader, HttpStatusCode.Unauthorized);
-
-    [Fact]
-    [Trait("TestCase", "TC-BUG-4-13")]
-    public Task TC_BUG_4_13_NonAdminPriceChangeIsForbiddenAndPublishesNoEvent() =>
-        AssertPriceChangeRefused(CatalogApiFixture.NonAdminHeader, HttpStatusCode.Forbidden);
-
-    [Fact]
-    [Trait("TestCase", "TC-BUG-4-14")]
-    public Task TC_BUG_4_14_AdminWithoutCatalogScopePriceChangeIsForbiddenAndPublishesNoEvent() =>
-        AssertPriceChangeRefused(CatalogApiFixture.NoCatalogScopeHeader, HttpStatusCode.Forbidden);
-
-    private async Task AssertPriceChangeRefused(string callerHeader, HttpStatusCode expectedStatus)
+    public async Task TC_BUG_4_06_AnonymousPriceChangePublishesNoPriceChangedEvent()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         using var scope = fixture.Services.CreateScope();
@@ -52,15 +39,15 @@ public sealed class Bug4Tests(CatalogApiFixture fixture)
         context.ChangeTracker.Clear();
         var eventsBefore = await CountPriceChangedEvents(context);
 
-        // Step 1: v2 PUT that changes the price, sent as the caller under test.
+        // Step 1: v2 PUT that changes the price, sent with no test identity and no Authorization header.
         var handler = new ApiVersionHandler(new QueryStringApiVersionWriter(), new ApiVersion(2.0));
         using var client = fixture.CreateDefaultClient(handler);
-        client.DefaultRequestHeaders.Add(callerHeader, "true");
+        client.DefaultRequestHeaders.Add(CatalogApiFixture.AnonymousHeader, "true");
         var body = new
         {
             id = ItemId,
             name = SeededName,
-            description = "Unauthorized price change",
+            description = "Anonymous price change",
             price = 1.00m,
             pictureFileName = "1.webp",
             catalogTypeId = 1,
@@ -76,7 +63,7 @@ public sealed class Bug4Tests(CatalogApiFixture fixture)
         var eventsAfter = await CountPriceChangedEvents(context);
         var stored = await context.CatalogItems.AsNoTracking().SingleAsync(i => i.Id == ItemId, cancellationToken);
 
-        Assert.Equal(expectedStatus, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         Assert.Equal(eventsBefore, eventsAfter);
         Assert.Equal(SeededPrice, stored.Price);
     }

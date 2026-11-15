@@ -14,7 +14,7 @@ priority: P1
 
 ## Preconditions
 
-- Test stack up with scenario `default`; item 99 is "Adventurer GPS Watch".
+- Test stack up with scenario `bug-4` loaded; item 99 is "Adventurer GPS Watch".
 
 ## Steps
 

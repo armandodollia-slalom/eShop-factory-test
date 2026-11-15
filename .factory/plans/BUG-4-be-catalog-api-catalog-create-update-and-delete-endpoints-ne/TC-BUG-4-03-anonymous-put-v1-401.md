@@ -15,7 +15,7 @@ priority: P0
 
 ## Preconditions
 
-- Test stack up with scenario `default`; item 1 has price `109.99`.
+- Test stack up with scenario `bug-4` loaded; item 1 has price `109.99`.
 
 ## Steps
 
