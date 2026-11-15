@@ -1,4 +1,10 @@
-﻿@inject WebhooksClient WebhooksClient
+﻿@using System.Net
+@inject WebhooksClient WebhooksClient
+
+@if (message is not null)
+{
+    <div class="error-message" role="alert">@message</div>
+}
 
 @if (webhooks is null)
 {
@@ -10,6 +16,9 @@ else if (webhooks.Any())
         <PropertyColumn Sortable="@true" IsDefaultSortColumn="true" InitialSortDirection="@SortDirection.Descending" Title="Date" Property="@(hook => hook.Date)" />
         <PropertyColumn Sortable="@true" Title="Destination" Property="@(hook => hook.DestUrl)" />
         <PropertyColumn Sortable="@true" Title="Token" Property="@(hook => hook.Token)" />
+        <TemplateColumn>
+            <button class="action" type="button" @onclick="@(() => RemoveAsync(context))">Remove</button>
+        </TemplateColumn>
     </QuickGrid>
 }
 else
@@ -19,9 +28,35 @@ else
 
 @code {
     IQueryable<WebhookResponse>? webhooks;
+    string? message;
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
         webhooks = (await WebhooksClient.LoadWebhooks()).AsQueryable();
+    }
+
+    private async Task RemoveAsync(WebhookResponse hook)
+    {
+        message = null;
+        using var response = await WebhooksClient.DeleteWebhookAsync(hook.Id);
+
+        if (response.IsSuccessStatusCode)
+        {
+            webhooks = webhooks?.Where(h => h.Id != hook.Id).ToList().AsQueryable();
+        }
+        else if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            message = "This webhook no longer exists.";
+            await LoadAsync();
+        }
+        else
+        {
+            message = "The webhook could not be removed. Please try again.";
+        }
     }
 }
