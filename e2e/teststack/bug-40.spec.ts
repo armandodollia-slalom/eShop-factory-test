@@ -84,6 +84,10 @@ test('TC-BUG-40-01 Price: Low to High puts the cheapest products on page 1 and c
     await expect(sortValue(page)).toHaveText(PRICE_ASC);
     await demo.highlight(sortValue(page), 'Price: Low to High');
     await demo.highlight(cards(page).first(), 'cheapest product: $21.99');
+    await expect(cardPrices(page).last()).toHaveText('$59.99');
+    await demo.highlight(cards(page).last(), 'page 1 ends at $59.99');
+    await expect(activePage(page)).toHaveText('1');
+    await demo.highlight(page.locator('.catalog-pagination'), 'page 1 selected');
   });
   await test.step('click Next page; page 2 continues the price order', async () => {
     await nextPage(page).click();
@@ -96,7 +100,9 @@ test('TC-BUG-40-01 Price: Low to High puts the cheapest products on page 1 and c
     expect(prices).toHaveLength(9);
     expect(prices.every((p) => p >= PAGE_1_MAX)).toBe(true);
     await expect(sortValue(page)).toHaveText(PRICE_ASC);
-    await demo.highlight(cards(page).first(), 'page 2 starts at $64.99');
+    await expect(activePage(page)).toHaveText('2');
+    await demo.highlight(page.locator('.catalog-pagination'), 'page 2 selected');
+    await demo.highlight(cards(page).first(), 'page 2 starts at $64.99, not below page 1\'s $59.99');
   });
 });
 
