@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json.Nodes;
 using Asp.Versioning;
 using Asp.Versioning.Http;
 using eShop.Catalog.API.Infrastructure;
@@ -66,5 +67,25 @@ public sealed class Bug4Tests(CatalogApiFixture fixture)
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         Assert.Equal(eventsBefore, eventsAfter);
         Assert.Equal(SeededPrice, stored.Price);
+    }
+
+    [Theory]
+    [InlineData("v1", "/api/catalog/items", "put")]
+    [InlineData("v1", "/api/catalog/items", "post")]
+    [InlineData("v1", "/api/catalog/items/{id}", "delete")]
+    [InlineData("v2", "/api/catalog/items/{id}", "put")]
+    [InlineData("v2", "/api/catalog/items", "post")]
+    [InlineData("v2", "/api/catalog/items/{id}", "delete")]
+    public async Task OpenApiDocumentRequiresTheOAuth2CatalogScopeOnWriteOperations(string version, string path, string method)
+    {
+        using var client = fixture.CreateDefaultClient();
+
+        var document = await client.GetFromJsonAsync<JsonObject>($"/openapi/{version}.json", TestContext.Current.CancellationToken);
+
+        // An empty requirement object ("security": [ { } ]) would mean anonymous access is allowed.
+        var security = Assert.IsType<JsonArray>(document!["paths"]![path]![method]!["security"]);
+        var requirement = Assert.IsType<JsonObject>(Assert.Single(security));
+        var scopes = Assert.IsType<JsonArray>(requirement["oauth2"]);
+        Assert.Equal("catalog", Assert.Single(scopes)!.GetValue<string>());
     }
 }

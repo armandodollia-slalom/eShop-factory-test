@@ -178,7 +178,11 @@
           }
         },
         "security": [
-          { }
+          {
+            "oauth2": [
+              "catalog"
+            ]
+          }
         ]
       }
     },
@@ -584,7 +588,11 @@
           }
         },
         "security": [
-          { }
+          {
+            "oauth2": [
+              "catalog"
+            ]
+          }
         ]
       },
       "get": {
@@ -722,7 +730,11 @@
           }
         },
         "security": [
-          { }
+          {
+            "oauth2": [
+              "catalog"
+            ]
+          }
         ]
       }
     },

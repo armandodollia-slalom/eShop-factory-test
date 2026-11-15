@@ -10,14 +10,13 @@ public class IdentityConfigurationTests
     [TestMethod]
     [TestCategory("BUG-4")]
     [TestProperty("TestCase", "TC-BUG-4-11")]
-    public void TC_BUG_4_11_IdentityDefinesTheCatalogApiResourceAndScope()
+    public void ApiResourcesAndScopesStayAligned()
     {
-        // Step 1: the API scope names. Step 2: the API resource names.
-        var scopes = Config.GetApiScopes().Select(scope => scope.Name).ToArray();
-        var resources = Config.GetApis().Select(resource => resource.Name).ToArray();
+        var resources = Config.GetApis().Select(resource => resource.Name).Order().ToArray();
+        var scopes = Config.GetApiScopes().Select(scope => scope.Name).Order().ToArray();
 
+        CollectionAssert.AreEqual(resources, scopes);
         CollectionAssert.AreEquivalent(new[] { "basket", "catalog", "orders", "webhooks" }, scopes);
-        CollectionAssert.Contains(resources, "catalog");
     }
 
     [TestMethod]
