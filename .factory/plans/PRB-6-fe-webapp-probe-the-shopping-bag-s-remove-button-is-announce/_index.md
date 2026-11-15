@@ -6,10 +6,10 @@ plan-sha: 590d78339b8f
 verified-score: 10
 verified-at: "2026-11-15T19:15:17.797Z"
 verified-by: test-planner@d8121b51/67b01306
-automation-sha: c87d26f7392c
+automation-sha: 1d6023e71d27
 automation-plan-sha: 590d78339b8f
 automation-score: 10
-automation-verified-at: "2026-11-15T19:32:33.257Z"
+automation-verified-at: "2026-11-15T19:42:08.006Z"
 ---
 # Test plan: PRB-6 [FE - WebApp] - [PROBE] The shopping bag's remove button is announced as "Remove … from your bag"
 
