@@ -7,3 +7,6 @@
 {"ts":"2026-11-15T18:19:21.875Z","story":"PRB-1","kind":"stack-slot","stage":"pr-check fixer","slot":2,"waitedSec":0,"outcome":"leased","poolSize":null}
 {"ts":"2026-11-15T18:20:47.863Z","story":"PRB-1","kind":"stack-slot","stage":"automation pass","slot":2,"waitedSec":0,"outcome":"leased","poolSize":null}
 {"ts":"2026-11-15T18:23:01.682Z","story":"PRB-1","kind":"stack-slot","stage":"precheck","slot":2,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":132}
+{"ts":"2026-11-15T18:27:31.302Z","story":"PRB-1","kind":"stack-slot","stage":"automation pass","slot":2,"waitedSec":0,"outcome":"leased","poolSize":null}
+{"ts":"2026-11-15T18:27:41.942Z","story":"PRB-1","kind":"stack-slot","stage":"precheck","slot":2,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":8}
+{"ts":"2026-11-15T18:38:13.750Z","story":"PRB-1","kind":"stack-slot","stage":"automation pass","slot":1,"waitedSec":1,"outcome":"leased","poolSize":null}
