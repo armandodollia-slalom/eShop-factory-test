@@ -6,10 +6,10 @@ plan-sha: 791e825803d7
 verified-score: 10
 verified-at: "2026-11-15T18:02:34.848Z"
 verified-by: test-planner@1edb523e/67b01306
-automation-sha: d9e6ad4b7ebd
+automation-sha: 27ca4691d4c4
 automation-plan-sha: 791e825803d7
-automation-score: 9
-automation-verified-at: "2026-11-15T18:16:25.451Z"
+automation-score: 10
+automation-verified-at: "2026-11-15T18:24:38.808Z"
 ---
 # Test plan: PRB-1 [FE - WebApp] - [PROBE] The shopping bag's browser tab title reads "Shopping Bag"
 
