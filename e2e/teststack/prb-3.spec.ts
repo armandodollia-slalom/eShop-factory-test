@@ -1,3 +1,4 @@
+import type { Page } from '@playwright/test';
 import { test, expect } from '../demo';
 import { BASE_URL } from './ports';
 import { loadScenario } from './scenario';
@@ -19,8 +20,6 @@ const ITEM_NAME = 'Adventurer GPS Watch';
 const ITEM_PATH = '/item/99';
 const ITEM_TITLE = `${ITEM_NAME} | AdventureWorks`;
 
-type Page = Parameters<Parameters<typeof test>[2]>[0]['page'];
-
 const headerTitle = (page: Page) => page.locator('.eshop-hero-intro h1');
 
 async function openCatalog(page: Page) {
@@ -38,7 +37,6 @@ test('TC-PRB-3-01 catalog home page tab title is "Catalog | AdventureWorks"', as
   await test.step('read the document title', async () => {
     await expect(page).toHaveTitle(CATALOG_TITLE);
     const title = await page.title();
-    expect(title).toBe(CATALOG_TITLE);
     expect(title).not.toBe(BARE_TITLE);
     await demo.caption(`Tab title: "${title}"`);
     await demo.highlight(headerTitle(page), `catalog page, tab title "${title}"`);
@@ -83,7 +81,6 @@ test('TC-PRB-3-03 leaving the catalog for an item page does not keep the "Catalo
   await test.step('read the document title', async () => {
     await expect(page).toHaveTitle(ITEM_TITLE);
     const title = await page.title();
-    expect(title).toBe(ITEM_TITLE);
     expect(title).not.toBe(CATALOG_TITLE);
     await demo.caption(`Tab title: "${title}"`);
     await demo.highlight(headerTitle(page), `item page, tab title "${title}"`);
