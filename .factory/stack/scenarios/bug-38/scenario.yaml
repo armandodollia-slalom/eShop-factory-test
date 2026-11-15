@@ -1,0 +1,5 @@
+description: BUG-38 footer hover states on the WebApp home page; needs only the default stack, browsed signed out.
+extends: default
+
+# No extra rows: every case opens / signed out and reads the static FooterBar markup and styles
+# (hover colour, cursor, href, entry text); nothing is read from or written to the database.
