@@ -8,7 +8,9 @@ import { loadScenario } from './scenario';
 // paging. Scenario `bug-40` (.factory/stack/scenarios/bug-40): the 101 demo items of `default`; brand 2 "Gravitator"
 // has 11 items, type 3 "Ski/boarding" has 18. Every UI test starts in a new browser context (empty localStorage).
 // The API cases (TC-BUG-40-11 to -16) are xUnit functional tests in tests/Catalog.FunctionalTests/Bug40SortTests.cs.
-test.describe.configure({ mode: 'serial' });
+// Each test holds a chapter card and several 2 s highlights for the video (TC-BUG-40-01 alone holds ~16 s) on top of
+// the catalog loads; the default 30 s timeout leaves no room for a cold first page load.
+test.describe.configure({ mode: 'serial', timeout: 90_000 });
 
 test.beforeAll(() => {
   loadScenario('bug-40');
