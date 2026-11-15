@@ -1,0 +1,5 @@
+description: BUG-40 catalog sort across pages; the unmodified demo catalog of the default scenario.
+extends: default
+
+# No extra rows: every case reads the 101 demo items of `default` (brand 2 "Gravitator" has 11 items, type 3
+# "Ski/boarding" has 18; cheapest item 31 at 21.99, dearest items 42 and 72 at 699.00). Nothing is written.

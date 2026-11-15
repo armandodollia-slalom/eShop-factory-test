@@ -10,7 +10,10 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace eShop.Catalog.FunctionalTests;
 
-public sealed class CatalogApiTests : IClassFixture<CatalogApiFixture>
+// Every class of this project shares one CatalogApiFixture (see CatalogApiCollection), so a test that changes the seeded
+// catalog restores it before it returns.
+[Collection(CatalogApiCollection.Name)]
+public sealed class CatalogApiTests
 {
     private readonly WebApplicationFactory<Program> _webApplicationFactory;
     private readonly JsonSerializerOptions _jsonSerializerOptions = new(JsonSerializerDefaults.Web);
@@ -24,6 +27,22 @@ public sealed class CatalogApiTests : IClassFixture<CatalogApiFixture>
     {
         var handler = new ApiVersionHandler(new QueryStringApiVersionWriter(), apiVersion);
         return _webApplicationFactory.CreateDefaultClient(handler);
+    }
+
+    private async Task<CatalogItem> GetItemAsync(HttpClient httpClient, int id)
+    {
+        var response = await httpClient.GetAsync($"/api/catalog/items/{id}", TestContext.Current.CancellationToken);
+        response.EnsureSuccessStatusCode();
+        var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        return JsonSerializer.Deserialize<CatalogItem>(body, _jsonSerializerOptions);
+    }
+
+    // Puts a seeded item back as it was read before the test changed it.
+    private async Task RestoreItemAsync(CatalogItem original)
+    {
+        using var httpClient = CreateHttpClient(new ApiVersion(2.0));
+        var response = await httpClient.PutAsJsonAsync($"/api/catalog/items/{original.Id}", original, TestContext.Current.CancellationToken);
+        response.EnsureSuccessStatusCode();
     }
 
     [Theory]
@@ -76,6 +95,9 @@ public sealed class CatalogApiTests : IClassFixture<CatalogApiFixture>
         body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         var updatedItem = JsonSerializer.Deserialize<CatalogItem>(body, _jsonSerializerOptions);
 
+        itemToUpdate.AvailableStock = priorAvailableStock;
+        await RestoreItemAsync(itemToUpdate);
+
         // Assert - 1
         Assert.Equal(itemToUpdate.Id, updatedItem.Id);
         Assert.NotEqual(priorAvailableStock, updatedItem.AvailableStock);
@@ -96,6 +118,7 @@ public sealed class CatalogApiTests : IClassFixture<CatalogApiFixture>
 
         // Act - 2
         var priorAvailableStock = itemToUpdate.AvailableStock;
+        var priorPrice = itemToUpdate.Price;
         itemToUpdate.AvailableStock -= 1;
         itemToUpdate.Price = 1.99m;
         response = version switch
@@ -111,6 +134,10 @@ public sealed class CatalogApiTests : IClassFixture<CatalogApiFixture>
         response.EnsureSuccessStatusCode();
         body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         var updatedItem = JsonSerializer.Deserialize<CatalogItem>(body, _jsonSerializerOptions);
+
+        itemToUpdate.AvailableStock = priorAvailableStock;
+        itemToUpdate.Price = priorPrice;
+        await RestoreItemAsync(itemToUpdate);
 
         // Assert - 1
         Assert.Equal(itemToUpdate.Id, updatedItem.Id);
@@ -428,6 +455,9 @@ public sealed class CatalogApiTests : IClassFixture<CatalogApiFixture>
         var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         var addedItem = JsonSerializer.Deserialize<CatalogItem>(body, _jsonSerializerOptions);
 
+        response = await _httpClient.DeleteAsync($"/api/catalog/items/{id}", TestContext.Current.CancellationToken);
+        response.EnsureSuccessStatusCode();
+
         // Assert - 1
         Assert.Equal(bodyContent.Id, addedItem.Id);
 
@@ -446,6 +476,8 @@ public sealed class CatalogApiTests : IClassFixture<CatalogApiFixture>
             _ => 0
         };
 
+        var original = await GetItemAsync(_httpClient, id);
+
         //Act - 1
         var response = await _httpClient.DeleteAsync($"/api/catalog/items/{id}", TestContext.Current.CancellationToken);
         response.EnsureSuccessStatusCode();
@@ -453,6 +485,10 @@ public sealed class CatalogApiTests : IClassFixture<CatalogApiFixture>
         // Act - 2
         var response1 = await _httpClient.GetAsync($"/api/catalog/items/{id}", TestContext.Current.CancellationToken);
         var responseStatus = response1.StatusCode;
+
+        // Put the seeded item back with its id so the catalog is unchanged for the other tests.
+        var restoreResponse = await _httpClient.PostAsJsonAsync("/api/catalog/items", original, TestContext.Current.CancellationToken);
+        restoreResponse.EnsureSuccessStatusCode();
 
         // Assert - 1
         Assert.Equal("NoContent", response.StatusCode.ToString());
