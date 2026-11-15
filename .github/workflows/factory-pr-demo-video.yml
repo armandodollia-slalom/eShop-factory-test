@@ -54,10 +54,11 @@ jobs:
         echo "Specs: ${list:-none}; $(echo $scope)"
         echo "$scope" >> "$GITHUB_OUTPUT"
         echo "list=$list" >> "$GITHUB_OUTPUT"
-        # Specs run for PRs that get a video or an API summary (their API calls are the examples), and
-        # backend-only PRs start the stack even without a spec, for the OpenAPI details.
-        if [ -n "$list" ] && { [ "$video" = true ] || [ "$api" = true ]; }; then echo "record=true" >> "$GITHUB_OUTPUT"; fi
-        if { [ -n "$list" ] && [ "$video" = true ]; } || [ "$api" = true ]; then echo "stack=true" >> "$GITHUB_OUTPUT"; fi
+        # Every changed spec runs, whatever else the PR changes (council C8 proof: a PR whose net change was a spec and no
+        # UI or API file ran its spec nowhere in CI, so CI was green without testing it); backend-only PRs also start the
+        # stack without a spec, for the OpenAPI details.
+        if [ -n "$list" ]; then echo "record=true" >> "$GITHUB_OUTPUT"; fi
+        if [ -n "$list" ] || [ "$api" = true ]; then echo "stack=true" >> "$GITHUB_OUTPUT"; fi
     - name: No frontend change
       if: steps.specs.outputs.video != 'true'
       run: factory pr-video publish --pr "$PR_NUMBER" --remove
