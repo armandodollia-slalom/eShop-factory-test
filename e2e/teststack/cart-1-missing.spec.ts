@@ -32,17 +32,31 @@ const savedLines = (page: Page) => page.locator('.cart-saved-item');
 const savedLine = (page: Page, name: string) => savedLines(page).filter({ has: page.locator('.name', { hasText: new RegExp(`^${name}$`) }) });
 const orderTotal = (page: Page) => page.locator('.cart-summary-total div').last();
 
-test('CART-1 regression: the cart page skips a saved product that is no longer in the catalog', async ({ page, demo }) => {
+const CART_PRODUCT = 'Alpine Pack';
+const CART_QUANTITY = '2';
+const ORDER_TOTAL = '$80.00';
+const SAVED_HEADING = 'Saved for later (1)';
+const SAVED_PRODUCT = 'Cedar Headlamp';
+const RETIRED_PRODUCT = 'Retired Lantern';
+
+test('TC-CART-1-23 The cart page renders and skips a saved product that is no longer in the catalog', async ({ page, demo }) => {
   await test.step('sign in as alice', () => signIn(page, demo, 'alice'));
-  await test.step('open /cart: the cart renders and only the saved product still in the catalog is listed', async () => {
+  await test.step('open /cart', async () => {
     await page.goto(`${BASE_URL}/cart`);
+  });
+  await test.step('the page renders with Alpine Pack x 2 in the cart and an order total of $80.00', async () => {
     await expect(cartLines(page)).toHaveCount(1);
-    await expect(cartLine(page, 'Alpine Pack').locator('[data-cart-quantity-input]')).toHaveValue('2');
-    await expect(orderTotal(page)).toHaveText('$80.00');
-    await expect(page.getByRole('heading', { name: 'Saved for later (1)', exact: true })).toBeVisible();
+    await expect(cartLine(page, CART_PRODUCT).locator('[data-cart-quantity-input]')).toHaveValue(CART_QUANTITY);
+    await demo.highlight(cartLine(page, CART_PRODUCT), `Cart: ${CART_PRODUCT} x ${CART_QUANTITY}`);
+    await expect(orderTotal(page)).toHaveText(ORDER_TOTAL);
+    await demo.highlight(orderTotal(page), `Order total ${ORDER_TOTAL}`);
+  });
+  await test.step('Saved for later (1) lists only Cedar Headlamp and Retired Lantern is not shown', async () => {
+    await expect(page.getByRole('heading', { name: SAVED_HEADING, exact: true })).toBeVisible();
     await expect(savedLines(page)).toHaveCount(1);
-    await expect(savedLine(page, 'Cedar Headlamp')).toHaveCount(1);
-    await expect(page.getByText('Retired Lantern')).toHaveCount(0);
-    await demo.highlight(savedSection(page), 'Saved for later lists only Cedar Headlamp; the retired product is skipped');
+    await expect(savedLine(page, SAVED_PRODUCT)).toHaveCount(1);
+    await demo.highlight(savedSection(page), `${SAVED_HEADING}: only ${SAVED_PRODUCT}`);
+    await expect(page.getByText(RETIRED_PRODUCT)).toHaveCount(0);
+    await demo.absent(savedSection(page), `${RETIRED_PRODUCT} is not shown anywhere on the page`);
   });
 });
