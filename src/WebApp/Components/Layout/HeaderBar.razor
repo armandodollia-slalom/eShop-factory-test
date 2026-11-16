@@ -1,5 +1,8 @@
 ﻿@using Microsoft.AspNetCore.Components.Endpoints
 
+@* Scroll target for the footer's "Back to top" link. The sticky header itself cannot be
+   the target: once stuck it already counts as in view, so scrolling to it does nothing. *@
+<div id="top"></div>
 <header class="eshop-topbar">
     <div class="eshop-topbar-inner">
         <a class="eshop-brand" href="" aria-label="AdventureWorks home">

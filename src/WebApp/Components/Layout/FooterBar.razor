@@ -1,3 +1,5 @@
+@inject NavigationManager NavigationManager
+
 <footer class='eshop-footer'>
   <div class='eshop-footer-content'>
     <div class='eshop-footer-main'>
@@ -66,7 +68,14 @@
         <li><a>Privacy</a></li>
         <li><a>Terms</a></li>
         <li><a>Cookies</a></li>
+        <li><a href="@BackToTopHref">Back to top</a></li>
       </ul>
     </div>
   </div>
 </footer>
+
+@code {
+    // The document's <base href="/"> would resolve a bare "#top" to the home page,
+    // so the link targets the current page (path and query) plus the fragment.
+    private string BackToTopHref => $"{NavigationManager.ToBaseRelativePath(NavigationManager.Uri)}#top";
+}
