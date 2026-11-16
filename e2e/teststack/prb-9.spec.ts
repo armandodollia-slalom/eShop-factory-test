@@ -21,6 +21,22 @@ test.beforeAll(() => {
 const shopNav = (page: Page) => page.getByRole('navigation', { name: NAV_NAME, exact: true });
 const headerTitle = (page: Page) => page.locator('.eshop-hero-intro h1');
 
+// Blazor's enhanced navigation replaces the document's children and drops Playwright's screencast overlay
+// root, so demo.caption no longer renders after the footer click. This caption lives in the page DOM instead.
+async function pageCaption(page: Page, text: string) {
+  await page.evaluate(value => {
+    document.getElementById('prb-9-caption')?.remove();
+    if (!value) return;
+    const el = document.createElement('div');
+    el.id = 'prb-9-caption';
+    el.textContent = value;
+    el.style.cssText = 'position:fixed; left:50%; bottom:28px; transform:translateX(-50%); max-width:80%;'
+      + 'padding:10px 18px; border-radius:10px; background:rgba(15,23,42,.85); color:#fff; z-index:2147483647;'
+      + 'font:500 18px/1.4 system-ui, sans-serif; text-align:center; pointer-events:none;';
+    document.body.appendChild(el);
+  }, text);
+}
+
 async function openHomePage(page: Page) {
   await test.step('open the WebApp home page /', async () => {
     await page.context().clearCookies();
@@ -58,8 +74,11 @@ test('TC-PRB-9-02 footer "Shop all" link\'s visible text is unchanged', async ({
     expect((await link.innerText()).trim()).toBe(OLD_NAME);
     await expect(shopNav(page).getByText(NEW_NAME, { exact: true })).toHaveCount(0);
     expect(await shopNav(page).innerText()).not.toContain(NEW_NAME);
+    await demo.caption(`${page.url()}: link "${NEW_NAME}" shows "${OLD_NAME}"`);
     await demo.highlight(link, `Visible text still "${OLD_NAME}"`);
+    await demo.caption(`Visible "${NEW_NAME}" texts in the Shop navigation: 0`);
     await demo.absent(shopNav(page), `No visible "${NEW_NAME}" text in the Shop navigation`);
+    await demo.caption('');
   });
 });
 
@@ -75,6 +94,7 @@ test('TC-PRB-9-03 footer "Shop all" link still opens the catalog', async ({ page
   await test.step('click the footer "Shop" link named "Shop all products"', async () => {
     const link = shopNav(page).getByRole('link', { name: NEW_NAME, exact: true });
     await demo.highlight(link, `Click "${OLD_NAME}" (announced "${NEW_NAME}")`);
+    await demo.caption('');
     await link.click();
   });
   await test.step('the catalog page at / is shown', async () => {
@@ -86,10 +106,11 @@ test('TC-PRB-9-03 footer "Shop all" link still opens the catalog', async ({ page
     const cards = page.locator('a.catalog-product');
     await expect(cards.first()).toBeVisible();
     await expect(cards.first()).toHaveAttribute('href', /(^|\/)item\/\d+$/);
-    await demo.caption(`After click: ${page.url()}`);
+    await pageCaption(page, `After click: ${page.url()} (path ${new URL(page.url()).pathname})`);
     await demo.highlight(headerTitle(page), `Catalog heading: ${CATALOG_HEADING}`);
+    await pageCaption(page, `At ${page.url()}: catalog grid`);
     await demo.highlight(cards.first(), 'Catalog grid: first item card links to /item/<id>');
-    await demo.caption('');
+    await pageCaption(page, '');
   });
 });
 
@@ -99,10 +120,15 @@ test('TC-PRB-9-04 no footer Shop link is announced with the bare name "Shop all"
     await expect(shopNav(page)).toHaveCount(1);
   });
   await test.step('count links with the exact accessible name "Shop all"', async () => {
-    await expect(shopNav(page).getByRole('link', { name: OLD_NAME, exact: true })).toHaveCount(0);
+    const oldNameLinks = shopNav(page).getByRole('link', { name: OLD_NAME, exact: true });
+    await expect(oldNameLinks).toHaveCount(0);
+    const oldNameCount = await oldNameLinks.count();
     const visibleText = shopNav(page).getByText(OLD_NAME, { exact: true });
     await expect(visibleText).toHaveCount(1);
+    await demo.caption(`Opened ${page.url()}; visible "${OLD_NAME}" texts: ${await visibleText.count()}`);
     await demo.highlight(visibleText, `Text "${OLD_NAME}" is shown`);
+    await demo.caption(`Links named exactly "${OLD_NAME}": ${oldNameCount}`);
     await demo.absent(visibleText, `0 links announced as exactly "${OLD_NAME}"`);
+    await demo.caption('');
   });
 });

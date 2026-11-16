@@ -6,10 +6,10 @@ plan-sha: 90514941f4e1
 verified-score: 10
 verified-at: "2026-11-16T14:54:19.753Z"
 verified-by: test-planner@d8121b51/67b01306
-automation-sha: 48a048d2cc40
+automation-sha: 4df552841ea6
 automation-plan-sha: 90514941f4e1
-automation-score: 9
-automation-verified-at: "2026-11-16T14:58:56.943Z"
+automation-score: 10
+automation-verified-at: "2026-11-16T15:17:27.307Z"
 ---
 # Test plan: PRB-9 The footer's "Shop all" link is not announced as the catalog
 
