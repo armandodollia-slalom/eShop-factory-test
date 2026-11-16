@@ -23,6 +23,8 @@ public sealed class OrderStatusFlowWithRowLockTests : IAsyncDisposable
     private static readonly TimeSpan CommandTimeout = TimeSpan.FromSeconds(60);
 
     private readonly WebApplicationFactory<Program> _factory;
+    private readonly List<int> _createdOrderIds = [];
+    private readonly List<int> _createdBuyerIds = [];
 
     public OrderStatusFlowWithRowLockTests(OrderingApiFixture fixture)
     {
@@ -34,7 +36,20 @@ public sealed class OrderStatusFlowWithRowLockTests : IAsyncDisposable
                 new SaveOnlyIntegrationEventService(ActivatorUtilities.CreateInstance<OrderingIntegrationEventService>(sp)))));
     }
 
-    public ValueTask DisposeAsync() => _factory.DisposeAsync();
+    // The collection shares one database: remove the orders and buyers this class created so other tests
+    // (for example GET api/orders/1 answering 404) do not see them.
+    public async ValueTask DisposeAsync()
+    {
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var context = scope.ServiceProvider.GetRequiredService<OrderingContext>();
+            await context.OrderItems.Where(i => _createdOrderIds.Contains(EF.Property<int>(i, "OrderId"))).ExecuteDeleteAsync();
+            await context.Orders.Where(o => _createdOrderIds.Contains(o.Id)).ExecuteDeleteAsync();
+            await context.Buyers.Where(b => _createdBuyerIds.Contains(b.Id)).ExecuteDeleteAsync();
+        }
+
+        await _factory.DisposeAsync();
+    }
 
     [Fact]
     public async Task Uncancelled_order_goes_through_AwaitingValidation_StockConfirmed_and_Paid_and_is_shipped()
@@ -90,6 +105,7 @@ public sealed class OrderStatusFlowWithRowLockTests : IAsyncDisposable
         var buyer = new Buyer(identity, "flow");
         context.Buyers.Add(buyer);
         await context.SaveChangesAsync(ct);
+        _createdBuyerIds.Add(buyer.Id);
 
         var order = new Order(
             identity,
@@ -109,6 +125,7 @@ public sealed class OrderStatusFlowWithRowLockTests : IAsyncDisposable
         order.ClearDomainEvents();
         context.Orders.Add(order);
         await context.SaveChangesAsync(ct);
+        _createdOrderIds.Add(order.Id);
         return order.Id;
     }
 

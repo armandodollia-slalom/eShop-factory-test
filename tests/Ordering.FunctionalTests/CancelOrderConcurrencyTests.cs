@@ -10,13 +10,24 @@ namespace eShop.Ordering.FunctionalTests;
 // waits for it and then sees Cancelled, and the order never becomes Paid.
 [Collection(OrderingApiCollection.Name)]
 [Trait("Story", "CANC-1")]
-public sealed class CancelOrderConcurrencyTests
+public sealed class CancelOrderConcurrencyTests : IAsyncDisposable
 {
     private readonly OrderingApiFixture _fixture;
+    private readonly List<int> _createdOrderIds = [];
 
     public CancelOrderConcurrencyTests(OrderingApiFixture fixture)
     {
         _fixture = fixture;
+    }
+
+    // The collection shares one database: remove the orders this class created so other tests
+    // (for example GET api/orders/1 answering 404) do not see them.
+    public async ValueTask DisposeAsync()
+    {
+        using var scope = _fixture.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<OrderingContext>();
+        await context.OrderItems.Where(i => _createdOrderIds.Contains(EF.Property<int>(i, "OrderId"))).ExecuteDeleteAsync();
+        await context.Orders.Where(o => _createdOrderIds.Contains(o.Id)).ExecuteDeleteAsync();
     }
 
     [Fact]
@@ -90,6 +101,7 @@ public sealed class CancelOrderConcurrencyTests
         order.ClearDomainEvents();
         context.Orders.Add(order);
         await context.SaveChangesAsync(ct);
+        _createdOrderIds.Add(order.Id);
         return order.Id;
     }
 }
