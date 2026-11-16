@@ -6,7 +6,7 @@
             <img alt="AdventureWorks" src="images/logo-header.svg" />
         </a>
         <nav class="eshop-topnav" aria-label="Primary">
-            <a class="eshop-topnav-link @(IsCatalog ? "is-current" : "")" href="">Shop all</a>
+            <a class="eshop-topnav-link @(IsCatalog ? "is-current" : "")" href="" aria-current="@(IsCatalog ? "page" : null)">Shop all</a>
         </nav>
         <div class="eshop-topbar-actions">
             <UserMenu />
