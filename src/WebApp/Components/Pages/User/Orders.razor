@@ -8,6 +8,10 @@
 <OrdersRefreshOnStatusChange />
 
 <div class="orders">
+@if (cancelMessage is not null)
+{
+    <p class="orders-message" role="alert">@cancelMessage</p>
+}
 @if (orders is null)
 {
     <p class="orders-loading" role="status">Loading your orders...</p>
@@ -34,6 +38,7 @@ else
             <div>Date</div>
             <div class="total-header">Total</div>
             <div>Status</div>
+            <div class="order-actions"><span class="visually-hidden">Actions</span></div>
         </li>
         @foreach (var order in orders)
         {
@@ -52,17 +57,75 @@ else
                         @order.Status
                     </span>
                 </div>
+                <div class="order-actions">
+                    @if (IsCancellable(order.Status))
+                    {
+                        <form method="post" data-enhance data-submit-once>
+                            <input type="hidden" name="_handler" value="cancel-order" />
+                            <AntiforgeryToken />
+                            <input type="hidden" name="CancelOrderNumber" value="@order.OrderNumber" />
+                            <input type="hidden" name="CancelRequestId" value="@Guid.NewGuid()" />
+                            <button type="submit" class="button button-secondary" aria-label="Cancel order @order.OrderNumber">Cancel order</button>
+                        </form>
+                    }
+                </div>
             </li>
         }
     </ul>
 }
 </div>
 
+@* Registers the cancel-order handler even when the row that posted no longer shows its button
+   (for example, the order was paid in the meantime), so that post still gets an answer. *@
+<form @formname="cancel-order" @onsubmit="@CancelOrderAsync"></form>
+
 @code {
+    private static readonly string[] CancellableStatuses = ["Submitted", "AwaitingValidation", "StockConfirmed"];
+
     private OrderRecord[]? orders;
+    private string? cancelMessage;
+
+    [SupplyParameterFromForm]
+    public int? CancelOrderNumber { get; set; }
+
+    [SupplyParameterFromForm]
+    public Guid? CancelRequestId { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
         orders = await OrderingService.GetOrders();
+    }
+
+    private static bool IsCancellable(string status)
+        => CancellableStatuses.Contains(status, StringComparer.OrdinalIgnoreCase);
+
+    private async Task CancelOrderAsync()
+    {
+        if (CancelOrderNumber is not { } orderNumber)
+        {
+            return;
+        }
+
+        try
+        {
+            var cancelled = await OrderingService.CancelOrder(orderNumber, CancelRequestId ?? Guid.NewGuid());
+            if (!cancelled)
+            {
+                cancelMessage = "This order can no longer be cancelled.";
+            }
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+        {
+            cancelMessage = "We couldn't cancel your order right now. Please try again.";
+        }
+
+        try
+        {
+            orders = await OrderingService.GetOrders();
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+        {
+            cancelMessage ??= "We couldn't refresh your orders. Please reload the page.";
+        }
     }
 }
