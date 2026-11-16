@@ -1,0 +1,8 @@
+description: PRB-8 "Back to top" link in the footer; needs only the default catalog, browsed anonymously.
+extends: default
+
+# No extra rows. Every case browses anonymously:
+# - TC-PRB-8-01, -03, -05, -06 open the catalog page `/` (default catalog: 101 items, 9 per page, so the page is
+#   taller than the viewport and has a footer to scroll to).
+# - TC-PRB-8-02 opens `/item/99`, the default catalog item "Adventurer GPS Watch".
+# - TC-PRB-8-04 opens `/?page=2`, which exists because the default catalog has more than 9 items.
