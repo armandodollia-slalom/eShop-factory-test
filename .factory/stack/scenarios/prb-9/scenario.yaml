@@ -1,6 +1,0 @@
-description: PRB-9 footer "Shop all" link accessible name; needs only the default catalog, browsed anonymously.
-extends: default
-
-# No extra rows: TC-PRB-9-01, -02 and -04 read the footer's Shop navigation on the home page, and TC-PRB-9-03
-# starts from item 99 "Adventurer GPS Watch" of the default catalog and follows the footer link back to the
-# catalog, whose grid lists the default catalog items. All cases run as an anonymous visitor.
