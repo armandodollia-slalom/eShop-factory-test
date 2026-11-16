@@ -9,3 +9,5 @@
 {"ts":"2026-11-16T14:27:54.413Z","story":"BUG-41","kind":"stack-slot","stage":"pr-check fixer","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null}
 {"ts":"2026-11-16T14:40:31.923Z","story":"BUG-41","kind":"stack-slot","stage":"automation pass","slot":1,"waitedSec":1,"outcome":"leased","poolSize":null}
 {"ts":"2026-11-16T14:41:23.059Z","story":"BUG-41","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":49}
+{"ts":"2026-11-16T14:48:46.265Z","story":"BUG-41","kind":"stack-slot","stage":"automation pass","slot":2,"waitedSec":0,"outcome":"leased","poolSize":null}
+{"ts":"2026-11-16T14:53:16.740Z","story":"BUG-41","kind":"stack-slot","stage":"precheck","slot":2,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":268}

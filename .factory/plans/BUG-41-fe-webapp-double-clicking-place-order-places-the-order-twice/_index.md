@@ -9,7 +9,7 @@ verified-by: test-planner@d8121b51/67b01306
 automation-sha: 0dd8dd544030
 automation-plan-sha: 8f68cd449558
 automation-score: 9
-automation-verified-at: "2026-11-16T14:44:52.509Z"
+automation-verified-at: "2026-11-16T14:57:10.731Z"
 ---
 # Test plan: BUG-41 [FE - WebApp] - Double-clicking "Place order" places the order twice
 
