@@ -473,6 +473,79 @@ test('TC-CANC-1-12 placing an order through checkout still works and the new ord
   });
 });
 
+test('CANC-1 an order left uncancelled is taken to Paid by the processors and can then be shipped', async ({ page, demo, browser, request }) => {
+  test.setTimeout(420_000);
+  await signInAsAlice(page);
+  await placeOrderForItem99(page);
+  let orderNumber = 0;
+  await test.step('the new order is listed as Submitted; it is not cancelled', async () => {
+    orderNumber = await newOrderNumber(page);
+    await expect(orderRow(page, orderNumber).locator('.order-status')).toHaveText('Submitted');
+    await demo.highlight(orderRow(page, orderNumber), `New order ${orderNumber}: Submitted, left uncancelled`);
+  });
+  const aliceToken = await tokenFor(browser, 'alice');
+  await test.step('the OrderProcessor and PaymentProcessor take it through AwaitingValidation and StockConfirmed to Paid', async () => {
+    await demo.caption(`Waiting for the processors to take order ${orderNumber} to Paid`);
+    const seen = new Set<string>();
+    await expect
+      .poll(
+        async () => {
+          const status = await readStatus(request, aliceToken, orderNumber);
+          seen.add(status);
+          return status;
+        },
+        { timeout: 300_000, intervals: [2_000] },
+      )
+      .toBe('Paid');
+    // StockConfirmed lasts at least the payment handler's 10 s delay, so the 2 s poll always sees it.
+    expect(seen.has('StockConfirmed')).toBe(true);
+    await page.reload();
+    await expect(orderRow(page, orderNumber).locator('.order-status')).toHaveText('Paid');
+    await expect(cancelButton(page, orderNumber)).toHaveCount(0);
+    await demo.highlight(orderRow(page, orderNumber), `${orderNumber} Paid (seen: ${[...seen].join(' -> ')})`);
+  });
+  await test.step(`PUT /api/orders/ship {"orderNumber": <new order>} as alice returns 200 and the order is Shipped`, async () => {
+    const response = await request.put(`${url('ordering')}/api/orders/ship?api-version=1.0`, {
+      headers: { Authorization: `Bearer ${aliceToken}`, 'x-requestid': crypto.randomUUID(), 'Content-Type': 'application/json' },
+      data: { orderNumber },
+    });
+    expect(response.status()).toBe(200);
+    expect(await readStatus(request, aliceToken, orderNumber)).toBe('Shipped');
+    await page.reload();
+    await expect(orderRow(page, orderNumber).locator('.order-status')).toHaveText('Shipped');
+    await expect(cancelButton(page, orderNumber)).toHaveCount(0);
+    await demo.caption(`PUT /api/orders/ship {"orderNumber": ${orderNumber}} -> ${response.status()}`);
+    await demo.highlight(orderRow(page, orderNumber), `${orderNumber} Shipped`);
+  });
+});
+
+test('CANC-1 at phone width (375px) My orders shows the "Cancel order" button and its message without horizontal scroll', async ({ page, demo }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await signInAsAlice(page);
+  await openMyOrders(page, demo);
+  const noHorizontalScroll = () =>
+    page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth);
+  await test.step('the "Cancel order 9101" button is visible and the page does not scroll sideways', async () => {
+    await expect(cancelButton(page, 9101)).toBeVisible();
+    await expect(cancelButton(page, 9101)).toHaveText('Cancel order');
+    expect(await noHorizontalScroll()).toBe(true);
+    await demo.highlight(orderRow(page, 9101), '375px wide: 9101 with its "Cancel order" button');
+  });
+  await test.step('set order 9107 to Paid in orderingdb and click "Cancel order 9107"', async () => {
+    runOrderingSql(`UPDATE ordering.orders SET "OrderStatus" = 'Paid' WHERE "Id" = 9107;`);
+    await cancelButton(page, 9107).click();
+  });
+  await test.step(`"${CANNOT_CANCEL}" is shown in 9107's row and the page still does not scroll sideways`, async () => {
+    const alert = page.getByRole('alert');
+    await expect(alert).toHaveText(CANNOT_CANCEL);
+    await expect(alert).toBeInViewport();
+    await expect(orderRow(page, 9107).locator('.order-status')).toHaveText('Paid');
+    expect(await noHorizontalScroll()).toBe(true);
+    await expectNoErrorPage(page);
+    await demo.highlight(orderRow(page, 9107), `375px wide: ${CANNOT_CANCEL}`);
+  });
+});
+
 test('CANC-1 bob replaying a request id already used for a cancel is still refused for alice\'s order', async ({ page, demo, browser, request }) => {
   const bobToken = await tokenFor(browser, 'bob');
   const aliceToken = await tokenFor(browser, 'alice');
