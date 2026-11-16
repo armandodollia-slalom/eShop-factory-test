@@ -1,6 +1,7 @@
 import { execFileSync } from 'child_process';
 import { Locator, Page } from '@playwright/test';
-import { test, expect, createDemo } from '../demo';
+import { test, expect, createDemo, Demo } from '../demo';
+import { captureKeyframe } from '../fixtures';
 import { BASE_URL, SLOT } from './ports';
 import { loadScenario } from './scenario';
 
@@ -54,6 +55,18 @@ const row = (page: Page, number: number) =>
 
 const dateCell = (page: Page, number: number) => row(page, number).locator('.order-date');
 
+/**
+ * Captions `label`, then outlines `locator` with it. `demo.highlight` takes its keyframe before the outline is drawn,
+ * so a second keyframe (`outlined: <label>`) is taken while the outline and its label are on screen.
+ */
+async function mark(page: Page, demo: Demo, locator: Locator, label: string) {
+  await demo.caption(label);
+  const highlight = demo.highlight(locator, label);
+  await page.waitForTimeout(1500);
+  await captureKeyframe(`outlined: ${label}`, [page]);
+  await highlight;
+}
+
 async function expectDate(cell: Locator, expected: string) {
   await expect(cell).toHaveText(expected);
   expect((await cell.innerText()).trim()).toBe(expected);
@@ -101,7 +114,7 @@ test.describe('seeded orders (scenario bug-42)', () => {
         const cell = dateCell(page, 1);
         await expectDate(cell, '11/16/2026 09:08:50');
         await expect(cell).not.toHaveText(UTC_ORDER_1);
-        await demo.highlight(cell, `Order 1 (15:08:50 UTC) in ${CHICAGO}: 11/16/2026 09:08:50`);
+        await mark(page, demo,cell, `Order 1 (15:08:50 UTC) in ${CHICAGO}: 11/16/2026 09:08:50`);
       });
     });
 
@@ -122,12 +135,12 @@ test.describe('seeded orders (scenario bug-42)', () => {
           const cell = dateCell(page, number);
           await expectDate(cell, date);
           expect((await cell.innerText()).trim()).toMatch(DATE_FORMAT);
-          await demo.highlight(cell, `Order ${number} (${utc}): ${date}`);
+          await mark(page, demo,cell, `Order ${number} (${utc}): ${date}`);
         }
         const texts = (await rows.locator('.order-date').allInnerTexts()).map((t) => t.trim());
         expect(texts).toHaveLength(5);
         for (const text of texts) expect(text).toMatch(DATE_FORMAT);
-        await demo.highlight(page.locator('.orders-list'), '5 orders, each in Chicago time, MM/dd/yyyy HH:mm:ss (24-hour)');
+        await mark(page, demo,page.locator('.orders-list'), '5 orders, each in Chicago time, MM/dd/yyyy HH:mm:ss (24-hour)');
       });
     });
   });
@@ -142,7 +155,7 @@ test.describe('seeded orders (scenario bug-42)', () => {
         const cell = dateCell(page, 1);
         await expectDate(cell, '11/17/2026 00:08:50');
         await expect(cell).not.toHaveText(UTC_ORDER_1);
-        await demo.highlight(cell, `Order 1 (11/16 15:08:50 UTC) in ${TOKYO}: 11/17/2026 00:08:50`);
+        await mark(page, demo,cell, `Order 1 (11/16 15:08:50 UTC) in ${TOKYO}: 11/17/2026 00:08:50`);
       });
     });
 
@@ -154,8 +167,8 @@ test.describe('seeded orders (scenario bug-42)', () => {
         const five = dateCell(page, 5);
         await expectDate(four, '11/16/2026 23:59:59');
         await expectDate(five, '11/17/2026 00:00:00');
-        await demo.highlight(four, 'Order 4 (14:59:59 UTC): 11/16/2026 23:59:59');
-        await demo.highlight(five, 'Order 5 (15:00:00 UTC): 11/17/2026 00:00:00');
+        await mark(page, demo,four, 'Order 4 (14:59:59 UTC): 11/16/2026 23:59:59');
+        await mark(page, demo,five, 'Order 5 (15:00:00 UTC): 11/17/2026 00:00:00');
       });
     });
 
@@ -172,7 +185,7 @@ test.describe('seeded orders (scenario bug-42)', () => {
       await test.step('the header row reads Number, Date, Total, Status', async () => {
         const header = page.locator('.orders-header > div');
         await expect(header).toHaveText(['Number', 'Date', 'Total', 'Status']);
-        await demo.highlight(page.locator('.orders-header'), 'Header: Number, Date, Total, Status');
+        await mark(page, demo,page.locator('.orders-header'), 'Header: Number, Date, Total, Status');
       });
       await test.step('read the number, total and status of every order row', async () => {
         await expect(page.locator('li.orders-item').filter({ has: page.locator('.order-number') })).toHaveCount(5);
@@ -186,7 +199,7 @@ test.describe('seeded orders (scenario bug-42)', () => {
           expect(totalText).toBe(total);
           expect(statusText).toBe(status);
           for (const text of [numberText, totalText, statusText]) expect(text).not.toMatch(DATE_TEXT);
-          await demo.highlight(r, `Order ${number}: ${total}, ${status}; Date ${date}`);
+          await mark(page, demo,r, `Order ${number}: ${total}, ${status}; Date ${date}`);
         }
       });
     });
@@ -227,7 +240,7 @@ test.describe('bug report replay (scenario default)', () => {
       await expect(page).not.toHaveURL(/\/checkout$/);
       after = Date.now();
       // Blazor's enhanced navigation patches the DOM in place and drops the recording's caption overlay;
-      // reload into a fresh document so the captions and highlights below show in the video.
+      // reload the order confirmation page into a fresh document so this caption shows in the video.
       await page.reload();
       await demo.caption(`Order placed; after = ${inZone(new Date(after), CHICAGO).shown} (${CHICAGO})`);
       await demo.pause(2500);
@@ -238,9 +251,8 @@ test.describe('bug report replay (scenario default)', () => {
       await expect(link).toBeVisible();
       await link.click();
       await expect(page).toHaveURL(ORDERS_PATH);
-      // Same as after Place order: a fresh document keeps the highlight below visible in the video.
-      await page.reload();
     });
+    let utc = '';
     await test.step('read the Date of the only order row', async () => {
       const rows = page.locator('li.orders-item').filter({ has: page.locator('.order-number') });
       await expect(rows).toHaveCount(1);
@@ -253,12 +265,19 @@ test.describe('bug report replay (scenario default)', () => {
       expect(shown).toMatch(DATE_FORMAT);
       expect(sortable(shown) >= inZone(new Date(before), CHICAGO).sortable).toBe(true);
       expect(sortable(shown) <= inZone(new Date(after), CHICAGO).sortable).toBe(true);
-      const utc = inZone(instant, 'UTC').shown;
+      utc = inZone(instant, 'UTC').shown;
       expect(shown).not.toBe(utc);
-      await demo.caption(`Window ${inZone(new Date(before), CHICAGO).shown} .. ${inZone(new Date(after), CHICAGO).shown}; UTC would be ${utc}`);
-      await demo.highlight(cell, `Placed order shows ${shown} (${CHICAGO}), not ${utc} UTC`);
-      await demo.pause(2500);
       chicagoShown = shown;
+    });
+    await test.step('reload My orders to show the asserted Date on video (enhanced navigation removed the overlays)', async () => {
+      // The assertions above ran on the page reached by enhanced navigation. Blazor's DOM patch removes the
+      // recording's overlay layer, so the outline and captions below need a freshly loaded document.
+      await page.reload();
+      const cell = page.locator('li.orders-item').filter({ has: page.locator('.order-number') }).locator('.order-date');
+      await expectDate(cell, chicagoShown);
+      await demo.caption(`Window ${inZone(new Date(before), CHICAGO).shown} .. ${inZone(new Date(after), CHICAGO).shown}; UTC ${utc}`);
+      await demo.pause(2500);
+      await mark(page, demo, cell, `Placed order shows ${chicagoShown} (${CHICAGO}), not ${utc} UTC`);
     });
     await test.step(`open My orders again in ${TOKYO} and read the Date of the same order`, async () => {
       const context = await browser.newContext({ timezoneId: TOKYO });
@@ -275,7 +294,7 @@ test.describe('bug report replay (scenario default)', () => {
         const expected = inZone(new Date(Date.UTC(+yyyy, +mm - 1, +dd, +hh + 15, +mi, +ss)), 'UTC').shown;
         expect(expected).toBe(inZone(instant, TOKYO).shown);
         await expectDate(cell, expected);
-        await tokyoDemo.highlight(cell, `Same order in ${TOKYO}: ${expected} (${CHICAGO} ${chicagoShown} + 15 h)`);
+        await mark(tokyo, tokyoDemo, cell, `Same order in ${TOKYO}: ${expected} (${CHICAGO} ${chicagoShown} + 15 h)`);
         await tokyoDemo.dispose();
       } finally {
         await context.close();
