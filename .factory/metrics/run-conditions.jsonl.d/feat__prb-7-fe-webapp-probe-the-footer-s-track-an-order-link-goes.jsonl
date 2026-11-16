@@ -1,0 +1,4 @@
+{"ts":"2026-11-16T14:06:24.700Z","story":"PRB-7","kind":"stack-slot","stage":"UI verifier (self)","slot":2,"waitedSec":1,"outcome":"leased","delivery":"epic"}
+{"ts":"2026-11-16T14:10:01.616Z","story":"PRB-7","kind":"stack-slot","stage":"automation pass","slot":2,"waitedSec":1,"outcome":"leased","poolSize":null}
+{"ts":"2026-11-16T14:17:00.433Z","story":"PRB-7","kind":"stack-slot","stage":"precheck","slot":2,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":4}
+{"ts":"2026-11-16T14:24:05.658Z","story":"PRB-7","kind":"stack-slot","stage":"precheck","slot":2,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":13}

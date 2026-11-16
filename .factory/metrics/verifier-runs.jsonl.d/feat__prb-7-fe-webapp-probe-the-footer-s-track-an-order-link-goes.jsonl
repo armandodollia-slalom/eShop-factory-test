@@ -1,0 +1,3 @@
+{"ts":"2026-11-16T14:12:36.207Z","stage":"plan","story":"PRB-7","round":2,"agent_prompt_ver":"d8121b51","verifier_ver":"67b01306","cli":"claude","score":10,"passed":true,"gaps":0}
+{"ts":"2026-11-16T14:19:36.508Z","stage":"automation","story":"PRB-7","round":1,"agent_prompt_ver":"452b59bc","verifier_ver":"5b110a7e","cli":"claude","score":8,"passed":false,"gaps":2}
+{"ts":"2026-11-16T14:26:34.300Z","stage":"automation","story":"PRB-7","round":2,"agent_prompt_ver":"452b59bc","verifier_ver":"5b110a7e","cli":"claude","score":10,"passed":true,"gaps":0}

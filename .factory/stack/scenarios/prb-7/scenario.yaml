@@ -1,0 +1,5 @@
+description: PRB-7 footer "Track an order" link; needs only the seeded user alice (Pass123$) with no orders.
+extends: default
+
+# No extra rows: TC-PRB-7-01 to -04 sign in as alice (from default) and only read or follow footer links;
+# alice has no orders, so the My orders page needs nothing seeded. TC-PRB-7-05 runs anonymously.
