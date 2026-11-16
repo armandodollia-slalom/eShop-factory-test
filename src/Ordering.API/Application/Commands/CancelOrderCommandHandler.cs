@@ -20,6 +20,7 @@ public class CancelOrderCommandHandler : IRequestHandler<CancelOrderCommand, Can
     /// <returns></returns>
     public async Task<CancelOrderResult> Handle(CancelOrderCommand command, CancellationToken cancellationToken)
     {
+        // The repository locks the order's row, so a concurrent status change cannot overwrite the cancel.
         var orderToUpdate = await _orderRepository.GetAsync(command.OrderNumber);
         if (orderToUpdate == null)
         {
@@ -34,6 +35,12 @@ public class CancelOrderCommandHandler : IRequestHandler<CancelOrderCommand, Can
             {
                 return CancelOrderResult.NotFound;
             }
+        }
+
+        // Cancelling an order that is already cancelled changes nothing, so it saves nothing and raises no event.
+        if (orderToUpdate.OrderStatus == OrderStatus.Cancelled)
+        {
+            return CancelOrderResult.Cancelled;
         }
 
         try
@@ -54,6 +61,9 @@ public class CancelOrderCommandHandler : IRequestHandler<CancelOrderCommand, Can
 // Use for Idempotency in Command process.
 // Unlike IdentifiedCommandHandler, the request is recorded only once the order is cancelled, so a refused
 // cancel leaves nothing committed, and unexpected failures are not swallowed: they roll the transaction back.
+// A repeated request id runs the command again instead of answering from the record: the record is shared by
+// every command and buyer, so only the command's ownership check can tell whether the caller may cancel this
+// order. Cancelling is idempotent (an already cancelled order is left untouched), so the repeat changes nothing.
 public class CancelOrderIdentifiedCommandHandler : IRequestHandler<IdentifiedCommand<CancelOrderCommand, CancelOrderResult>, CancelOrderResult>
 {
     private readonly IMediator _mediator;
@@ -73,17 +83,12 @@ public class CancelOrderIdentifiedCommandHandler : IRequestHandler<IdentifiedCom
 
     public async Task<CancelOrderResult> Handle(IdentifiedCommand<CancelOrderCommand, CancelOrderResult> message, CancellationToken cancellationToken)
     {
-        if (await _requestManager.ExistAsync(message.Id))
-        {
-            // Only successful cancels are recorded, so a duplicate request means the order was cancelled.
-            return CancelOrderResult.Cancelled;
-        }
-
         var command = message.Command;
+        var commandName = command.GetGenericTypeName();
 
         _logger.LogInformation(
             "Sending command: {CommandName} - {IdProperty}: {CommandId} ({@Command})",
-            command.GetGenericTypeName(),
+            commandName,
             nameof(command.OrderNumber),
             command.OrderNumber,
             command);
@@ -93,12 +98,12 @@ public class CancelOrderIdentifiedCommandHandler : IRequestHandler<IdentifiedCom
         _logger.LogInformation(
             "Command result: {@Result} - {CommandName} - {IdProperty}: {CommandId} ({@Command})",
             result,
-            command.GetGenericTypeName(),
+            commandName,
             nameof(command.OrderNumber),
             command.OrderNumber,
             command);
 
-        if (result == CancelOrderResult.Cancelled)
+        if (result == CancelOrderResult.Cancelled && !await _requestManager.ExistAsync(message.Id))
         {
             await _requestManager.CreateRequestForCommandAsync<CancelOrderCommand>(message.Id);
         }

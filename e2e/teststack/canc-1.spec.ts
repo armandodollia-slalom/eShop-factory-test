@@ -1,6 +1,6 @@
 import { execFileSync } from 'child_process';
 import { Browser, Page } from '@playwright/test';
-import { test, expect } from '../demo';
+import { test, expect, type Demo } from '../demo';
 import { BASE_URL, STACK, url } from './ports';
 import { DOCKER, loadScenario } from './scenario';
 
@@ -112,7 +112,8 @@ async function expectNoErrorPage(page: Page) {
   await expect(page.getByText(/An error occurred while processing your request/)).toHaveCount(0);
 }
 
-async function placeOrderForItem99(page: Page) {
+/** Checks out item 99; with `demo`, the video shows the bag with the item and the "Place order" click. */
+async function placeOrderForItem99(page: Page, demo?: Demo) {
   await test.step(`open /item/${ITEM_ID} and click "Add to shopping bag"`, async () => {
     await page.goto(`${BASE_URL}/item/${ITEM_ID}`);
     await expect(page.getByRole('heading', { name: ITEM_NAME })).toBeVisible();
@@ -122,6 +123,11 @@ async function placeOrderForItem99(page: Page) {
   await test.step('open the shopping bag and click "Check out"', async () => {
     await page.goto(`${BASE_URL}/cart`);
     await expect(page.getByRole('heading', { name: 'Shopping bag', exact: true })).toBeVisible();
+    if (demo) {
+      await demo.caption(`Shopping bag: ${page.url()}`);
+      await demo.highlight(page.getByText(ITEM_NAME).first(), `${ITEM_NAME} in the bag`);
+      await demo.caption('');
+    }
     await page.getByRole('link', { name: 'Check out' }).click();
     await expect(page.getByRole('heading', { name: 'Checkout' })).toBeVisible();
   });
@@ -131,7 +137,11 @@ async function placeOrderForItem99(page: Page) {
     await page.getByLabel('State', { exact: true }).fill(ADDRESS.state);
     await page.getByLabel('Zip code', { exact: true }).fill(ADDRESS.zip);
     await page.getByLabel('Country', { exact: true }).fill(ADDRESS.country);
-    await page.getByRole('button', { name: 'Place order' }).click();
+    const placeOrder = page.getByRole('button', { name: 'Place order' });
+    if (demo) {
+      await demo.highlight(placeOrder, 'Click "Place order"');
+    }
+    await placeOrder.click();
     await expect(page).toHaveURL(ORDERS_PATH);
   });
 }
@@ -333,17 +343,19 @@ test('TC-CANC-1-08 cancelling an order paid after the page loaded shows "This or
   await test.step('click the button "Cancel order 9107"', async () => {
     await cancelButton(page, 9107).click();
   });
-  await test.step('"This order can no longer be cancelled." is shown; 9107 shows Paid with no button; no error page', async () => {
+  await test.step('"This order can no longer be cancelled." is shown in row 9107, in view; 9107 shows Paid with no button; no error page', async () => {
     const alert = page.getByRole('alert');
     await expect(alert).toHaveCount(1);
     await expect(alert).toHaveText(CANNOT_CANCEL);
     const row = orderRow(page, 9107);
+    // The message sits in the row that was clicked, so it is on screen without scrolling.
+    await expect(row.getByRole('alert')).toHaveText(CANNOT_CANCEL);
+    await expect(alert).toBeInViewport();
     await expect(row.locator('.order-status')).toHaveText('Paid');
     await expect(cancelButton(page, 9107)).toHaveCount(0);
     await expectNoErrorPage(page);
-    await demo.caption(`After the click: ${page.url()}`);
     await demo.highlight(alert, `Message: ${CANNOT_CANCEL}`);
-    await demo.highlight(row, '9107 Paid, no "Cancel order" button');
+    await demo.highlight(row, '9107 Paid, no "Cancel order" button, message in its row');
   });
   const aliceToken = await tokenFor(browser, 'alice');
   await test.step('GET /api/orders/9107 as alice returns 200 with status Paid', async () => {
@@ -438,11 +450,13 @@ test('TC-CANC-1-11 My orders still shows each order\'s number, date, total and s
 
 test('TC-CANC-1-12 placing an order through checkout still works and the new order is listed as Submitted', async ({ page, demo }) => {
   await signInAsAlice(page);
-  await placeOrderForItem99(page);
+  await placeOrderForItem99(page, demo);
   await test.step('the browser is on /user/orders with no error page and no alert', async () => {
     await expectNoErrorPage(page);
     await expect(page.getByRole('alert')).toHaveCount(0);
     await demo.caption(`After "Place order": ${page.url()}`);
+    await demo.pause(1500);
+    await demo.caption('');
   });
   await test.step('9 rows: the 8 seeded orders and one new Submitted $199.99 order with a "Cancel order" button', async () => {
     const orderNumber = await newOrderNumber(page);
@@ -460,4 +474,89 @@ test('TC-CANC-1-12 placing an order through checkout still works and the new ord
     await expect(empty).toBeVisible();
     await demo.highlight(empty, 'Shopping bag is empty');
   });
+});
+
+test('CANC-1 bob replaying a request id already used for a cancel is still refused for alice\'s order', async ({ page, demo, browser, request }) => {
+  const bobToken = await tokenFor(browser, 'bob');
+  const aliceToken = await tokenFor(browser, 'alice');
+  const requestId = crypto.randomUUID();
+  await signInAsAlice(page);
+  await openMyOrders(page, demo);
+  await test.step(`PUT /api/orders/cancel {"orderNumber": 9101} as alice with x-requestid ${requestId} returns 200`, async () => {
+    const response = await request.put(CANCEL_URL(), {
+      headers: { Authorization: `Bearer ${aliceToken}`, 'x-requestid': requestId, 'Content-Type': 'application/json' },
+      data: { orderNumber: 9101 },
+    });
+    expect(response.status()).toBe(200);
+    await demo.caption(`PUT /api/orders/cancel {"orderNumber": 9101} as alice -> ${response.status()}`);
+    await demo.pause(1500);
+  });
+  await test.step('PUT /api/orders/cancel {"orderNumber": 9108} as bob with the same x-requestid returns 404', async () => {
+    const response = await request.put(CANCEL_URL(), {
+      headers: { Authorization: `Bearer ${bobToken}`, 'x-requestid': requestId, 'Content-Type': 'application/json' },
+      data: { orderNumber: 9108 },
+    });
+    expect(response.status()).toBe(404);
+    await demo.caption(`Same x-requestid, {"orderNumber": 9108} as bob -> ${response.status()}`);
+    await demo.highlight(orderRow(page, 9108), 'Bob\'s replayed request for 9108 refused (404)');
+  });
+  await test.step('GET /api/orders/9108 as alice returns 200 with status Submitted', async () => {
+    expect(await readStatus(request, aliceToken, 9108)).toBe('Submitted');
+    await page.reload();
+    await expect(orderRow(page, 9108).locator('.order-status')).toHaveText('Submitted');
+    await demo.caption('GET /api/orders/9108 as alice -> 200, status "Submitted"');
+    await demo.highlight(orderRow(page, 9108).locator('.order-status'), 'API and My orders: 9108 still Submitted');
+    await demo.caption('');
+  });
+});
+
+test('CANC-1 a cancel the Ordering API cannot carry out shows "We couldn\'t cancel your order right now." and no error page', async ({ page, demo }) => {
+  const COULD_NOT_CANCEL = "We couldn't cancel your order right now. Please try again.";
+  await signInAsAlice(page);
+  await openMyOrders(page, demo);
+  await test.step('point the "Cancel order 9101" form at order 999999, which does not exist (the API answers 404)', async () => {
+    const form = page.locator('form').filter({ has: cancelButton(page, 9101) });
+    await form.locator('input[name="CancelOrderNumber"]').evaluate((input: HTMLInputElement) => { input.value = '999999'; });
+    await demo.highlight(cancelButton(page, 9101), 'Cancel order 9101, posting order 999999');
+  });
+  await test.step('click "Cancel order 9101"', async () => {
+    await cancelButton(page, 9101).click();
+  });
+  await test.step(`"${COULD_NOT_CANCEL}" is shown in view; 9101 is still Submitted; no error page`, async () => {
+    const alert = page.getByRole('alert');
+    await expect(alert).toHaveCount(1);
+    await expect(alert).toHaveText(COULD_NOT_CANCEL);
+    await expect(alert).toBeInViewport();
+    await expect(orderRow(page, 9101).locator('.order-status')).toHaveText('Submitted');
+    await expectNoErrorPage(page);
+    await demo.highlight(alert, `Message: ${COULD_NOT_CANCEL}`);
+    await demo.highlight(orderRow(page, 9101), '9101 still Submitted');
+  });
+});
+
+test('CANC-1 My orders shows "We couldn\'t load your orders right now." when the Ordering API fails, and no error page', async ({ page, demo }) => {
+  const COULD_NOT_LOAD = "We couldn't load your orders right now. Please reload the page.";
+  await signInAsAlice(page);
+  try {
+    await test.step('make GET /api/orders fail: rename ordering.orders in orderingdb', async () => {
+      runOrderingSql('ALTER TABLE ordering.orders RENAME TO orders_canc1_offline;');
+    });
+    await test.step('open /user/orders', async () => {
+      await page.goto(`${BASE_URL}/user/orders`);
+      await expect(page).toHaveURL(ORDERS_PATH);
+      await expect(headerTitle(page)).toHaveText(HEADING);
+    });
+    await test.step(`"${COULD_NOT_LOAD}" is shown with no list and no error page`, async () => {
+      const alert = page.getByRole('alert');
+      await expect(alert).toHaveText(COULD_NOT_LOAD, { timeout: 60_000 });
+      await expect(page.locator('.orders-list')).toHaveCount(0);
+      await expect(page.getByRole('status')).toHaveCount(0);
+      await expectNoErrorPage(page);
+      await demo.caption('GET /api/orders fails (orders table renamed)');
+      await demo.highlight(alert, `Message: ${COULD_NOT_LOAD}`);
+      await demo.caption('');
+    });
+  } finally {
+    runOrderingSql('ALTER TABLE IF EXISTS ordering.orders_canc1_offline RENAME TO orders;');
+  }
 });

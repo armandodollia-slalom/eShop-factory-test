@@ -8,11 +8,11 @@
 <OrdersRefreshOnStatusChange />
 
 <div class="orders">
-@if (cancelMessage is not null)
+@if (statusMessage is not null && !IsMessageShownInRow)
 {
-    <p class="orders-message" role="alert">@cancelMessage</p>
+    <p class="orders-message" role="alert">@statusMessage</p>
 }
-@if (orders is null && cancelMessage is null)
+@if (orders is null && statusMessage is null)
 {
     <p class="orders-loading" role="status">Loading your orders...</p>
 }
@@ -69,6 +69,11 @@ else if (orders is not null)
                         </form>
                     }
                 </div>
+                @* The answer to a cancel is shown in the row that posted it, which stays in view after the post. *@
+                @if (statusMessage is not null && order.OrderNumber == messageOrderNumber)
+                {
+                    <p class="orders-message orders-row-message" role="alert">@statusMessage</p>
+                }
             </li>
         }
     </ul>
@@ -83,7 +88,12 @@ else if (orders is not null)
     private static readonly string[] CancellableStatuses = ["Submitted", "AwaitingValidation", "StockConfirmed"];
 
     private OrderRecord[]? orders;
-    private string? cancelMessage;
+    private string? statusMessage;
+    private int? messageOrderNumber;
+
+    // A cancel message goes in its order's row when that order is listed; any other message goes above the list.
+    private bool IsMessageShownInRow
+        => messageOrderNumber is { } number && orders is not null && orders.Any(o => o.OrderNumber == number);
 
     [SupplyParameterFromForm]
     public int? CancelOrderNumber { get; set; }
@@ -110,7 +120,7 @@ else if (orders is not null)
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
         {
-            cancelMessage ??= "We couldn't load your orders right now. Please reload the page.";
+            statusMessage ??= "We couldn't load your orders right now. Please reload the page.";
         }
     }
 
@@ -129,12 +139,14 @@ else if (orders is not null)
             var cancelled = await OrderingService.CancelOrder(orderNumber, CancelRequestId ?? Guid.NewGuid());
             if (!cancelled)
             {
-                cancelMessage = "This order can no longer be cancelled.";
+                statusMessage = "This order can no longer be cancelled.";
+                messageOrderNumber = orderNumber;
             }
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
         {
-            cancelMessage = "We couldn't cancel your order right now. Please try again.";
+            statusMessage = "We couldn't cancel your order right now. Please try again.";
+            messageOrderNumber = orderNumber;
         }
 
         await LoadOrdersAsync();

@@ -64,7 +64,9 @@
     list-style: none;
     margin: 0;
     padding: 0;
-    max-width: 56rem;
+    /* 56rem for Number, Date, Total and Status, plus the fixed actions column (8.5rem) and its gap,
+       so those four columns keep their widths. */
+    max-width: calc(56rem + 1.75rem + 8.5rem);
 }
 
 .orders-item {
@@ -141,7 +143,8 @@
     }
 }
 
-.orders-message {
+/* `.orders .orders-message` outranks `.orders > p`, so the danger color and size apply. */
+.orders .orders-message {
     max-width: 56rem;
     margin: 0 0 1.25rem;
     padding: 0.85rem 1.1rem;
@@ -152,9 +155,29 @@
     font-size: var(--text-base);
 }
 
+/* The answer to a cancel, on its own line under the row that posted it. */
+.orders-item:has(> .orders-row-message) {
+    flex-wrap: wrap;
+    row-gap: 0.75rem;
+}
+
+.orders .orders-row-message {
+    flex: 0 0 100%;
+    box-sizing: border-box;
+    max-width: none;
+    margin: 0;
+}
+
 .orders-item > .order-actions {
+    flex: 0 0 8.5rem;
     display: flex;
     justify-content: flex-end;
+}
+
+/* Compact, so rows with the button are as tall as the rows without it. */
+.order-actions .button {
+    padding: 0.25rem 0.75rem;
+    font-size: var(--text-sm);
 }
 
 .visually-hidden {
