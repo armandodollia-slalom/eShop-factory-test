@@ -24,7 +24,7 @@ const headerTitle = (page: Page) => page.locator('.eshop-hero-intro h1');
 async function openHomePage(page: Page) {
   await test.step('open the WebApp home page /', async () => {
     await page.context().clearCookies();
-    await page.goto(BASE_URL!);
+    await page.goto(BASE_URL);
     await expect(headerTitle(page)).toHaveText(CATALOG_HEADING);
   });
 }
@@ -40,7 +40,6 @@ test('TC-PRB-9-01 footer "Shop all" link\'s accessible name is "Shop all product
     await expect(link).toHaveCount(1);
     await expect(link).toHaveAccessibleName(NEW_NAME);
     const href = await link.evaluate(a => (a as HTMLAnchorElement).href);
-    expect(new URL(href).pathname).toBe('/');
     expect(href).toBe(new URL('/', BASE_URL).href);
     await demo.caption(`Accessible name: "${NEW_NAME}", href -> ${href}`);
     await demo.highlight(link, `Announced as "${NEW_NAME}"`);
@@ -86,7 +85,6 @@ test('TC-PRB-9-03 footer "Shop all" link still opens the catalog', async ({ page
     await expect(page.getByRole('heading', { level: 1, name: ITEM_NAME, exact: true })).toHaveCount(0);
     const cards = page.locator('a.catalog-product');
     await expect(cards.first()).toBeVisible();
-    expect(await cards.count()).toBeGreaterThanOrEqual(1);
     await expect(cards.first()).toHaveAttribute('href', /(^|\/)item\/\d+$/);
     await demo.caption(`After click: ${page.url()}`);
     await demo.highlight(headerTitle(page), `Catalog heading: ${CATALOG_HEADING}`);
