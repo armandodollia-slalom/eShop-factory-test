@@ -29,7 +29,7 @@ const shopAllCurrentPage = (page: Page) =>
 
 async function signInAsAlice(page: Page) {
   await test.step('sign in as alice / Pass123$', async () => {
-    await page.goto(BASE_URL!);
+    await page.goto(BASE_URL);
     await page.getByLabel('Sign in').click();
     await expect(page.getByRole('heading', { name: 'Login' })).toBeVisible();
     await page.getByPlaceholder('Username').fill('alice');
@@ -49,7 +49,6 @@ test('TC-PRB-10-01 "Shop all" has aria-current="page" on the catalog page', asyn
   await test.step('locate "Shop all" in the primary navigation: aria-current="page"', async () => {
     await expect(primaryNav(page).getByRole('link', { name: LINK_NAME })).toHaveCount(1);
     await expect(shopAll(page)).toHaveAttribute('aria-current', 'page');
-    expect(await shopAll(page).getAttribute('aria-current')).toBe('page');
     await expect(shopAllCurrentPage(page)).toHaveCount(1);
     await demo.highlight(shopAll(page), 'Catalog: Shop all has aria-current="page"');
   });
@@ -66,7 +65,7 @@ test('TC-PRB-10-02 "Shop all" keeps its text, destination and is-current look on
     await expect(primaryNav(page).getByRole('link')).toHaveCount(1);
     expect(await link.innerText()).toBe(LINK_NAME);
     expect(await link.getAttribute('href')).toBe('');
-    const webappRoot = `${new URL(BASE_URL!).origin}/`;
+    const webappRoot = `${new URL(BASE_URL).origin}/`;
     expect(await link.evaluate(a => (a as HTMLAnchorElement).href)).toBe(webappRoot);
     await expect(link).toHaveClass(/(^|\s)eshop-topnav-link(\s|$)/);
     await expect(link).toHaveClass(/(^|\s)is-current(\s|$)/);
@@ -148,6 +147,7 @@ test('TC-PRB-10-06 "Shop all" keeps its text and destination and has no is-curre
     await expect(page.locator('.catalog-product').first()).toBeVisible();
     expect(await page.locator('.catalog-product').count()).toBeGreaterThan(0);
     await demo.caption(`After click: ${page.url()}`);
+    await demo.pause(2000);
     // Enhanced navigation streams the catalog in, so a card can be replaced while it is being highlighted.
     await expect(async () => {
       await demo.highlight(page.locator('.catalog-product').first(), 'Catalog with product cards');
@@ -156,6 +156,8 @@ test('TC-PRB-10-06 "Shop all" keeps its text and destination and has no is-curre
 });
 
 test('TC-PRB-10-07 aria-current follows in-app navigation from the catalog to a product and back', async ({ page, demo }) => {
+  // Two page loads plus the held post-navigation highlights the demo video must show exceed the default 30 s.
+  test.slow();
   await test.step('open /', async () => {
     await page.goto(`${BASE_URL}/`);
     await expect(page.locator('.catalog-product').first()).toBeVisible();
@@ -174,9 +176,9 @@ test('TC-PRB-10-07 aria-current follows in-app navigation from the catalog to a 
   });
   await test.step('check "Shop all" again: no aria-current, no is-current', async () => {
     expect(new URL(page.url()).pathname).toMatch(/^\/item\/\d+$/);
-    expect(await shopAll(page).getAttribute('aria-current')).toBeNull();
+    await expect(shopAll(page)).not.toHaveAttribute('aria-current');
     await expect(shopAll(page)).not.toHaveClass(/(^|\s)is-current(\s|$)/);
-    await demo.highlight(shopAll(page), 'Product page: no aria-current, no is-current');
+    await demo.highlight(shopAll(page), 'Product page: no aria-current, no is-current', 4000);
   });
   await test.step('click "Shop all"', async () => {
     await shopAll(page).click();
@@ -188,6 +190,6 @@ test('TC-PRB-10-07 aria-current follows in-app navigation from the catalog to a 
     expect(new URL(page.url()).pathname).toBe('/');
     await expect(shopAll(page)).toHaveAttribute('aria-current', 'page');
     await expect(shopAll(page)).toHaveClass(/(^|\s)is-current(\s|$)/);
-    await demo.highlight(shopAll(page), 'Catalog again: aria-current="page", is-current');
+    await demo.highlight(shopAll(page), 'Catalog again: aria-current="page", is-current', 4000);
   });
 });
