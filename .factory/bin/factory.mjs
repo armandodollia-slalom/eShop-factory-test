@@ -22,7 +22,7 @@ const pin = (() => {
   }
 })();
 const mainCheckout = (() => {
-  const r = spawnSync('git', ['rev-parse', '--path-format=absolute', '--git-common-dir'], { cwd: repo, encoding: 'utf8' });
+  const r = spawnSync('git', ['rev-parse', '--path-format=absolute', '--git-common-dir'], { cwd: repo, encoding: 'utf8', timeout: 60_000 });
   const dir = r.status === 0 ? r.stdout.trim() : '';
   return dir && path.basename(dir) === '.git' ? path.dirname(dir) : null;
 })();
