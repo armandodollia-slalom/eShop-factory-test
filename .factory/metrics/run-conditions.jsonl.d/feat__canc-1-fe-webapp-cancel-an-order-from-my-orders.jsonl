@@ -3,3 +3,11 @@
 {"ts":"2026-11-16T19:05:03.167Z","story":"CANC-1","kind":"stack-slot","stage":"precheck","slot":2,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":4}
 {"ts":"2026-11-16T19:23:35.487Z","story":"CANC-1","kind":"stack-slot","stage":"precheck","slot":2,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":4}
 {"ts":"2026-11-16T19:46:32.986Z","story":"CANC-1","kind":"stack-slot","stage":"precheck","slot":2,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":25}
+{"ts":"2026-11-16T20:05:34.167Z","kind":"provider-slow","story":"CANC-1","agent":"pr-check-style","seconds":523,"sessionId":"8c87c6c3-6204-4e4f-8969-560288c5865b","requests":10,"resent":1,"stalledSec":375,"errors":0,"rateLimited":false,"overloaded":false,"startupSec":1}
+{"ts":"2026-11-16T20:10:29.961Z","kind":"provider-slow","story":"CANC-1","agent":"pr-check-flow","seconds":819,"sessionId":"1f394d33-cfd2-4d0e-a996-6281d2feb3e6","requests":12,"resent":2,"stalledSec":669,"errors":0,"rateLimited":false,"overloaded":false,"startupSec":2}
+{"ts":"2026-11-16T20:11:11.362Z","kind":"provider-slow","story":"CANC-1","agent":"pr-check-video","seconds":860,"sessionId":"9ff6fa6f-598d-4740-a620-ebe164c097e6","requests":18,"resent":2,"stalledSec":637,"errors":0,"rateLimited":false,"overloaded":false,"startupSec":1}
+{"ts":"2026-11-16T20:14:53.862Z","story":"CANC-1","kind":"stack-slot","stage":"pr-check fixer","slot":1,"waitedSec":1,"outcome":"leased","poolSize":null}
+{"ts":"2026-11-16T21:05:58.732Z","kind":"provider-slow","story":"CANC-1","agent":"pr-check-fixer","seconds":3065,"sessionId":"5e872a61-d496-4797-82d2-241617e74795","requests":55,"resent":1,"stalledSec":209,"errors":0,"rateLimited":false,"overloaded":false,"startupSec":0}
+{"ts":"2026-11-16T21:06:33.376Z","story":"CANC-1","kind":"stack-slot","stage":"automation pass","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null}
+{"ts":"2026-11-16T21:07:35.300Z","story":"CANC-1","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":10}
+{"ts":"2026-11-16T21:22:21.354Z","story":"CANC-1","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":3}

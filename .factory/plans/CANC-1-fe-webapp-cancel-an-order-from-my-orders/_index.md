@@ -6,10 +6,10 @@ plan-sha: 4b27d9571ef4
 verified-score: 9
 verified-at: "2026-11-16T18:35:55.556Z"
 verified-by: test-planner@d8121b51/67b01306
-automation-sha: 77dd5fc5db55
+automation-sha: e938d6fade6f
 automation-plan-sha: 4b27d9571ef4
-automation-score: 9
-automation-verified-at: "2026-11-16T19:55:53.461Z"
+automation-score: 10
+automation-verified-at: "2026-11-16T21:31:51.995Z"
 ---
 # Test plan: CANC-1 [FE - WebApp] - Cancel an order from My orders
 
