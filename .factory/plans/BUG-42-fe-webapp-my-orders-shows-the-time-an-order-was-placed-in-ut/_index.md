@@ -9,7 +9,7 @@ verified-by: test-planner@d8121b51/67b01306
 automation-sha: 556f7a4577c3
 automation-plan-sha: f5529c737ead
 automation-score: 10
-automation-verified-at: "2026-11-16T19:19:40.114Z"
+automation-verified-at: "2026-11-16T19:26:40.329Z"
 ---
 # Test plan: BUG-42 [FE - WebApp] - My orders shows the time an order was placed in UTC, not the shopper's own time
 

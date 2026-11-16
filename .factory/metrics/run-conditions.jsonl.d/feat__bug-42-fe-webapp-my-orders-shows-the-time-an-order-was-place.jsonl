@@ -9,3 +9,5 @@
 {"ts":"2026-11-16T19:02:38.359Z","story":"BUG-42","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":10}
 {"ts":"2026-11-16T19:16:17.538Z","kind":"provider-slow","story":"BUG-42","agent":"test-automation","seconds":640,"sessionId":"a3ca8bb6-8026-4d7b-a584-22e3a6d61e6a","requests":17,"resent":1,"stalledSec":1,"errors":0,"rateLimited":false,"overloaded":false,"startupSec":1}
 {"ts":"2026-11-16T19:16:22.111Z","story":"BUG-42","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":3}
+{"ts":"2026-11-16T19:23:37.795Z","story":"BUG-42","kind":"stack-slot","stage":"automation pass","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null}
+{"ts":"2026-11-16T19:23:47.590Z","story":"BUG-42","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":8}
