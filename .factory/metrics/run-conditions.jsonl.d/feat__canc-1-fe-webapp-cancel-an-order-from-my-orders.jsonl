@@ -1,1 +1,5 @@
 {"ts":"2026-11-16T17:53:50.315Z","story":"CANC-1","kind":"stack-slot","stage":"UI verifier (webapp)","slot":2,"waitedSec":1,"outcome":"leased","delivery":"epic"}
+{"ts":"2026-11-16T18:31:02.502Z","story":"CANC-1","kind":"stack-slot","stage":"automation pass","slot":2,"waitedSec":0,"outcome":"leased","poolSize":null}
+{"ts":"2026-11-16T19:05:03.167Z","story":"CANC-1","kind":"stack-slot","stage":"precheck","slot":2,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":4}
+{"ts":"2026-11-16T19:23:35.487Z","story":"CANC-1","kind":"stack-slot","stage":"precheck","slot":2,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":4}
+{"ts":"2026-11-16T19:46:32.986Z","story":"CANC-1","kind":"stack-slot","stage":"precheck","slot":2,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":25}

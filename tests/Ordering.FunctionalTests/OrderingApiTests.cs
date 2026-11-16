@@ -62,8 +62,8 @@ public sealed class OrderingApiTests
         var response = await _httpClient.PutAsync("api/orders/cancel", content, TestContext.Current.CancellationToken);
         var s = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
-        // Assert
-        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+        // Assert: CANC-1 answers a missing (or someone else's) order with 404 instead of 500.
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     [Fact]
