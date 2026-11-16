@@ -1,6 +1,4 @@
-﻿using Npgsql;
-
-namespace eShop.Ordering.Infrastructure.Idempotency;
+﻿namespace eShop.Ordering.Infrastructure.Idempotency;
 
 public class RequestManager : IRequestManager
 {
@@ -25,7 +23,7 @@ public class RequestManager : IRequestManager
         var exists = await ExistAsync(id);
 
         var request = exists ?
-            throw new OrderingDomainException($"Request with {id} already exists") :
+            throw RequestAlreadyExists(id) :
             new ClientRequest()
             {
                 Id = id,
@@ -44,7 +42,10 @@ public class RequestManager : IRequestManager
             // A concurrent request with the same id was inserted first. Inside a transaction EF Core rolled
             // back to its savepoint; detach the entry so the commit does not try to insert it again.
             _context.Entry(request).State = EntityState.Detached;
-            throw new OrderingDomainException($"Request with {id} already exists");
+            throw RequestAlreadyExists(id);
         }
     }
+
+    private static OrderingDomainException RequestAlreadyExists(Guid id) =>
+        new($"Request with {id} already exists");
 }

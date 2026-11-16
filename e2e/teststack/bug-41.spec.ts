@@ -1,5 +1,5 @@
 import { Page } from '@playwright/test';
-import { test, expect, Demo } from '../demo';
+import { test, expect, Demo, createDemo } from '../demo';
 import { BASE_URL, url } from './ports';
 import { loadScenario } from './scenario';
 
@@ -13,6 +13,7 @@ test.describe.configure({ mode: 'serial', timeout: 120_000 });
 const ITEM_ID = 28;
 const ITEM_NAME = 'Alpine Peak Down Jacket';
 const ITEM_TOTAL = '$249.99';
+const ITEM_UNIT_PRICE = 249.99;
 const ADDRESS = '15703 NE 61st Ct';
 const CITY = 'Redmond';
 const STATE = 'WA';
@@ -47,7 +48,8 @@ async function signInAsAlice(page: Page) {
   });
 }
 
-async function addJacketAndOpenCheckout(page: Page) {
+/** Adds the jacket and opens checkout; with `demo`, highlights the bag's line item and total on the way. */
+async function addJacketAndOpenCheckout(page: Page, demo?: Demo) {
   await test.step(`open item ${ITEM_ID} "${ITEM_NAME}" and click "Add to shopping bag"`, async () => {
     await page.goto(`${BASE_URL}/item/${ITEM_ID}`);
     await expect(page.getByRole('heading', { name: ITEM_NAME })).toBeVisible();
@@ -58,6 +60,12 @@ async function addJacketAndOpenCheckout(page: Page) {
     await page.goto(`${BASE_URL}/cart`);
     await expect(page.getByRole('heading', { name: 'Shopping bag', exact: true })).toBeVisible();
     await expect(page.locator('.cart-item .name')).toHaveText([ITEM_NAME]);
+    const bagTotal = page.locator('.cart-summary-total');
+    await expect(bagTotal).toContainText(ITEM_TOTAL);
+    if (demo) {
+      await demo.highlight(page.locator('.cart-item'), `Bag: 1 x ${ITEM_NAME}`);
+      await demo.highlight(bagTotal, `Bag total: ${ITEM_TOTAL}`);
+    }
     await page.getByRole('link', { name: 'Check out' }).click();
     await expect(page).toHaveURL(CHECKOUT_PATH);
     await expect(page.getByRole('heading', { name: 'Checkout' })).toBeVisible();
@@ -118,7 +126,7 @@ async function expectBagEmpty(page: Page, demo: Demo) {
 
 test('TC-BUG-41-01 double-clicking Place order creates exactly one order with the bag\'s total', async ({ page, demo }) => {
   await signInAsAlice(page);
-  await addJacketAndOpenCheckout(page);
+  await addJacketAndOpenCheckout(page, demo);
   const before = new Date();
   await test.step('double-click "Place order"', async () => {
     await demo.highlight(placeOrder(page), 'Double-click: Place order');
@@ -194,6 +202,10 @@ test('TC-BUG-41-04 after a single click on Place order the shopping bag is empty
   await signInAsAlice(page);
   await addJacketAndOpenCheckout(page);
   await test.step('click "Place order" once and wait for /user/orders', async () => {
+    await demo.caption(`Opened ${page.url()}`);
+    await demo.highlight(page.getByRole('heading', { name: 'Checkout' }), 'Checkout page');
+    await demo.highlight(placeOrder(page), 'Single click: Place order');
+    await demo.caption('');
     await placeOrder(page).click();
     await expect(page).toHaveURL(ORDERS_PATH);
     await expect(page.locator('.orders-list')).toBeVisible();
@@ -250,9 +262,14 @@ test('TC-BUG-41-06 Place order still works after the form was rejected by a vali
   await test.step('in a separate tab, /user/orders lists no orders', async () => {
     const tab = await page.context().newPage();
     await openMyOrders(tab);
-    await expect(tab.locator('.orders-empty').getByRole('heading', { name: 'No orders yet', exact: true })).toBeVisible();
+    const noOrders = tab.locator('.orders-empty').getByRole('heading', { name: 'No orders yet', exact: true });
+    await expect(noOrders).toBeVisible();
     await expect(orderRows(tab)).toHaveCount(0);
     const tabUrl = tab.url();
+    const tabDemo = createDemo(tab);
+    await tabDemo.caption(`Separate tab ${tabUrl}`);
+    await tabDemo.highlight(noOrders, 'No orders yet');
+    await tabDemo.dispose();
     await tab.close();
     await demo.caption(`Separate tab ${tabUrl}: "No orders yet"`);
     await demo.highlight(placeOrder(page), 'No order placed yet');
@@ -303,18 +320,18 @@ test('TC-BUG-41-07 two concurrent order requests with the same request id create
   const body = {
     userId: ALICE_ID,
     userName: 'alice',
-    city: 'Redmond',
-    street: '15703 NE 61st Ct',
-    state: 'WA',
-    country: 'U.S.',
-    zipCode: '98052',
+    city: CITY,
+    street: ADDRESS,
+    state: STATE,
+    country: COUNTRY,
+    zipCode: ZIP,
     cardNumber: '4012888888881881',
     cardHolderName: 'Alice Smith',
     cardExpiration: '2030-12-31T00:00:00Z',
     cardSecurityNumber: '123',
     cardTypeId: 1,
     buyer: 'alice',
-    items: [{ id: '1', productId: 28, productName: 'Alpine Peak Down Jacket', unitPrice: 249.99, oldUnitPrice: 249.99, quantity: 1, pictureUrl: null }],
+    items: [{ id: '1', productId: ITEM_ID, productName: ITEM_NAME, unitPrice: ITEM_UNIT_PRICE, oldUnitPrice: ITEM_UNIT_PRICE, quantity: 1, pictureUrl: null }],
   };
   const headers = { Authorization: `Bearer ${token}`, 'x-requestid': REQUEST_ID, 'Content-Type': 'application/json' };
 
@@ -329,7 +346,7 @@ test('TC-BUG-41-07 two concurrent order requests with the same request id create
     expect(response.status()).toBe(200);
     const result: { orderNumber: number; total: number }[] = await response.json();
     expect(result).toHaveLength(1);
-    expect(result[0].total).toBe(249.99);
+    expect(result[0].total).toBe(ITEM_UNIT_PRICE);
     return result;
   });
   await test.step('show the API results on screen', async () => {

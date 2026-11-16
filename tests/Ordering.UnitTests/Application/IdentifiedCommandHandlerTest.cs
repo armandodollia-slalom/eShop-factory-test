@@ -57,6 +57,28 @@ public class IdentifiedCommandHandlerTest
        await  _mediator.DidNotReceive().Send(Arg.Any<IRequest<bool>>(), default);
     }
 
+    [TestMethod]
+    public async Task Handler_returns_duplicate_result_and_sends_no_command_when_concurrent_request_was_recorded_first()
+    {
+        // Arrange
+        var fakeGuid = Guid.NewGuid();
+        var fakeOrderCmd = new IdentifiedCommand<CreateOrderCommand, bool>(FakeOrderRequest(), fakeGuid);
+
+        _requestManager.ExistAsync(Arg.Any<Guid>())
+            .Returns(Task.FromResult(false));
+
+        _requestManager.CreateRequestForCommandAsync<CreateOrderCommand>(fakeGuid)
+            .Returns(Task.FromException(new OrderingDomainException($"Request with {fakeGuid} already exists")));
+
+        // Act
+        var handler = new CreateOrderIdentifiedCommandHandler(_mediator, _requestManager, _loggerMock);
+        var result = await handler.Handle(fakeOrderCmd, CancellationToken.None);
+
+        // Assert
+        Assert.IsTrue(result);
+        await _mediator.DidNotReceive().Send(Arg.Any<IRequest<bool>>(), default);
+    }
+
     private CreateOrderCommand FakeOrderRequest(Dictionary<string, object> args = null)
     {
         return new CreateOrderCommand(
