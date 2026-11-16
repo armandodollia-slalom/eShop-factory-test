@@ -124,3 +124,12 @@ export const test = withStepKeyframes(base.extend<{ demo: Demo }>({
 }));
 
 export { expect };
+
+// [PROBE] Council C12 live proof (retry-only pass): PRB-8's own spec fails on its first CI attempt by design and passes
+// on Playwright's retry, so CI is green only with a retry. Not for merging.
+test.beforeEach(async ({ page }, testInfo) => {
+  if (process.env.CI && /prb-8[^/]*\.spec\.ts$/.test(testInfo.file) && testInfo.retry === 0) {
+    await page.close();
+    throw new Error('probe: fails on its first attempt by design');
+  }
+});
