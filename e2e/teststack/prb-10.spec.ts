@@ -1,5 +1,5 @@
-import { Page } from '@playwright/test';
-import { test, expect } from '../demo';
+import { Locator, Page } from '@playwright/test';
+import { test, expect, Demo } from '../demo';
 import { BASE_URL } from './ports';
 import { loadScenario } from './scenario';
 
@@ -27,6 +27,44 @@ const shopAll = (page: Page) => primaryNav(page).getByRole('link', { name: LINK_
 const shopAllCurrentPage = (page: Page) =>
   primaryNav(page).getByRole('link', { name: LINK_NAME }).and(page.locator('[aria-current="page"]'));
 
+/**
+ * Blazor's enhanced navigation patches the document and drops Playwright's overlay host (`x-pw-glass`), which
+ * Playwright does not re-attach, so captions and highlights after an in-app click would not be drawn. Keep a
+ * reference before the click (`clickInApp`) and put it back afterwards (`restoreOverlays`).
+ */
+async function clickInApp(page: Page, locator: Locator) {
+  await page.evaluate(() => {
+    (window as unknown as { __pwGlass: Element | null }).__pwGlass = document.querySelector('x-pw-glass');
+  });
+  await locator.click();
+}
+
+async function restoreOverlays(page: Page) {
+  await page.evaluate(() => {
+    const glass = (window as unknown as { __pwGlass?: HTMLElement | null }).__pwGlass;
+    if (!glass || glass.isConnected) return;
+    document.documentElement.appendChild(glass);
+    glass.showPopover?.();
+  });
+}
+
+/** aria-current as measured on the element: its value, or that the attribute is absent. */
+async function ariaCurrentText(link: Locator) {
+  const value = await link.getAttribute('aria-current');
+  return value === null ? 'no aria-current (attribute absent)' : `aria-current="${value}"`;
+}
+
+/**
+ * Scroll `locator` into view first, so the caption (drawn at the bottom of the viewport) stays on screen in the
+ * highlight keyframe, then caption the page's URL and the measured state, and highlight the element.
+ */
+async function showState(page: Page, demo: Demo, locator: Locator, state: string, label: string, durationMs?: number) {
+  await restoreOverlays(page);
+  await locator.scrollIntoViewIfNeeded();
+  await demo.caption(`${new URL(page.url()).pathname} -> Shop all: ${state}`);
+  await demo.highlight(locator, label, durationMs);
+}
+
 async function signInAsAlice(page: Page) {
   await test.step('sign in as alice / Pass123$', async () => {
     await page.goto(BASE_URL);
@@ -50,7 +88,7 @@ test('TC-PRB-10-01 "Shop all" has aria-current="page" on the catalog page', asyn
     await expect(primaryNav(page).getByRole('link', { name: LINK_NAME })).toHaveCount(1);
     await expect(shopAll(page)).toHaveAttribute('aria-current', 'page');
     await expect(shopAllCurrentPage(page)).toHaveCount(1);
-    await demo.highlight(shopAll(page), 'Catalog: Shop all has aria-current="page"');
+    await showState(page, demo, shopAll(page), await ariaCurrentText(shopAll(page)), 'Catalog: Shop all has aria-current="page"');
   });
 });
 
@@ -69,8 +107,8 @@ test('TC-PRB-10-02 "Shop all" keeps its text, destination and is-current look on
     expect(await link.evaluate(a => (a as HTMLAnchorElement).href)).toBe(webappRoot);
     await expect(link).toHaveClass(/(^|\s)eshop-topnav-link(\s|$)/);
     await expect(link).toHaveClass(/(^|\s)is-current(\s|$)/);
-    await demo.caption(`text "Shop all", href="" -> ${webappRoot}`);
-    await demo.highlight(link, 'class: eshop-topnav-link is-current');
+    await showState(page, demo, link, `"${await link.innerText()}", href="" -> ${webappRoot}`, 'text and destination');
+    await showState(page, demo, link, `class="${(await link.getAttribute('class'))?.trim()}"`, 'class: eshop-topnav-link is-current');
   });
 });
 
@@ -85,7 +123,7 @@ test('TC-PRB-10-03 "Shop all" has no aria-current on a product page', async ({ p
     await expect(shopAll(page)).toHaveCount(1);
     expect(await shopAll(page).getAttribute('aria-current')).toBeNull();
     await expect(shopAllCurrentPage(page)).toHaveCount(0);
-    await demo.highlight(shopAll(page), 'Product page: Shop all has no aria-current');
+    await showState(page, demo, shopAll(page), await ariaCurrentText(shopAll(page)), 'Product page: Shop all has no aria-current');
   });
 });
 
@@ -104,7 +142,8 @@ test('TC-PRB-10-04 "Shop all" has no aria-current on the shopping bag', async ({
     expect(await link.innerText()).toBe(LINK_NAME);
     expect(await link.getAttribute('aria-current')).toBeNull();
     await expect(link).not.toHaveClass(/(^|\s)is-current(\s|$)/);
-    await demo.highlight(link, 'Shopping bag: Shop all, no aria-current, no is-current');
+    await showState(page, demo, link, `"${await link.innerText()}", ${await ariaCurrentText(link)}, class="${(await link.getAttribute('class'))?.trim()}"`,
+      'Shopping bag: Shop all, no aria-current, no is-current');
   });
 });
 
@@ -123,7 +162,8 @@ test('TC-PRB-10-05 "Shop all" has no aria-current on My orders', async ({ page, 
     expect(await link.innerText()).toBe(LINK_NAME);
     expect(await link.getAttribute('aria-current')).toBeNull();
     await expect(link).not.toHaveClass(/(^|\s)is-current(\s|$)/);
-    await demo.highlight(link, 'My orders: Shop all, no aria-current, no is-current');
+    await showState(page, demo, link, `"${await link.innerText()}", ${await ariaCurrentText(link)}, class="${(await link.getAttribute('class'))?.trim()}"`,
+      'My orders: Shop all, no aria-current, no is-current');
   });
 });
 
@@ -139,18 +179,22 @@ test('TC-PRB-10-06 "Shop all" keeps its text and destination and has no is-curre
     expect(await link.getAttribute('href')).toBe('');
     await expect(link).toHaveClass(/(^|\s)eshop-topnav-link(\s|$)/);
     await expect(link).not.toHaveClass(/(^|\s)is-current(\s|$)/);
-    await demo.highlight(link, 'Product page: "Shop all", href="", no is-current');
+    await showState(page, demo, link, `"${await link.innerText()}", href="", class="${(await link.getAttribute('class'))?.trim()}"`,
+      'Product page: "Shop all", href="", no is-current');
   });
   await test.step('click "Shop all": the catalog at / is shown', async () => {
-    await shopAll(page).click();
+    await clickInApp(page, shopAll(page));
     await expect.poll(() => new URL(page.url()).pathname).toBe('/');
     await expect(page.locator('.catalog-product').first()).toBeVisible();
     expect(await page.locator('.catalog-product').count()).toBeGreaterThan(0);
-    await demo.caption(`After click: ${page.url()}`);
     await demo.pause(2000);
     // Enhanced navigation streams the catalog in, so a card can be replaced while it is being highlighted.
     await expect(async () => {
-      await demo.highlight(page.locator('.catalog-product').first(), 'Catalog with product cards');
+      const card = page.locator('.catalog-product').first();
+      await restoreOverlays(page);
+      await card.scrollIntoViewIfNeeded();
+      await demo.caption(`After click: ${page.url()} (path ${new URL(page.url()).pathname})`);
+      await demo.highlight(card, 'Catalog with product cards');
     }).toPass();
   });
 });
@@ -165,31 +209,40 @@ test('TC-PRB-10-07 aria-current follows in-app navigation from the catalog to a 
   });
   await test.step('check "Shop all": aria-current="page"', async () => {
     await expect(shopAll(page)).toHaveAttribute('aria-current', 'page');
-    await demo.highlight(shopAll(page), 'Catalog: aria-current="page"');
+    await showState(page, demo, shopAll(page), await ariaCurrentText(shopAll(page)), 'Catalog: aria-current="page"');
   });
   await test.step('click a product card on the catalog', async () => {
     const card = page.locator('.catalog-product').first();
     await demo.highlight(card, 'Click this product card');
-    await card.click();
+    await clickInApp(page, card);
     await expect.poll(() => new URL(page.url()).pathname).toMatch(/^\/item\/\d+$/);
+    await expect(page.locator('.eshop-hero-intro h1')).toBeVisible();
+    await restoreOverlays(page);
     await demo.caption(`Now on ${page.url()}`);
+    await demo.highlight(page.locator('.eshop-hero-intro h1'), `Product page ${new URL(page.url()).pathname}`);
   });
   await test.step('check "Shop all" again: no aria-current, no is-current', async () => {
     expect(new URL(page.url()).pathname).toMatch(/^\/item\/\d+$/);
     await expect(shopAll(page)).not.toHaveAttribute('aria-current');
     await expect(shopAll(page)).not.toHaveClass(/(^|\s)is-current(\s|$)/);
-    await demo.highlight(shopAll(page), 'Product page: no aria-current, no is-current', 4000);
+    await showState(page, demo, shopAll(page), `${await ariaCurrentText(shopAll(page))}, class="${(await shopAll(page).getAttribute('class'))?.trim()}"`,
+      'Product page: no aria-current, no is-current', 4000);
   });
   await test.step('click "Shop all"', async () => {
-    await shopAll(page).click();
+    await clickInApp(page, shopAll(page));
     await expect.poll(() => new URL(page.url()).pathname).toBe('/');
     await expect(page.locator('.catalog-product').first()).toBeVisible();
+    const hero = page.getByRole('heading', { name: 'Ready for a new adventure?' });
+    await restoreOverlays(page);
+    await hero.scrollIntoViewIfNeeded();
     await demo.caption(`Back on ${page.url()} (catalog)`);
+    await demo.highlight(hero, `Back on ${new URL(page.url()).pathname}: the catalog`);
   });
   await test.step('check "Shop all" again: aria-current="page" and is-current', async () => {
     expect(new URL(page.url()).pathname).toBe('/');
     await expect(shopAll(page)).toHaveAttribute('aria-current', 'page');
     await expect(shopAll(page)).toHaveClass(/(^|\s)is-current(\s|$)/);
-    await demo.highlight(shopAll(page), 'Catalog again: aria-current="page", is-current', 4000);
+    await showState(page, demo, shopAll(page), `${await ariaCurrentText(shopAll(page))}, class="${(await shopAll(page).getAttribute('class'))?.trim()}"`,
+      'Catalog again: aria-current="page", is-current', 4000);
   });
 });

@@ -6,10 +6,10 @@ plan-sha: 709ab4b7ada6
 verified-score: 9
 verified-at: "2026-11-16T16:06:40.855Z"
 verified-by: test-planner@d8121b51/67b01306
-automation-sha: 66dd04545959
+automation-sha: 86b2df0c00f7
 automation-plan-sha: 709ab4b7ada6
-automation-score: 9
-automation-verified-at: "2026-11-16T16:19:10.465Z"
+automation-score: 10
+automation-verified-at: "2026-11-16T16:49:23.428Z"
 ---
 # Test plan: PRB-10 The header's "Shop all" link is not announced as the current page
 
