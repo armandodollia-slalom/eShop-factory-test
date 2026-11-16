@@ -120,7 +120,8 @@ async function expectBagEmpty(page: Page, demo: Demo) {
   await expect(bagIcon).toBeVisible();
   await demo.caption(`Opened ${page.url()}`);
   await demo.highlight(empty, `Shopping bag is empty: no "${ITEM_NAME}"`);
-  await demo.highlight(bagIcon, 'Header bag icon: no item count');
+  await demo.caption('Header bag icon shows no item count');
+  await demo.highlight(bagIcon, 'No item count');
   await demo.caption('');
 }
 
@@ -204,8 +205,8 @@ test('TC-BUG-41-04 after a single click on Place order the shopping bag is empty
   await test.step('click "Place order" once and wait for /user/orders', async () => {
     await demo.caption(`Opened ${page.url()}`);
     await demo.highlight(page.getByRole('heading', { name: 'Checkout' }), 'Checkout page');
-    await demo.highlight(placeOrder(page), 'Single click: Place order');
     await demo.caption('');
+    await demo.highlight(placeOrder(page), 'Single click: Place order');
     await placeOrder(page).click();
     await expect(page).toHaveURL(ORDERS_PATH);
     await expect(page.locator('.orders-list')).toBeVisible();
@@ -272,8 +273,9 @@ test('TC-BUG-41-06 Place order still works after the form was rejected by a vali
     await tabDemo.dispose();
     await tab.close();
     await demo.caption(`Separate tab ${tabUrl}: "No orders yet"`);
-    await demo.highlight(placeOrder(page), 'No order placed yet');
+    await demo.pause(1500);
     await demo.caption('');
+    await demo.highlight(placeOrder(page), 'No order placed yet');
   });
   await test.step(`type "${ADDRESS}" into Address and click "Place order" once`, async () => {
     await demo.type(address, ADDRESS);
