@@ -9,7 +9,7 @@ verified-by: test-planner@d8121b51/67b01306
 automation-sha: 4df552841ea6
 automation-plan-sha: 90514941f4e1
 automation-score: 10
-automation-verified-at: "2026-11-16T15:17:27.307Z"
+automation-verified-at: "2026-11-16T15:21:55.443Z"
 ---
 # Test plan: PRB-9 The footer's "Shop all" link is not announced as the catalog
 
