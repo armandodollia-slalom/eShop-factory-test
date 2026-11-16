@@ -1,8 +1,8 @@
 // Shows order dates in the browser's own time zone. The server renders each date as
 // <time datetime="...Z" data-local-time> with the UTC text as a fallback; this rewrites the
 // text as MM/dd/yyyy HH:mm:ss in local time. The text is always derived from the datetime
-// attribute and only written when it differs, so a value is never converted twice and our
-// own writes do not retrigger the observer.
+// attribute and only written when it differs, so a value is never converted twice and the
+// mutation our own write triggers ends in a no-op pass.
 //
 // Runs on load, after every Blazor enhanced navigation, and whenever streaming render or a
 // refresh inserts or replaces rows (MutationObserver on the document body).

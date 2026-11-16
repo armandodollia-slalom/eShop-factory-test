@@ -1,6 +1,6 @@
 import { execFileSync } from 'child_process';
 import { Locator, Page } from '@playwright/test';
-import { test, expect } from '../demo';
+import { test, expect, createDemo } from '../demo';
 import { BASE_URL, SLOT } from './ports';
 import { loadScenario } from './scenario';
 
@@ -200,15 +200,19 @@ test.describe('bug report replay (scenario default)', () => {
     loadScenario('default');
   });
 
-  test('TC-BUG-42-06 an order placed through the UI in America/Chicago shows the browser clock\'s time on My orders', async ({ page, demo }) => {
+  test('TC-BUG-42-06 an order placed through the UI in America/Chicago shows the browser clock\'s time on My orders', async ({ page, demo, browser }) => {
     let before = 0;
     let after = 0;
+    let instant = new Date(0);
+    let chicagoShown = '';
     await signInAsAlice(page);
     await test.step(`open item ${ITEM_ID} "${ITEM_NAME}" and click "Add to shopping bag"`, async () => {
       await page.goto(`${BASE_URL}/item/${ITEM_ID}`);
       await expect(page.getByRole('heading', { name: ITEM_NAME })).toBeVisible();
       await page.getByRole('button', { name: 'Add to shopping bag' }).click();
       await expect(page.locator('.in-cart').getByRole('link', { name: 'shopping bag' })).toBeVisible();
+      await demo.caption(`Added ${ITEM_NAME} to the shopping bag`);
+      await demo.pause(1500);
     });
     await test.step('open /checkout, keep the prefilled address and record "before"', async () => {
       await page.goto(`${BASE_URL}/checkout`);
@@ -236,7 +240,7 @@ test.describe('bug report replay (scenario default)', () => {
       const cell = rows.locator('.order-date');
       await expect(cell).toHaveText(DATE_FORMAT);
       // The <time datetime> attribute carries the UTC instant; wait until the script has rewritten the text from it.
-      const instant = new Date((await cell.locator('time').getAttribute('datetime'))!);
+      instant = new Date((await cell.locator('time').getAttribute('datetime'))!);
       await expect(cell).toHaveText(inZone(instant, CHICAGO).shown);
       const shown = (await cell.innerText()).trim();
       expect(shown).toMatch(DATE_FORMAT);
@@ -246,6 +250,28 @@ test.describe('bug report replay (scenario default)', () => {
       expect(shown).not.toBe(utc);
       await demo.caption(`Window ${inZone(new Date(before), CHICAGO).shown} .. ${inZone(new Date(after), CHICAGO).shown}; UTC would be ${utc}`);
       await demo.highlight(cell, `Placed order shows ${shown} (${CHICAGO}), not ${utc} UTC`);
+      chicagoShown = shown;
+    });
+    await test.step(`open My orders again in ${TOKYO} and read the Date of the same order`, async () => {
+      const context = await browser.newContext({ timezoneId: TOKYO });
+      try {
+        const tokyo = await context.newPage();
+        const tokyoDemo = createDemo(tokyo);
+        await signInAsAlice(tokyo);
+        await openOrders(tokyo, tokyoDemo, TOKYO);
+        const rows = tokyo.locator('li.orders-item').filter({ has: tokyo.locator('.order-number') });
+        await expect(rows).toHaveCount(1);
+        const cell = rows.locator('.order-date');
+        // In November Chicago is CST (UTC-6) and Tokyo is UTC+9, so the same instant reads 15 hours later.
+        const [, mm, dd, yyyy, hh, mi, ss] = chicagoShown.match(/^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2}):(\d{2})$/)!;
+        const expected = inZone(new Date(Date.UTC(+yyyy, +mm - 1, +dd, +hh + 15, +mi, +ss)), 'UTC').shown;
+        expect(expected).toBe(inZone(instant, TOKYO).shown);
+        await expectDate(cell, expected);
+        await tokyoDemo.highlight(cell, `Same order in ${TOKYO}: ${expected} (${CHICAGO} ${chicagoShown} + 15 h)`);
+        await tokyoDemo.dispose();
+      } finally {
+        await context.close();
+      }
     });
   });
 });
