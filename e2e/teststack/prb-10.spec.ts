@@ -186,7 +186,6 @@ test('TC-PRB-10-06 "Shop all" keeps its text and destination and has no is-curre
     await clickInApp(page, shopAll(page));
     await expect.poll(() => new URL(page.url()).pathname).toBe('/');
     await expect(page.locator('.catalog-product').first()).toBeVisible();
-    expect(await page.locator('.catalog-product').count()).toBeGreaterThan(0);
     await demo.pause(2000);
     // Enhanced navigation streams the catalog in, so a card can be replaced while it is being highlighted.
     await expect(async () => {
