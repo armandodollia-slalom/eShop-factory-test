@@ -8,8 +8,8 @@ verified-at: "2026-11-16T18:35:55.556Z"
 verified-by: test-planner@d8121b51/67b01306
 automation-sha: 494d321715b9
 automation-plan-sha: 4b27d9571ef4
-automation-score: 9
-automation-verified-at: "2026-11-16T22:15:42.016Z"
+automation-score: 10
+automation-verified-at: "2026-11-16T22:29:36.275Z"
 ---
 # Test plan: CANC-1 [FE - WebApp] - Cancel an order from My orders
 

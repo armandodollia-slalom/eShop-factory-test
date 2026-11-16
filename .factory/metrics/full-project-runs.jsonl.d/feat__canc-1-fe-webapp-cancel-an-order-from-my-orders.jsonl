@@ -8,3 +8,5 @@
 {"ts":"2026-11-16T21:31:51.871Z","story":"CANC-1","unit":"tests/Ordering.FunctionalTests","why":"covers ordering-api, ordering-infrastructure","argv":"dotnet test --project tests/Ordering.FunctionalTests --no-build","status":0,"timedOut":false}
 {"ts":"2026-11-16T22:08:14.397Z","story":"CANC-1","unit":"tests/Ordering.UnitTests","why":"holds the story's tests","argv":"dotnet test --project tests/Ordering.UnitTests --no-build","status":0,"timedOut":false}
 {"ts":"2026-11-16T22:09:04.831Z","story":"CANC-1","unit":"tests/Ordering.FunctionalTests","why":"covers ordering-api, ordering-infrastructure","argv":"dotnet test --project tests/Ordering.FunctionalTests --no-build","status":0,"timedOut":false}
+{"ts":"2026-11-16T22:21:30.636Z","story":"CANC-1","unit":"tests/Ordering.UnitTests","why":"holds the story's tests","argv":"dotnet test --project tests/Ordering.UnitTests --no-build","status":0,"timedOut":false}
+{"ts":"2026-11-16T22:22:17.593Z","story":"CANC-1","unit":"tests/Ordering.FunctionalTests","why":"covers ordering-api, ordering-infrastructure","argv":"dotnet test --project tests/Ordering.FunctionalTests --no-build","status":0,"timedOut":false}
