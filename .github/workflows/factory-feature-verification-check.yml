@@ -21,8 +21,6 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-    - name: '[PROBE] council C12 live proof: this check fails on purpose'
-      run: echo '[PROBE] the delivery decision through the CI fixing round; not for merging' && exit 1
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
