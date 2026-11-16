@@ -1,9 +1,9 @@
 ﻿namespace eShop.Ordering.UnitTests.Application;
 
-using Microsoft.AspNetCore.Http.HttpResults;
 using eShop.Ordering.API.Application.Queries;
-using Order = eShop.Ordering.API.Application.Queries.Order;
+using Microsoft.AspNetCore.Http.HttpResults;
 using NSubstitute.ExceptionExtensions;
+using Order = eShop.Ordering.API.Application.Queries.Order;
 
 [TestClass]
 public class OrdersWebApiTest
@@ -25,8 +25,8 @@ public class OrdersWebApiTest
     public async Task Cancel_order_with_requestId_success()
     {
         // Arrange
-        _mediatorMock.Send(Arg.Any<IdentifiedCommand<CancelOrderCommand, bool>>(), default)
-            .Returns(Task.FromResult(true));
+        _mediatorMock.Send(Arg.Any<IdentifiedCommand<CancelOrderCommand, CancelOrderResult>>(), default)
+            .Returns(Task.FromResult(CancelOrderResult.Cancelled));
 
         // Act
         var orderServices = new OrderServices(_mediatorMock, _orderQueriesMock, _identityServiceMock, _loggerMock);
@@ -40,8 +40,8 @@ public class OrdersWebApiTest
     public async Task Cancel_order_bad_request()
     {
         // Arrange
-        _mediatorMock.Send(Arg.Any<IdentifiedCommand<CancelOrderCommand, bool>>(), default)
-            .Returns(Task.FromResult(true));
+        _mediatorMock.Send(Arg.Any<IdentifiedCommand<CancelOrderCommand, CancelOrderResult>>(), default)
+            .Returns(Task.FromResult(CancelOrderResult.Cancelled));
 
         // Act
         var orderServices = new OrderServices(_mediatorMock, _orderQueriesMock, _identityServiceMock, _loggerMock);
@@ -155,16 +155,16 @@ public class OrdersWebApiTest
     }
 
     [TestMethod]
-    public async Task Cancel_order_returns_problem_when_command_fails()
+    public async Task Cancel_order_returns_conflict_when_order_cannot_be_cancelled()
     {
-        _mediatorMock.Send(Arg.Any<IdentifiedCommand<CancelOrderCommand, bool>>(), default)
-            .Returns(Task.FromResult(false));
+        _mediatorMock.Send(Arg.Any<IdentifiedCommand<CancelOrderCommand, CancelOrderResult>>(), default)
+            .Returns(Task.FromResult(CancelOrderResult.NotCancellable));
         var services = new OrderServices(_mediatorMock, _orderQueriesMock, _identityServiceMock, _loggerMock);
 
         var result = await OrdersApi.CancelOrderAsync(Guid.NewGuid(), new CancelOrderCommand(1), services);
 
         var problem = Assert.IsInstanceOfType<ProblemHttpResult>(result.Result);
-        Assert.AreEqual(500, problem.StatusCode);
+        Assert.AreEqual(409, problem.StatusCode);
     }
 
     [TestMethod]

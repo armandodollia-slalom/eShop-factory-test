@@ -21,7 +21,7 @@ public static class OrdersApi
         return api;
     }
 
-    public static async Task<Results<Ok, BadRequest<string>, ProblemHttpResult>> CancelOrderAsync(
+    public static async Task<Results<Ok, BadRequest<string>, NotFound, ProblemHttpResult>> CancelOrderAsync(
         [FromHeader(Name = "x-requestid")] Guid requestId,
         CancelOrderCommand command,
         [AsParameters] OrderServices services)
@@ -31,7 +31,10 @@ public static class OrdersApi
             return TypedResults.BadRequest("Empty GUID is not valid for request ID");
         }
 
-        var requestCancelOrder = new IdentifiedCommand<CancelOrderCommand, bool>(command, requestId);
+        // An empty identity matches no buyer, so an anonymous caller cannot cancel anyone's order.
+        var buyerIdentityGuid = services.IdentityService.GetUserIdentity() ?? string.Empty;
+        var requestCancelOrder = new IdentifiedCommand<CancelOrderCommand, CancelOrderResult>(
+            command with { BuyerIdentityGuid = buyerIdentityGuid }, requestId);
 
         services.Logger.LogInformation(
             "Sending command: {CommandName} - {IdProperty}: {CommandId} ({@Command})",
@@ -42,12 +45,14 @@ public static class OrdersApi
 
         var commandResult = await services.Mediator.Send(requestCancelOrder);
 
-        if (!commandResult)
+        return commandResult switch
         {
-            return TypedResults.Problem(detail: "Cancel order failed to process.", statusCode: 500);
-        }
-
-        return TypedResults.Ok();
+            CancelOrderResult.Cancelled => TypedResults.Ok(),
+            CancelOrderResult.NotCancellable => TypedResults.Problem(
+                detail: "This order can no longer be cancelled.",
+                statusCode: StatusCodes.Status409Conflict),
+            _ => TypedResults.NotFound()
+        };
     }
 
     public static async Task<Results<Ok, BadRequest<string>, ProblemHttpResult>> ShipOrderAsync(
@@ -128,9 +133,9 @@ public static class OrdersApi
         CreateOrderRequest request,
         [AsParameters] OrderServices services)
     {
-        
+
         //mask the credit card number
-        
+
         services.Logger.LogInformation(
             "Sending command: {CommandName} - {IdProperty}: {CommandId}",
             request.GetGenericTypeName(),
