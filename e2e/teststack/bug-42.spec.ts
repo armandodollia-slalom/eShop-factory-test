@@ -212,7 +212,7 @@ test.describe('bug report replay (scenario default)', () => {
       await page.getByRole('button', { name: 'Add to shopping bag' }).click();
       await expect(page.locator('.in-cart').getByRole('link', { name: 'shopping bag' })).toBeVisible();
       await demo.caption(`Added ${ITEM_NAME} to the shopping bag`);
-      await demo.pause(1500);
+      await demo.pause(2500);
     });
     await test.step('open /checkout, keep the prefilled address and record "before"', async () => {
       await page.goto(`${BASE_URL}/checkout`);
@@ -220,12 +220,17 @@ test.describe('bug report replay (scenario default)', () => {
       await expect(page.getByLabel('Address')).not.toHaveValue('');
       before = Math.floor(Date.now() / 1000) * 1000;
       await demo.caption(`Browser time zone ${CHICAGO}: before = ${inZone(new Date(before), CHICAGO).shown}`);
+      await demo.pause(2500);
     });
     await test.step('click "Place order", wait to leave checkout and record "after"', async () => {
       await page.getByRole('button', { name: 'Place order' }).click();
       await expect(page).not.toHaveURL(/\/checkout$/);
       after = Date.now();
+      // Blazor's enhanced navigation patches the DOM in place and drops the recording's caption overlay;
+      // reload into a fresh document so the captions and highlights below show in the video.
+      await page.reload();
       await demo.caption(`Order placed; after = ${inZone(new Date(after), CHICAGO).shown} (${CHICAGO})`);
+      await demo.pause(2500);
     });
     await test.step('open My orders from the user menu', async () => {
       await page.getByRole('button', { name: 'Account' }).hover();
@@ -233,6 +238,8 @@ test.describe('bug report replay (scenario default)', () => {
       await expect(link).toBeVisible();
       await link.click();
       await expect(page).toHaveURL(ORDERS_PATH);
+      // Same as after Place order: a fresh document keeps the highlight below visible in the video.
+      await page.reload();
     });
     await test.step('read the Date of the only order row', async () => {
       const rows = page.locator('li.orders-item').filter({ has: page.locator('.order-number') });
@@ -250,6 +257,7 @@ test.describe('bug report replay (scenario default)', () => {
       expect(shown).not.toBe(utc);
       await demo.caption(`Window ${inZone(new Date(before), CHICAGO).shown} .. ${inZone(new Date(after), CHICAGO).shown}; UTC would be ${utc}`);
       await demo.highlight(cell, `Placed order shows ${shown} (${CHICAGO}), not ${utc} UTC`);
+      await demo.pause(2500);
       chicagoShown = shown;
     });
     await test.step(`open My orders again in ${TOKYO} and read the Date of the same order`, async () => {
