@@ -1,0 +1,1 @@
+{"ts":"2026-11-16T17:07:06.127Z","story":"pr-191","stage":"pr-check","title":"the fixer could not fix the upheld findings without a human decision","details":"- [major] CI-1 (flow) CI check fails on the PR: pipeline: Make \"pipeline\" pass on the PR's head; do not weaken or skip the check."}
