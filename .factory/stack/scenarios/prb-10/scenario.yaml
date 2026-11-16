@@ -1,0 +1,6 @@
+description: PRB-10 header "Shop all" aria-current; needs only the default catalog and the seeded user alice with an empty basket and no orders.
+extends: default
+
+# No extra rows: TC-PRB-10-01, -02 and -07 open the default catalog (101 items), TC-PRB-10-03, -06 and -07 open
+# item 99 "Adventurer GPS Watch" from that catalog, and TC-PRB-10-04 and -05 sign in as alice (Pass123$) and open
+# her empty shopping bag and her My orders page. No case writes data.
