@@ -16,3 +16,4 @@
 {"ts":"2026-11-16T22:08:11.033Z","story":"CANC-1","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":9}
 {"ts":"2026-11-16T22:20:49.535Z","story":"CANC-1","kind":"stack-slot","stage":"automation pass","slot":1,"waitedSec":1,"outcome":"leased","poolSize":null}
 {"ts":"2026-11-16T22:21:36.815Z","story":"CANC-1","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":10}
+{"ts":"2026-11-16T22:34:06.077Z","story":"CANC-1","kind":"stack-slot","stage":"pr-check fixer","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null}
