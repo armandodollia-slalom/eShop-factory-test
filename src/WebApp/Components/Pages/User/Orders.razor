@@ -12,11 +12,11 @@
 {
     <p class="orders-message" role="alert">@cancelMessage</p>
 }
-@if (orders is null)
+@if (orders is null && cancelMessage is null)
 {
     <p class="orders-loading" role="status">Loading your orders...</p>
 }
-else if (orders.Length == 0)
+else if (orders is { Length: 0 })
 {
     <div class="orders-empty">
         <span class="orders-empty-icon" aria-hidden="true">
@@ -30,7 +30,7 @@ else if (orders.Length == 0)
         <a class="button button-primary" href="/">Start shopping</a>
     </div>
 }
-else
+else if (orders is not null)
 {
     <ul class="orders-list">
         <li class="orders-header orders-item">
@@ -93,7 +93,25 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        orders = await OrderingService.GetOrders();
+        // A cancel post reloads the list in its handler, after the cancel has run.
+        if (CancelOrderNumber is not null)
+        {
+            return;
+        }
+
+        await LoadOrdersAsync();
+    }
+
+    private async Task LoadOrdersAsync()
+    {
+        try
+        {
+            orders = await OrderingService.GetOrders();
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+        {
+            cancelMessage ??= "We couldn't load your orders right now. Please reload the page.";
+        }
     }
 
     private static bool IsCancellable(string status)
@@ -119,13 +137,6 @@ else
             cancelMessage = "We couldn't cancel your order right now. Please try again.";
         }
 
-        try
-        {
-            orders = await OrderingService.GetOrders();
-        }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
-        {
-            cancelMessage ??= "We couldn't refresh your orders. Please reload the page.";
-        }
+        await LoadOrdersAsync();
     }
 }
