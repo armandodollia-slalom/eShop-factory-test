@@ -36,6 +36,8 @@
                 <dl class="item-meta">
                     <dt>Brand</dt>
                     <dd>@item.CatalogBrand?.Brand</dd>
+                    <dt>Category</dt>
+                    <dd>@item.CatalogType?.Type</dd>
                 </dl>
 
                 <form class="add-to-cart" method="post" @formname="add-to-cart" @onsubmit="@AddToCartAsync" data-enhance="@isLoggedIn">
