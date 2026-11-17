@@ -2,14 +2,14 @@
 story: BUG-47
 story-issue: "https://github.com/armandodollia-slalom/eShop-factory-test/issues/240"
 story-sha: 86c99e48ef5f
-plan-sha: 3f0dda5c0989
-verified-score: 9
-verified-at: "2026-11-17T18:41:12.588Z"
-verified-by: test-planner@6ab9e852/council
-automation-sha: 980d15040725
-automation-plan-sha: 3f0dda5c0989
+plan-sha: ceb58dbf6250
+verified-score: 10
+verified-at: "2026-11-17T19:02:17.100Z"
+verified-by: as-is/council
+automation-sha: 8aec4d40e963
+automation-plan-sha: ceb58dbf6250
 automation-score: 10
-automation-verified-at: "2026-11-17T18:47:38.099Z"
+automation-verified-at: "2026-11-17T19:05:05.990Z"
 ---
 # Test plan: BUG-47 [BE - Ordering API] - A shopper can open another shopper's order
 
