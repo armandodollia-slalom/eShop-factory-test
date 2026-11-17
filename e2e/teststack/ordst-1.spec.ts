@@ -29,14 +29,12 @@ test.beforeAll(() => {
 async function tokenFor(user: string): Promise<string> {
   if (tokens[user]) return tokens[user];
   // The Identity URL may use a host name only the containers and the browser (--host-resolver-rules) resolve, so the
-  // requests go to 127.0.0.1 with the original Host header and every redirect is followed by hand.
+  // requests go to 127.0.0.1 with the original Host header. Every request goes to a fixed Identity endpoint built here;
+  // the redirects' Location headers are only checked against those endpoints, never fetched.
   const identity = new URL(url('identity'));
   const local = `${identity.protocol}//127.0.0.1:${identity.port}`;
   const http = await playwrightRequest.newContext({ extraHTTPHeaders: { Host: identity.host } });
-  const at = (location: string) => {
-    const target = new URL(location, local);
-    return `${local}${target.pathname}${target.search}`;
-  };
+  const pathOf = (location: string) => new URL(location, local).pathname.toLowerCase();
   try {
     const authorize = new URLSearchParams({
       client_id: 'orderingswaggerui',
@@ -45,21 +43,22 @@ async function tokenFor(user: string): Promise<string> {
       redirect_uri: REDIRECT,
       state: 'ordst1',
     });
+    const returnUrl = `/connect/authorize/callback?${authorize}`;
+    const loginUrl = `${local}/Account/Login?${new URLSearchParams({ ReturnUrl: returnUrl })}`;
     const challenge = await http.get(`${local}/connect/authorize?${authorize}`, { maxRedirects: 0 });
     expect(challenge.status()).toBe(302);
-    const loginUrl = at(challenge.headers()['location'] ?? '');
+    expect(pathOf(challenge.headers()['location'] ?? '')).toBe('/account/login');
     const loginPage = await http.get(loginUrl, { maxRedirects: 0 });
     expect(loginPage.status()).toBe(200);
     const html = await loginPage.text();
     const antiforgery = /<input[^>]*name="__RequestVerificationToken"[^>]*value="([^"]+)"/.exec(html)?.[1] ?? '';
-    const returnUrl = new URL(loginUrl).searchParams.get('ReturnUrl') ?? '';
-    expect(returnUrl).not.toBe('');
     const login = await http.post(loginUrl, {
       form: { ReturnUrl: returnUrl, Username: user, Password: PASSWORD, button: 'login', __RequestVerificationToken: antiforgery },
       maxRedirects: 0,
     });
     expect(login.status()).toBe(302);
-    const callback = await http.get(at(login.headers()['location'] ?? ''), { maxRedirects: 0 });
+    expect(pathOf(login.headers()['location'] ?? '')).toBe('/connect/authorize/callback');
+    const callback = await http.get(`${local}${returnUrl}`, { maxRedirects: 0 });
     expect(callback.status()).toBe(302);
     const location = callback.headers()['location'] ?? '';
     const token = new URLSearchParams(location.split('#')[1] ?? '').get('access_token') ?? '';
