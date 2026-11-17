@@ -97,7 +97,7 @@ else
     protected override async Task OnInitializedAsync()
     {
         // An unknown status falls back to "All" instead of reaching the API, which would answer 400.
-        selectedStatus = Statuses.FirstOrDefault(s => string.Equals(s, Status, StringComparison.OrdinalIgnoreCase));
+        selectedStatus = Statuses.FirstOrDefault(s => s == Status);
 
         var result = await OrderingService.GetOrders(selectedStatus);
 
