@@ -9,7 +9,7 @@ verified-by: test-planner@6ab9e852/council
 automation-sha: efc2fc6b0ff5
 automation-plan-sha: 2a1016bb02a4
 automation-score: 10
-automation-verified-at: "2026-11-17T11:36:33.212Z"
+automation-verified-at: "2026-11-17T11:48:22.782Z"
 ---
 # Test plan: BUG-46 A very large quantity in the shopping bag shows an empty page
 
