@@ -1,0 +1,1 @@
+{"ts":"2026-11-17T16:25:40.919Z","story":"PRB-13","unit":"tests/Application.UnitTests","why":"covers webappcomponents","argv":"dotnet test --project tests/Application.UnitTests --no-build","status":0,"timedOut":false,"head":"7506229ef1c3f556453624055849539538289f43","dirty":true,"tests":{"total":14,"failed":0},"failedTests":[]}

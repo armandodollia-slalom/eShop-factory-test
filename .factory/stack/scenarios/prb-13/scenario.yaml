@@ -1,0 +1,9 @@
+description: PRB-13 "Surprise me" link on the catalog page; needs only the default seeded catalog, browsed anonymously.
+extends: default
+
+# No extra rows. Every case uses the default catalog (101 products, ids 1-101, 13 brands, 8 types):
+# - unfiltered: 101 products over 12 pages of 9 (TC-PRB-13-01, -02, -03, -08);
+# - brand 13 "XE": 3 products, Survivor 2-Person Tent, Pathfinder GPS Watch, Nomad 2-Person Tent (TC-PRB-13-04);
+# - type 8 "Cycling": 9 products, exactly one catalog page (TC-PRB-13-05);
+# - brand 13 "XE" + type 7 "Navigation": the single product Pathfinder GPS Watch (TC-PRB-13-06);
+# - brand 13 "XE" + type 2 "Climbing": no product (TC-PRB-13-07).
