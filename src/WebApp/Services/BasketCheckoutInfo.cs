@@ -5,6 +5,7 @@ namespace eShop.WebApp.Services;
 public class BasketCheckoutInfo
 {
     [Required]
+    [Display(Name = "Address")]
     public string? Street { get; set; }
 
     [Required]
@@ -17,6 +18,7 @@ public class BasketCheckoutInfo
     public string? Country { get; set; }
 
     [Required]
+    [Display(Name = "Zip code")]
     public string? ZipCode { get; set; }
 
     public string? CardNumber { get; set; }
