@@ -9,7 +9,7 @@ verified-by: test-planner@6ab9e852/council
 automation-sha: 259e2abb9c53
 automation-plan-sha: 6d8005831774
 automation-score: 10
-automation-verified-at: "2026-11-17T16:25:41.064Z"
+automation-verified-at: "2026-11-17T17:20:01.064Z"
 ---
 # Test plan: PRB-13 [FE - WebApp] - [PROBE] A "Surprise me" link on the catalog page opens a random product
 
