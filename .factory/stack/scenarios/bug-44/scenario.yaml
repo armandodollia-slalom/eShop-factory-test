@@ -1,0 +1,7 @@
+description: BUG-44 checkout validation messages name Address and Zip code by their labels; needs only the seeded user bob with an empty basket and no orders.
+extends: default
+
+# No extra rows. Every case signs in as bob (Pass123$, seeded by `default` with an empty basket and no orders),
+# adds item 7 "Explorer 45L Backpack" ($149.99, default catalog) to the shopping bag itself and opens /checkout.
+# The spec reloads this scenario before each case so bob starts every case with an empty basket and no orders;
+# TC-BUG-44-07 places bob's only order.
