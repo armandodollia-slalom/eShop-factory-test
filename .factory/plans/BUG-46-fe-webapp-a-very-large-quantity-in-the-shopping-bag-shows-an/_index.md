@@ -6,10 +6,10 @@ plan-sha: 2a1016bb02a4
 verified-score: 10
 verified-at: "2026-11-17T10:53:42.758Z"
 verified-by: test-planner@6ab9e852/council
-automation-sha: cb4d685c4ddf
+automation-sha: efc2fc6b0ff5
 automation-plan-sha: 2a1016bb02a4
 automation-score: 10
-automation-verified-at: "2026-11-17T11:20:03.219Z"
+automation-verified-at: "2026-11-17T11:36:33.212Z"
 ---
 # Test plan: BUG-46 A very large quantity in the shopping bag shows an empty page
 
