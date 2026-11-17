@@ -1,4 +1,5 @@
 ---
+kept-for: OPUS-1-1
 id: TC-TYPE-1-03
 type: happy
 layer: functional
@@ -14,7 +15,7 @@ priority: P2
 
 ## Preconditions
 
-- Demo catalog (101 items); first page ordered by name.
+- Demo catalog; first page ordered by name. The database is shared with `CatalogApiTests`, which creates and deletes items, so the total item count is not fixed.
 
 ## Steps
 
@@ -22,5 +23,5 @@ priority: P2
 
 ## Expected result
 
-- Status 200; `pageIndex` 0, `pageSize` 5, `count` 101, `data` has 5 items.
+- Status 200; `pageIndex` 0, `pageSize` 5, `data` has 5 items and `count` is at least 5.
 - Every item in `data` has a non-null `catalogBrand` (as before) and `catalogType` null, while `catalogTypeId` is set (greater than 0).
