@@ -98,7 +98,7 @@ public static class OrdersApi
         string status = null)
     {
         OrderStatus? orderStatus = null;
-        if (!string.IsNullOrEmpty(status))
+        if (status is not null)
         {
             // Only the status names are accepted; Enum.TryParse alone would also take numbers and comma lists.
             var name = Enum.GetNames<OrderStatus>().FirstOrDefault(n => string.Equals(n, status, StringComparison.OrdinalIgnoreCase));
