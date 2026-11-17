@@ -54,6 +54,7 @@
 /.github/agents/test-automation.agent.md @armandodollia-slalom
 /.github/agents/test-plan-verifier.agent.md @armandodollia-slalom
 /.github/agents/test-planner.agent.md @armandodollia-slalom
+/.github/workflows/factory-analysis.yml @armandodollia-slalom
 /.github/workflows/factory-board-epic-assign.yml @armandodollia-slalom
 /.github/workflows/factory-board-escalation-resolve.yml @armandodollia-slalom
 /.github/workflows/factory-feature-verification-check.yml @armandodollia-slalom

@@ -420,7 +420,7 @@
       "review": {
         "rounds": 5,
         "lenses": {
-          "opus": "rewrite",
+          "opus": "acceptance",
           "sol": "correctness"
         }
       },
@@ -444,6 +444,18 @@
           "opus": "rewrite",
           "sol": "test-value"
         }
+      }
+    }
+  },
+  "analysis": {
+    "vars": {
+      "solution": "eShop.Web.slnf"
+    },
+    "secrets": {
+      "allow": {
+        "stopwords": [
+          "Pass123$"
+        ]
       }
     }
   }
