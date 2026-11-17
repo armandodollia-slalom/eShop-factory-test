@@ -1,0 +1,7 @@
+description: BUG-46 a too-large typed quantity in the shopping bag keeps the page and shows "Enter a smaller quantity."; needs only the seeded user bob with an empty basket.
+extends: default
+
+# No extra rows. Every case signs in as bob (Pass123$, seeded by `default` with an empty basket),
+# adds item 7 "Explorer 45L Backpack" ($149.99, default catalog) to the shopping bag itself, and
+# TC-BUG-46-05 also adds item 99 "Adventurer GPS Watch" ($199.99, default catalog).
+# The spec reloads this scenario before each case so bob starts every case with an empty basket.
