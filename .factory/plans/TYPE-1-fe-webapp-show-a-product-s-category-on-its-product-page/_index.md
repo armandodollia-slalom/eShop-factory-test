@@ -9,7 +9,7 @@ verified-by: as-is/council
 automation-sha: f7c147273414
 automation-plan-sha: e57a9c35f146
 automation-score: 10
-automation-verified-at: "2026-11-17T05:32:14.306Z"
+automation-verified-at: "2026-11-17T05:38:42.584Z"
 ---
 # Test plan: TYPE-1 Show a product's category on its product page
 
