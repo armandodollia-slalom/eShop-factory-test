@@ -147,7 +147,9 @@ public static class CatalogApi
 
         if (name is not null)
         {
-            root = root.Where(c => c.Name.StartsWith(name));
+            // Names match from their start regardless of case.
+            var lowerName = name.ToLower();
+            root = root.Where(c => c.Name.ToLower().StartsWith(lowerName));
         }
         if (type is { Length: > 0 })
         {
