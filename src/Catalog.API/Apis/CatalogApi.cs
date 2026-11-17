@@ -209,16 +209,18 @@ public static class CatalogApi
         {
             selection = selection.Where(c => type.Contains(c.CatalogTypeId));
         }
-        var minPrice = await selection.MinAsync(c => (decimal?)c.Price);
-        var maxPrice = await selection.MaxAsync(c => (decimal?)c.Price);
+        var priceRange = await selection
+            .GroupBy(_ => 1)
+            .Select(g => new { Min = g.Min(c => c.Price), Max = g.Max(c => c.Price) })
+            .FirstOrDefaultAsync();
 
         return TypedResults.Ok(new CatalogFacets(
             brandCounts,
             typeCounts,
             brandCounts.Sum(b => b.Count),
             typeCounts.Sum(t => t.Count),
-            minPrice,
-            maxPrice));
+            priceRange?.Min,
+            priceRange?.Max));
     }
 
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
