@@ -1,6 +1,8 @@
 @page "/"
 @inject NavigationManager Nav
+@using System.Text.Json
 @inject CatalogService CatalogService
+@inject ILogger<Catalog> Logger
 @attribute [StreamRendering]
 
 <PageTitle>AdventureWorks</PageTitle>
@@ -48,7 +50,13 @@
     {
         <div class="catalog-results">
             <div class="catalog-toolbar">
-                <p class="catalog-count">@catalogResult.Count @(catalogResult.Count == 1 ? "product" : "products")</p>
+                <p class="catalog-count">
+                    @catalogResult.Count @(catalogResult.Count == 1 ? "product" : "products")
+                    @if (PriceRangeText(facets) is { } priceRange)
+                    {
+                        <span class="catalog-price-range">@priceRange</span>
+                    }
+                </p>
                 <div class="catalog-sort" data-catalog-sort>
                     <span class="catalog-sort-label" id="catalog-sort-label">Sort</span>
                     <div class="catalog-sort-field">
@@ -160,6 +168,7 @@
     public int[]? TypeIds { get; set; }
 
     CatalogResult? catalogResult;
+    CatalogFacets? facets;
 
     static IEnumerable<int> GetPageTokens(int totalPages, int current)
     {
@@ -193,12 +202,40 @@
         { "type", null },
     });
 
+    // The range spans the whole selection (every page, independent of the sort).
+    private static string? PriceRangeText(CatalogFacets? facets) => facets switch
+    {
+        { MinPrice: decimal min, MaxPrice: decimal max } when min == max => $"Price ${min.ToPriceDisplay()}",
+        { MinPrice: decimal min, MaxPrice: decimal max } => $"Prices ${min.ToPriceDisplay()} – ${max.ToPriceDisplay()}",
+        _ => null,
+    };
+
     protected override async Task OnInitializedAsync()
     {
-        catalogResult = await CatalogService.GetCatalogItems(
+        var itemsTask = CatalogService.GetCatalogItems(
             Page.GetValueOrDefault(1) - 1,
             PageSize,
             BrandIds,
             TypeIds);
+        var facetsTask = LoadFacetsAsync();
+        await Task.WhenAll(itemsTask, facetsTask);
+
+        catalogResult = await itemsTask;
+        facets = await facetsTask;
+    }
+
+    // The price range is secondary: if the facets cannot be loaded the catalog
+    // still renders, just without the range.
+    private async Task<CatalogFacets?> LoadFacetsAsync()
+    {
+        try
+        {
+            return await CatalogService.GetCatalogFacets(BrandIds, TypeIds);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
+        {
+            Logger.LogWarning(ex, "Could not load the catalog facets");
+            return null;
+        }
     }
 }

@@ -6,4 +6,6 @@ public record CatalogFacets(
     IReadOnlyList<CatalogFacetCount> BrandCounts,
     IReadOnlyList<CatalogFacetCount> TypeCounts,
     int BrandTotal,
-    int TypeTotal);
+    int TypeTotal,
+    decimal? MinPrice,
+    decimal? MaxPrice);

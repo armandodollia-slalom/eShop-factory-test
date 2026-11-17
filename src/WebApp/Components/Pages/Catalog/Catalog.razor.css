@@ -29,6 +29,11 @@
     font-weight: 600;
 }
 
+.catalog-price-range::before {
+    content: "·";
+    margin: 0 0.5rem;
+}
+
 .catalog-sort {
     display: inline-flex;
     align-items: center;
