@@ -147,8 +147,8 @@ public static class CatalogApi
 
         if (name is not null)
         {
-            // Names match from their start regardless of case.
-            var lowerName = name.ToLower();
+            // lower() on both sides instead of ILIKE: StartsWith escapes % and _ in the search text, so the match stays a literal prefix.
+            var lowerName = name.ToLowerInvariant();
             root = root.Where(c => c.Name.ToLower().StartsWith(lowerName));
         }
         if (type is { Length: > 0 })

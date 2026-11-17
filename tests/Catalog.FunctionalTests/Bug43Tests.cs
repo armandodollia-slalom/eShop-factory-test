@@ -45,9 +45,6 @@ public sealed class Bug43Tests
 
         Assert.Equal(0, result.Count);
         Assert.Empty(result.Data);
-        var names = result.Data.Select(i => i.Name).ToList();
-        Assert.DoesNotContain("Explorer 45L Backpack", names);
-        Assert.DoesNotContain("Trailblaze hiking backpack", names);
     }
 
     [Fact]
@@ -73,9 +70,6 @@ public sealed class Bug43Tests
         Assert.Equal(2, result.Count);
         Assert.Equal(new[] { "Explorer Biking Computer", "Explorer Camping Tent" }, result.Data.Select(i => i.Name).ToArray());
         Assert.All(result.Data, i => Assert.Equal(brR, i.CatalogBrandId));
-        var names = result.Data.Select(i => i.Name).ToList();
-        Assert.DoesNotContain("Explorer 45L Backpack", names);
-        Assert.DoesNotContain("Explorer Frost Boots", names);
     }
 
     [Fact]
