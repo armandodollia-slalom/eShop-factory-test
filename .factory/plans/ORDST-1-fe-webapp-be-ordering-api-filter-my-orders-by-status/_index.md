@@ -6,10 +6,10 @@ plan-sha: a1036c769a20
 verified-score: 10
 verified-at: "2026-11-17T19:15:59.681Z"
 verified-by: test-planner@6ab9e852/council
-automation-sha: 4251cec3caab
+automation-sha: c390d50d418d
 automation-plan-sha: a1036c769a20
 automation-score: 10
-automation-verified-at: "2026-11-17T20:42:24.761Z"
+automation-verified-at: "2026-11-17T21:01:13.800Z"
 ---
 # Test plan: ORDST-1 [FE - WebApp, BE - Ordering API] - Filter My orders by status
 
