@@ -1,7 +1,9 @@
 @page "/surprise"
+@using System.Text.Json
 @using eShop.WebAppComponents.Item
 @inject NavigationManager Nav
 @inject CatalogService CatalogService
+@inject ILogger<Surprise> Logger
 @code {
     [SupplyParameterFromQuery(Name = "brand")]
     public int[]? BrandIds { get; set; }
@@ -13,19 +15,31 @@
     // from the list the given filters produce.
     protected override async Task OnInitializedAsync()
     {
-        var all = await CatalogService.GetCatalogItems(0, 1, BrandIds, TypeIds);
-        if (all.Count > 0)
-        {
-            var pick = await CatalogService.GetCatalogItems(Random.Shared.Next(all.Count), 1, BrandIds, TypeIds);
-            if (pick.Data is [var item, ..])
-            {
-                Nav.NavigateTo(ItemHelper.Url(item));
-                return;
-            }
-        }
+        var item = await PickRandomItemAsync();
 
-        // No product matches these filters: back to the catalog with the same filters.
-        Nav.NavigateTo(FilteredUri(Nav, Nav.BaseUri, BrandIds, TypeIds));
+        // No product matches these filters, or the catalog could not be read:
+        // back to the catalog with the same filters.
+        Nav.NavigateTo(item is not null ? ItemHelper.Url(item) : FilteredUri(Nav, Nav.BaseUri, BrandIds, TypeIds));
+    }
+
+    private async Task<CatalogItem?> PickRandomItemAsync()
+    {
+        try
+        {
+            var firstPage = await CatalogService.GetCatalogItems(0, 1, BrandIds, TypeIds);
+            if (firstPage.Count == 0)
+            {
+                return null;
+            }
+
+            var pick = await CatalogService.GetCatalogItems(Random.Shared.Next(firstPage.Count), 1, BrandIds, TypeIds);
+            return pick.Data is [var item, ..] ? item : null;
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
+        {
+            Logger.LogWarning(ex, "Could not pick a random catalog item");
+            return null;
+        }
     }
 
     public static string Url(NavigationManager nav, int[]? brandIds, int[]? typeIds)
