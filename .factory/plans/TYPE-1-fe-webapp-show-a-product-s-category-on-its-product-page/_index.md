@@ -2,14 +2,14 @@
 story: TYPE-1
 story-issue: "https://github.com/armandodollia-slalom/eShop-factory-test/issues/206"
 story-sha: 6cb64593d46a
-plan-sha: 97952de1338f
+plan-sha: e57a9c35f146
 verified-score: 10
-verified-at: "2026-11-17T04:23:30.741Z"
-verified-by: test-planner@6ab9e852/council
-automation-sha: 668045637650
-automation-plan-sha: 97952de1338f
-automation-score: 9
-automation-verified-at: "2026-11-17T05:20:22.664Z"
+verified-at: "2026-11-17T05:28:24.883Z"
+verified-by: as-is/council
+automation-sha: f7c147273414
+automation-plan-sha: e57a9c35f146
+automation-score: 10
+automation-verified-at: "2026-11-17T05:32:14.306Z"
 ---
 # Test plan: TYPE-1 Show a product's category on its product page
 
