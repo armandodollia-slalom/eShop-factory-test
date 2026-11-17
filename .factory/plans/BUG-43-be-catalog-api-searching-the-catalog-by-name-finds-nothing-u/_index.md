@@ -8,8 +8,8 @@ verified-at: "2026-11-17T01:51:24.959Z"
 verified-by: test-planner@d8121b51/council
 automation-sha: a653680a5201
 automation-plan-sha: 7b53bbe725b5
-automation-score: 10
-automation-verified-at: "2026-11-17T02:23:32.704Z"
+automation-score: 9
+automation-verified-at: "2026-11-17T02:41:09.304Z"
 ---
 # Test plan: BUG-43 [BE - Catalog API] - Searching the catalog by name finds nothing unless the capital letters match
 
