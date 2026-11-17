@@ -1,0 +1,6 @@
+description: BUG-47 order ownership on GET /api/orders/{id}; needs only the seeded users alice and bob, card types and no orders.
+extends: default
+
+# No extra rows: the spec places one order as alice (A) and one as bob (B) through POST /api/orders with each
+# user's own token (alice and bob, Pass123$, seeded by Identity.API), so each order's buyer is its owner's subject id.
+# Card type 2 (Visa) is seeded by Ordering.API at startup. Order number 999999 exists for no one.
