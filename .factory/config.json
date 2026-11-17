@@ -160,7 +160,7 @@
       ]
     },
     "maxConcurrentAgents": 8,
-    "maxAgentRunsPerStory": 32,
+    "maxAgentRunsPerStory": 48,
     "storyWallClockSec": 18000
   },
   "precheck": {
