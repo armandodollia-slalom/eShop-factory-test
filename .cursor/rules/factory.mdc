@@ -12,6 +12,7 @@ This repository is worked on through the AI app factory. Its engine is installed
 - When your line of work for that story is complete, run `factory done` before you finish. The Stop hook then runs the architecture review. If it blocks with findings, fix them and finish again; tests are written automatically after approval.
 - Stories, epics, spikes and mockups are tickets on the story board, cached in `.factory/state/board/<KEY>/`. Ignore that cache except for the story handed to the pipeline (`factory start <KEY>` or `factory implement run`). A PreToolUse hook enforces this.
 - Do not edit `.factory/` or the files listed in `.factory/manifest.json` while implementing a story: they belong to the factory, not to the application. The exceptions are the application's topology in `.factory/app.json` (a story that adds a service registers it there) and the test stack it generates (`factory teststack publish`). Change generated files through their source and `factory render`. `factory check` fails when a generated file was edited by hand.
+- To review a branch as a council of verifiers from several models and CLIs, follow the factory's `council` skill (`skills/council/SKILL.md` in the factory install; `factory version --path` prints where that is) or run `factory council review`; the pipeline's stages seat their configured council themselves.
 - Tests the pipeline writes live in the application's own test tree and are tagged with their story; treat them like any other test.
 
 ## graphify
