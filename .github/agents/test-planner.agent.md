@@ -70,6 +70,7 @@ priority: P1
 - Do not invent requirements. If the story is ambiguous, write the case for the most literal reading and record the ambiguity under an `## Open questions` section in `_index.md`.
 - If the story has a **Test scope** section, follow it: put each area at the layer it names, and write no cases for what it marks out of scope.
 - Write sad paths only where the story states or directly implies the expected outcome. Behavior the story leaves undefined (for example concurrency, outages, exact error bodies) goes under `## Open questions`, never into a case's expected result.
+- If the story states and directly implies no error outcome at all, write no sad case: add a `## No sad path` section to `_index.md` that says why (for example "the story only adds a field to a page; it names no error and changes no existing one"). Never invent a sad path to fill the plan; an existing error the story explicitly keeps unchanged is not invented and may be a sad case.
 - Prefer fewer, sharper cases: one case per distinct observable behavior, with one exact command or request per step and no alternatives ("X or Y").
 - Use the seeded test stack users and data where they fit (`.factory/stack/scenarios/default`; the Project context names the seeded users); describe any extra data the scenario must contain.
 
