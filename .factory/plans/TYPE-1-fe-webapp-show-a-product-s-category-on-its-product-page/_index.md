@@ -6,10 +6,10 @@ plan-sha: 97952de1338f
 verified-score: 10
 verified-at: "2026-11-17T04:23:30.741Z"
 verified-by: test-planner@6ab9e852/council
-automation-sha: 1e7c70740081
+automation-sha: 668045637650
 automation-plan-sha: 97952de1338f
-automation-score: 10
-automation-verified-at: "2026-11-17T05:00:15.787Z"
+automation-score: 9
+automation-verified-at: "2026-11-17T05:20:22.664Z"
 ---
 # Test plan: TYPE-1 Show a product's category on its product page
 

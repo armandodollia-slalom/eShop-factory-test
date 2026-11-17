@@ -7,8 +7,9 @@ namespace eShop.Catalog.FunctionalTests;
 
 // TYPE-1: GET /api/catalog/items/{id} includes the item's type; the other item endpoints are unchanged.
 // The product page cases (TC-TYPE-1-05 to 07) run on the test stack (e2e/teststack/type-1.spec.ts).
+[Collection(CatalogApiCollection.Name)]
 [Trait("Story", "TYPE-1")]
-public sealed class ProductCategoryTests : IClassFixture<CatalogApiFixture>
+public sealed class ProductCategoryTests
 {
     private readonly CatalogApiFixture _fixture;
 
