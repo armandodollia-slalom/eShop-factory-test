@@ -8,7 +8,12 @@
 <SectionContent SectionName="page-header-subtitle">Start the season with the latest in clothing and equipment.</SectionContent>
 
 <div class="catalog">
-    <CatalogSearch BrandIds="@BrandIds" TypeIds="@TypeIds" />
+    <CatalogSearch BrandIds="@BrandIds" TypeIds="@TypeIds">
+        @if (catalogResult is { Count: > 0 })
+        {
+            <a class="button button-secondary" href="@Surprise.Url(Nav, BrandIds, TypeIds)" data-enhance-nav="false">Surprise me</a>
+        }
+    </CatalogSearch>
 
     @if (catalogResult is null)
     {

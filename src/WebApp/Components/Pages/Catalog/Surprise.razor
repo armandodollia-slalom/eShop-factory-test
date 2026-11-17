@@ -1,0 +1,40 @@
+@page "/surprise"
+@using eShop.WebAppComponents.Item
+@inject NavigationManager Nav
+@inject CatalogService CatalogService
+@code {
+    [SupplyParameterFromQuery(Name = "brand")]
+    public int[]? BrandIds { get; set; }
+
+    [SupplyParameterFromQuery(Name = "type")]
+    public int[]? TypeIds { get; set; }
+
+    // The product is picked on every request, so each click opens a new random product
+    // from the list the given filters produce.
+    protected override async Task OnInitializedAsync()
+    {
+        var all = await CatalogService.GetCatalogItems(0, 1, BrandIds, TypeIds);
+        if (all.Count > 0)
+        {
+            var pick = await CatalogService.GetCatalogItems(Random.Shared.Next(all.Count), 1, BrandIds, TypeIds);
+            if (pick.Data is [var item, ..])
+            {
+                Nav.NavigateTo(ItemHelper.Url(item));
+                return;
+            }
+        }
+
+        // No product matches these filters: back to the catalog with the same filters.
+        Nav.NavigateTo(FilteredUri(Nav, Nav.BaseUri, BrandIds, TypeIds));
+    }
+
+    public static string Url(NavigationManager nav, int[]? brandIds, int[]? typeIds)
+        => FilteredUri(nav, nav.ToAbsoluteUri("surprise").ToString(), brandIds, typeIds);
+
+    private static string FilteredUri(NavigationManager nav, string uri, int[]? brandIds, int[]? typeIds)
+        => nav.GetUriWithQueryParameters(uri, new Dictionary<string, object?>()
+        {
+            { "brand", brandIds is { Length: > 0 } ? brandIds : null },
+            { "type", typeIds is { Length: > 0 } ? typeIds : null },
+        });
+}

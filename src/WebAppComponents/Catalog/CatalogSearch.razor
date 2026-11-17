@@ -71,6 +71,13 @@
                         }
                     </div>
                 </div>
+
+                @if (ChildContent is not null)
+                {
+                    <div class="catalog-search-extra">
+                        @ChildContent
+                    </div>
+                }
             </div>
         </details>
     </aside>
@@ -83,6 +90,9 @@
 
     [Parameter] public int[]? BrandIds { get; set; }
     [Parameter] public int[]? TypeIds { get; set; }
+
+    // Extra content the host page renders below the filter groups.
+    [Parameter] public RenderFragment? ChildContent { get; set; }
 
     private IReadOnlyList<int> Brands => BrandIds ?? [];
     private IReadOnlyList<int> Types => TypeIds ?? [];
