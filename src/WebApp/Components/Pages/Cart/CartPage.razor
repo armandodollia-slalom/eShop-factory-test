@@ -38,6 +38,8 @@
             @foreach (var item in basketItems)
             {
                 var quantity = CurrentOrPendingQuantity(item.ProductId, item.Quantity);
+                var quantityInvalid = invalidQuantityProductId == item.ProductId;
+                var quantityErrorId = $"quantity-error-{item.ProductId}";
                 <div class="cart-item" @key="@item.Id">
                     <div class="catalog-item-info">
                         <img alt="@item.ProductName" src="@ProductImages.GetProductImageUrl(item.ProductId)" />
@@ -59,9 +61,11 @@
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14" /></svg>
                                 </button>
                                 <input class="quantity-value" type="number" min="1" inputmode="numeric"
-                                       value="@quantity" aria-label="Quantity of @item.ProductName" data-cart-quantity-input />
+                                       value="@quantity" aria-label="Quantity of @item.ProductName" data-cart-quantity-input
+                                       aria-invalid="@(quantityInvalid ? "true" : null)"
+                                       aria-describedby="@(quantityInvalid ? quantityErrorId : null)" />
                                 <button type="submit" class="quantity-step" name="UpdateQuantityValue" value="@(quantity + 1)"
-                                        aria-label="Increase quantity of @item.ProductName">
+                                        aria-label="Increase quantity of @item.ProductName" disabled="@(quantity >= MaxQuantity)">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
                                 </button>
                             </div>
@@ -74,9 +78,9 @@
                                 <span>Remove</span>
                             </button>
                         </form>
-                        @if (invalidQuantityProductId == item.ProductId)
+                        @if (quantityInvalid)
                         {
-                            <p class="validation-message cart-quantity-message" role="alert">Enter a smaller quantity.</p>
+                            <p id="@quantityErrorId" class="validation-message cart-quantity-message" role="alert">Enter a smaller quantity.</p>
                         }
                     </div>
                     <div class="catalog-item-total">
@@ -126,31 +130,34 @@
     }
 
     private decimal? TotalPrice => basketItems?.Sum(i => i.Quantity * i.UnitPrice);
-    private decimal? TotalQuantity => basketItems?.Sum(i => i.Quantity);
+    private long? TotalQuantity => basketItems?.Sum(i => (long)i.Quantity);
 
     // While an update post is in process, we want to show the pending quantity, not the one
     // that is committed to the cart (otherwise the UI briefly shows the old data)
     private int CurrentOrPendingQuantity(int productId, int cartQuantity)
-        => UpdateQuantityId.GetValueOrDefault(-1) == productId && IsValidQuantity(UpdateQuantityValue)
-        ? UpdateQuantityValue!.Value
+        => UpdateQuantityId.GetValueOrDefault(-1) == productId && ValidPendingQuantity is int pending
+        ? pending
         : cartQuantity;
 
-    // A quantity too large for an int fails to bind and arrives as null; a negative one
-    // comes from incrementing past int.MaxValue. Neither may reach the basket.
-    private static bool IsValidQuantity(int? quantity) => quantity >= 0;
+    // The largest quantity one item may have. A larger one, a value too large for an int (it fails to
+    // bind and arrives as null) or a negative one never reaches the basket: the item shows
+    // "Enter a smaller quantity." instead.
+    private const int MaxQuantity = 9999;
+
+    private int? ValidPendingQuantity => UpdateQuantityValue is int quantity and >= 0 and <= MaxQuantity ? quantity : null;
 
     private async Task UpdateQuantityAsync()
     {
         var id = UpdateQuantityId!.Value;
-        var quantity = UpdateQuantityValue;
-        if (!IsValidQuantity(quantity))
+        if (ValidPendingQuantity is int quantity)
+        {
+            await Basket.SetQuantityAsync(id, quantity);
+        }
+        else
         {
             invalidQuantityProductId = id;
-            basketItems = await Basket.GetBasketItemsAsync();
-            return;
         }
 
-        await Basket.SetQuantityAsync(id, quantity!.Value);
         basketItems = await Basket.GetBasketItemsAsync();
     }
 }

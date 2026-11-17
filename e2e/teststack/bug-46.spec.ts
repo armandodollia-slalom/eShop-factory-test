@@ -1,5 +1,5 @@
 import { Locator, Page } from '@playwright/test';
-import { test, expect, Demo } from '../demo';
+import { test, expect, Demo, drawCaption, overlayGone } from '../demo';
 import { BASE_URL } from './ports';
 import { loadScenario } from './scenario';
 
@@ -18,6 +18,7 @@ const BACKPACK = 'Explorer 45L Backpack';
 const WATCH_ID = 99;
 const WATCH = 'Adventurer GPS Watch';
 const TOO_LARGE = '5000000000';
+const INT_MAX = '2147483647';
 const MESSAGE = 'Enter a smaller quantity.';
 const CART_PATH = /\/cart$/;
 
@@ -42,7 +43,6 @@ const message = (page: Page) => page.getByText(MESSAGE, { exact: true });
 // Keyframes are screenshots taken before an overlay is drawn, so a caption that must appear in them
 // (the typed value) is always drawn in the page (`inPage`). The form post's DOM merge can also remove that
 // caption, so mark() draws the latest one again until the next caption replaces it.
-const overlayGone = async (page: Page) => (await page.locator('x-pw-glass').count()) === 0;
 const currentCaption = new WeakMap<Page, string>();
 
 async function caption(page: Page, demo: Demo, text: string, inPage = false) {
@@ -56,19 +56,6 @@ async function caption(page: Page, demo: Demo, text: string, inPage = false) {
 async function restoreCaption(page: Page) {
   const text = currentCaption.get(page);
   if (text && (await page.locator('#e2e-caption').count()) === 0) await drawCaption(page, text);
-}
-
-async function drawCaption(page: Page, text: string) {
-  await page.evaluate(value => {
-    const el = document.createElement('div');
-    el.id = 'e2e-caption';
-    el.textContent = value;
-    el.style.cssText = 'position:fixed; left:50%; bottom:28px; transform:translateX(-50%); z-index:2147483647;'
-      + ' max-width:80%; padding:10px 18px; border-radius:10px; background:rgba(15,23,42,.85); color:#fff;'
-      + ' font:500 18px/1.4 system-ui, sans-serif; text-align:center; box-shadow:0 4px 18px rgba(0,0,0,.35);'
-      + ' pointer-events:none;';
-    document.body.appendChild(el);
-  }, text);
 }
 
 async function mark(page: Page, demo: Demo, locator: Locator, label: string, kind: 'highlight' | 'absent' = 'highlight') {
@@ -294,5 +281,34 @@ test('TC-BUG-46-05 with two items in the bag the message appears only next to th
     await mark(page, demo, row(page, BACKPACK), `${BACKPACK}: "${MESSAGE}", quantity 1`);
     await mark(page, demo, quantityColumn(page, WATCH), `${WATCH}: no message, quantity 1`, 'absent');
     await mark(page, demo, summary(page), `Badge 2, Total still ${before}`);
+  });
+  // 2147483647 fits an int but is far above the largest quantity; saved, it would overflow the bag's total.
+  await test.step(`type ${INT_MAX} in "Quantity of ${WATCH}" and press Enter`, async () => {
+    await typeQuantityAndEnter(page, demo, WATCH, INT_MAX);
+  });
+  await test.step(`the page stays with "${MESSAGE}" next to ${WATCH} only; both quantities 1, badge 2, Total T`, async () => {
+    await expect(page).toHaveURL(CART_PATH);
+    await expect(page.getByRole('heading', { name: 'Shopping bag', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Error', exact: true })).toHaveCount(0);
+    await expect(row(page, WATCH).getByText(MESSAGE, { exact: true })).toBeVisible();
+    await expect(message(page)).toHaveCount(1);
+    await expect(quantityInput(page, WATCH)).toHaveAttribute('aria-invalid', 'true');
+    await expect(quantityInput(page, WATCH)).toHaveAccessibleDescription(MESSAGE);
+    await expect(quantityInput(page, BACKPACK)).not.toHaveAttribute('aria-invalid');
+    await expect(quantityInput(page, BACKPACK)).toHaveValue('1');
+    await expect(quantityInput(page, WATCH)).toHaveValue('1');
+    await expect(badge(page)).toHaveText('2');
+    await expect(summaryTotal(page)).toHaveText(before, { useInnerText: true });
+    await mark(page, demo, row(page, WATCH), `${WATCH}: "${MESSAGE}", quantity 1`);
+    await mark(page, demo, summary(page), `Badge 2, Total still ${before}`);
+  });
+  await test.step(`reload /cart: both quantities still 1 and Total T`, async () => {
+    await page.reload();
+    await expect(page.getByRole('heading', { name: 'Shopping bag', exact: true })).toBeVisible();
+    await expect(quantityInput(page, BACKPACK)).toHaveValue('1');
+    await expect(quantityInput(page, WATCH)).toHaveValue('1');
+    await expect(summaryTotal(page)).toHaveText(before, { useInnerText: true });
+    await caption(page, demo, `Reloaded ${page.url()}`);
+    await mark(page, demo, summary(page), `After reload: badge 2, Total ${before}`);
   });
 });
