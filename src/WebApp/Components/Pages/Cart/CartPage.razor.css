@@ -114,6 +114,12 @@
     flex-wrap: wrap;
 }
 
+.cart-quantity-message {
+    margin: 0.35rem 0 0;
+    font-size: var(--text-xs);
+    font-weight: 600;
+}
+
 /* Segmented [-] [number] [+] stepper. Custom buttons replace the native number
    spinners, so the increment controls are obvious and use cursor: pointer. */
 .quantity-stepper {

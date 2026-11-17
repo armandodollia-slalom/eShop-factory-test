@@ -74,6 +74,10 @@
                                 <span>Remove</span>
                             </button>
                         </form>
+                        @if (invalidQuantityProductId == item.ProductId)
+                        {
+                            <p class="validation-message cart-quantity-message" role="alert">Enter a smaller quantity.</p>
+                        }
                     </div>
                     <div class="catalog-item-total">
                         $@((item.UnitPrice * quantity).ToPriceDisplay())
@@ -108,6 +112,7 @@
 
 @code {
     private IReadOnlyCollection<BasketItem>? basketItems;
+    private int? invalidQuantityProductId;
 
     [SupplyParameterFromForm]
     public int? UpdateQuantityId { get; set; }
@@ -126,15 +131,26 @@
     // While an update post is in process, we want to show the pending quantity, not the one
     // that is committed to the cart (otherwise the UI briefly shows the old data)
     private int CurrentOrPendingQuantity(int productId, int cartQuantity)
-        => UpdateQuantityId.GetValueOrDefault(-1) == productId
+        => UpdateQuantityId.GetValueOrDefault(-1) == productId && IsValidQuantity(UpdateQuantityValue)
         ? UpdateQuantityValue!.Value
         : cartQuantity;
+
+    // A quantity too large for an int fails to bind and arrives as null; a negative one
+    // comes from incrementing past int.MaxValue. Neither may reach the basket.
+    private static bool IsValidQuantity(int? quantity) => quantity >= 0;
 
     private async Task UpdateQuantityAsync()
     {
         var id = UpdateQuantityId!.Value;
-        var quantity = UpdateQuantityValue!.Value;
-        await Basket.SetQuantityAsync(id, quantity);
+        var quantity = UpdateQuantityValue;
+        if (!IsValidQuantity(quantity))
+        {
+            invalidQuantityProductId = id;
+            basketItems = await Basket.GetBasketItemsAsync();
+            return;
+        }
+
+        await Basket.SetQuantityAsync(id, quantity!.Value);
         basketItems = await Basket.GetBasketItemsAsync();
     }
 }
