@@ -9,8 +9,15 @@ rules:
       FormattableString, or Dapper's parameter object).
     metadata: { cwe: "CWE-89", category: security, licence: MIT, source: ai-app-factory }
     pattern-either:
-      - pattern: new $CMD($"...", ...)
-      - pattern: new $CMD(<... "..." + $V ...>, ...)
+      # A command or adapter type only: an interpolated string passed to any other constructor (new Uri($"..."),
+      # new ArgumentException($"...")) is not SQL (dogfood C15: the unconstrained constructor matched them as injections).
+      - patterns:
+          - pattern-either:
+              - pattern: new $CMD($"...", ...)
+              - pattern: new $CMD(<... "..." + $V ...>, ...)
+          - metavariable-regex:
+              metavariable: $CMD
+              regex: ^(\w+\.)*(Sql|Npgsql|MySql|Sqlite|SQLite|Oracle|Odbc|OleDb|Db|Fb|Db2)(Command|DataAdapter)$
       - pattern: $X.FromSqlRaw($"...", ...)
       - pattern: $X.FromSqlRaw(<... "..." + $V ...>, ...)
       - pattern: $X.ExecuteSqlRaw($"...", ...)
