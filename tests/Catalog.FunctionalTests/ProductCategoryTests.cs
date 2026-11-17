@@ -1,20 +1,14 @@
-﻿using System.IO;
-using System.Net;
+﻿using System.Net;
 using System.Text.Json;
 using Asp.Versioning;
 using Asp.Versioning.Http;
-using eShop.Catalog.API.Infrastructure;
-using eShop.Catalog.API.Model;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace eShop.Catalog.FunctionalTests;
 
 // TYPE-1: GET /api/catalog/items/{id} includes the item's type; the other item endpoints are unchanged.
 // The product page cases (TC-TYPE-1-05 to 07) run on the test stack (e2e/teststack/type-1.spec.ts).
-[Collection(CatalogApiCollection.Name)]
 [Trait("Story", "TYPE-1")]
-public sealed class ProductCategoryTests
+public sealed class ProductCategoryTests : IClassFixture<CatalogApiFixture>
 {
     private readonly CatalogApiFixture _fixture;
 
@@ -37,31 +31,30 @@ public sealed class ProductCategoryTests
     private static void AssertTypeIsNull(JsonElement item) =>
         Assert.Equal(JsonValueKind.Null, item.GetProperty("catalogType").ValueKind);
 
-    [Fact]
+    [Theory]
+    [InlineData(1.0)]
+    [InlineData(2.0)]
     [Trait("TestCase", "TC-TYPE-1-01")]
-    public async Task TC_TYPE_1_01_SingleItemResponseOfItem1IncludesTypeFootwearNextToBrand()
+    public async Task TC_TYPE_1_01_SingleItemResponseOfItem1IncludesTypeFootwearNextToBrand(double version)
     {
-        foreach (var version in new[] { 1.0, 2.0 })
-        {
-            using var client = CreateHttpClient(version);
+        using var client = CreateHttpClient(version);
 
-            var item = await GetJsonAsync(client, "/api/catalog/items/1");
+        var item = await GetJsonAsync(client, "/api/catalog/items/1");
 
-            Assert.Equal(1, item.GetProperty("id").GetInt32());
-            Assert.Equal("Wanderer Black Hiking Boots", item.GetProperty("name").GetString());
+        Assert.Equal(1, item.GetProperty("id").GetInt32());
+        Assert.Equal("Wanderer Black Hiking Boots", item.GetProperty("name").GetString());
 
-            Assert.Equal(1, item.GetProperty("catalogTypeId").GetInt32());
-            var type = item.GetProperty("catalogType");
-            Assert.Equal(JsonValueKind.Object, type.ValueKind);
-            Assert.Equal(1, type.GetProperty("id").GetInt32());
-            Assert.Equal("Footwear", type.GetProperty("type").GetString());
+        Assert.Equal(1, item.GetProperty("catalogTypeId").GetInt32());
+        var type = item.GetProperty("catalogType");
+        Assert.Equal(JsonValueKind.Object, type.ValueKind);
+        Assert.Equal(1, type.GetProperty("id").GetInt32());
+        Assert.Equal("Footwear", type.GetProperty("type").GetString());
 
-            Assert.Equal(1, item.GetProperty("catalogBrandId").GetInt32());
-            var brand = item.GetProperty("catalogBrand");
-            Assert.Equal(JsonValueKind.Object, brand.ValueKind);
-            Assert.Equal(1, brand.GetProperty("id").GetInt32());
-            Assert.Equal("Daybird", brand.GetProperty("brand").GetString());
-        }
+        Assert.Equal(1, item.GetProperty("catalogBrandId").GetInt32());
+        var brand = item.GetProperty("catalogBrand");
+        Assert.Equal(JsonValueKind.Object, brand.ValueKind);
+        Assert.Equal(1, brand.GetProperty("id").GetInt32());
+        Assert.Equal("Daybird", brand.GetProperty("brand").GetString());
     }
 
     [Fact]
@@ -87,7 +80,6 @@ public sealed class ProductCategoryTests
     [Trait("TestCase", "TC-TYPE-1-03")]
     public async Task TC_TYPE_1_03_PagedItemListStillReturnsItemsWithoutTheirType()
     {
-        await RestoreDemoCatalogItemsAsync();
         using var client = CreateHttpClient(2.0);
 
         var page = await GetJsonAsync(client, "/api/catalog/items?PageSize=5&PageIndex=0");
@@ -127,43 +119,5 @@ public sealed class ProductCategoryTests
             Assert.Equal(JsonValueKind.Object, item.GetProperty("catalogBrand").ValueKind);
             AssertTypeIsNull(item);
         }
-    }
-
-    // CatalogApiTests shares this database and adds and deletes items, so the case first puts the item table back to
-    // the demo catalog (Setup/catalog.json, 101 items) the way CatalogContextSeed writes it.
-    private async Task RestoreDemoCatalogItemsAsync()
-    {
-        using var scope = _fixture.Services.CreateScope();
-        var environment = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
-        var context = scope.ServiceProvider.GetRequiredService<CatalogContext>();
-        var cancellationToken = TestContext.Current.CancellationToken;
-
-        var json = await File.ReadAllTextAsync(Path.Combine(environment.ContentRootPath, "Setup", "catalog.json"), cancellationToken);
-        var demoItems = JsonDocument.Parse(json).RootElement.EnumerateArray().ToList();
-        var demoIds = demoItems.Select(e => e.GetProperty("Id").GetInt32()).ToList();
-
-        await context.CatalogItems.Where(i => !demoIds.Contains(i.Id)).ExecuteDeleteAsync(cancellationToken);
-
-        var presentIds = (await context.CatalogItems.Select(i => i.Id).ToListAsync(cancellationToken)).ToHashSet();
-        var brandIds = await context.CatalogBrands.ToDictionaryAsync(b => b.Brand, b => b.Id, cancellationToken);
-        var typeIds = await context.CatalogTypes.ToDictionaryAsync(t => t.Type, t => t.Id, cancellationToken);
-        foreach (var entry in demoItems.Where(e => !presentIds.Contains(e.GetProperty("Id").GetInt32())))
-        {
-            var id = entry.GetProperty("Id").GetInt32();
-            context.CatalogItems.Add(new CatalogItem(entry.GetProperty("Name").GetString())
-            {
-                Id = id,
-                Description = entry.GetProperty("Description").GetString(),
-                Price = entry.GetProperty("Price").GetDecimal(),
-                CatalogBrandId = brandIds[entry.GetProperty("Brand").GetString()],
-                CatalogTypeId = typeIds[entry.GetProperty("Type").GetString()],
-                AvailableStock = 100,
-                MaxStockThreshold = 200,
-                RestockThreshold = 10,
-                PictureFileName = $"{id}.webp",
-            });
-        }
-        await context.SaveChangesAsync(cancellationToken);
-        Assert.Equal(101, await context.CatalogItems.CountAsync(cancellationToken));
     }
 }

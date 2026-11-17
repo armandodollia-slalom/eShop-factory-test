@@ -10,8 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace eShop.Catalog.FunctionalTests;
 
-[Collection(CatalogApiCollection.Name)]
-public sealed class CatalogApiTests
+public sealed class CatalogApiTests : IClassFixture<CatalogApiFixture>
 {
     private readonly WebApplicationFactory<Program> _webApplicationFactory;
     private readonly JsonSerializerOptions _jsonSerializerOptions = new(JsonSerializerDefaults.Web);

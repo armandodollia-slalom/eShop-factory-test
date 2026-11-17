@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using System.Threading;
 
 using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
@@ -9,6 +10,7 @@ namespace eShop.Catalog.FunctionalTests;
 
 public sealed class CatalogApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
 {
+    private static readonly SemaphoreSlim StartLock = new(1, 1);
     private readonly IHost _app;
 
     public IResourceBuilder<PostgresServerResource> Postgres { get; private set; }
@@ -52,7 +54,16 @@ public sealed class CatalogApiFixture : WebApplicationFactory<Program>, IAsyncLi
 
     public async ValueTask InitializeAsync()
     {
-        await _app.StartAsync();
+        // Aspire's DCP startup check fails when two hosts start at once, so test classes start their hosts one at a time.
+        await StartLock.WaitAsync();
+        try
+        {
+            await _app.StartAsync();
+        }
+        finally
+        {
+            StartLock.Release();
+        }
         _postgresConnectionString = await Postgres.Resource.GetConnectionStringAsync();
     }
 }
