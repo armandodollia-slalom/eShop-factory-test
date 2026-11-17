@@ -133,7 +133,9 @@ test('TC-PRB-13-02 without filters, "Surprise me" opens the product page of a ca
   await test.step('the product page /item/<id> (1-101) shows the name the Catalog API returns for that id', async () => {
     expect(opened.id).toBeGreaterThanOrEqual(1);
     expect(opened.id).toBeLessThanOrEqual(TOTAL_PRODUCTS);
-    const response = await request.get(`${url('catalog')}/api/catalog/items/${opened.id}?api-version=1.0`);
+    const itemUrl = new URL(`/api/catalog/items/${opened.id}`, url('catalog'));
+    itemUrl.searchParams.set('api-version', '1.0');
+    const response = await request.get(itemUrl.href);
     expect(response.status()).toBe(200);
     const item = await response.json();
     expect(opened.name).toBe(item.name);
