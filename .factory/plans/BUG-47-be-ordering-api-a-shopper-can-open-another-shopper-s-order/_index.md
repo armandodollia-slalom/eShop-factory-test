@@ -36,8 +36,7 @@ Each call must answer 200. Each order's number is read from its owner's `GET /ap
 
 | ID | Title | Type | Layer | Covers |
 | --- | --- | --- | --- | --- |
-| TC-BUG-47-01 | bob requesting alice's order gets 404 with no order data | sad | e2e | Steps 3; Expected: step 3 answers 404 with no order data; Actual: 200 with alice's address, items, description |
-| TC-BUG-47-03 | bob's answer for alice's order is identical to his answer for a missing order | sad | e2e | Steps 4 (second bullet); Expected: same answer as step 4 "so he cannot tell that the order exists" |
+| TC-BUG-47-03 | bob's answer for alice's order is identical to his answer for a missing order | sad | e2e | Steps 3, 4 (second bullet); Expected: step 3 answers 404 with no order data, the same answer as step 4 "so he cannot tell that the order exists" |
 | TC-BUG-47-04 | alice requesting her own order still gets 200 with the order | happy | e2e | Steps 4 (first bullet); Expected: alice still gets her own order (200), as today |
 | TC-BUG-47-07 | alice's order list still lists only her orders, including A | happy | e2e | Expected: `GET /api/orders` works exactly as today |
 
@@ -52,4 +51,4 @@ Each call must answer 200. Each order's number is read from its owner's `GET /ap
 
 - Requests without a token or with a token lacking the `orders` scope: the story does not mention them, so no case asserts their outcome (today they answer 401; this fix should not change that).
 - Whether cancelling or shipping another shopper's order is also allowed today is not part of this bug; a separate ticket would be needed.
-- "No order data" is read as: the 404 response body is empty (`TypedResults.NotFound()` writes no body). If the API instead returned a problem-details body, TC-BUG-47-01 would still require that it contains none of the order's fields, and TC-BUG-47-03 that it is byte-identical for both requests.
+- "No order data" is read as: the 404 response body is empty (`TypedResults.NotFound()` writes no body). If the API instead returned a problem-details body, TC-BUG-47-03 would require that it is byte-identical for both requests.

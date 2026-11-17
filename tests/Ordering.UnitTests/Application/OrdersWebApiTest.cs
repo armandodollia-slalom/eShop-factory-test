@@ -107,8 +107,10 @@ public class OrdersWebApiTest
     {
         // Arrange
         var fakeOrderId = 123;
+        var fakeUserId = "fake-user-id";
         var fakeDynamicResult = new Order();
-        _orderQueriesMock.GetOrderAsync(Arg.Any<int>(), Arg.Any<string>())
+        _identityServiceMock.GetUserIdentity().Returns(fakeUserId);
+        _orderQueriesMock.GetOrderAsync(fakeOrderId, fakeUserId)
             .Returns(Task.FromResult(fakeDynamicResult));
 
         // Act
@@ -118,6 +120,7 @@ public class OrdersWebApiTest
         // Assert
         Assert.IsInstanceOfType<Ok<Order>>(result.Result);
         Assert.AreSame(fakeDynamicResult, ((Ok<Order>)result.Result).Value);
+        await _orderQueriesMock.Received(1).GetOrderAsync(fakeOrderId, fakeUserId);
     }
 
     [TestMethod]

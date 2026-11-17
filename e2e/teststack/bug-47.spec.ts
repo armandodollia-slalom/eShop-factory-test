@@ -102,24 +102,6 @@ test.beforeAll(async ({ browser, playwright }) => {
   expect(orderA).not.toBe(orderB);
 });
 
-test('TC-BUG-47-01 bob requesting alice\'s order gets 404 with no order data', async ({ request }) => {
-  await test.step(`As bob: GET /api/orders/${orderA} (alice's order) answers 404 with an empty body`, async () => {
-    const response = await request.get(ORDER(orderA), { headers: auth(bob) });
-    expect(response.status()).toBe(404);
-    const body = (await response.body()).toString('utf8');
-    expect(body).toHaveLength(0);
-    expect(body).not.toContain(STREET);
-    expect(body).not.toContain(PRODUCT);
-    expect(body).not.toContain('orderNumber');
-    expect(body).not.toContain('description');
-  });
-  await test.step(`As alice: GET /api/orders/${orderA} still answers 200 with orderNumber ${orderA}`, async () => {
-    const response = await request.get(ORDER(orderA), { headers: auth(alice) });
-    expect(response.status()).toBe(200);
-    expect((await response.json()).orderNumber).toBe(orderA);
-  });
-});
-
 test('TC-BUG-47-03 bob\'s answer for alice\'s order is identical to his answer for a missing order', async ({ request }) => {
   const others = await test.step(`As bob: GET /api/orders/${orderA} (alice's order)`, async () => {
     const response = await request.get(ORDER(orderA), { headers: auth(bob) });
