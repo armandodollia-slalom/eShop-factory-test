@@ -58,7 +58,7 @@ public static class CatalogApi
         api.MapGet("/items/facets", GetCatalogFacets)
             .WithName("GetCatalogFacets")
             .WithSummary("Get catalog facet counts")
-            .WithDescription("Get per-brand and per-type item counts for the current filter selection, used to drive the catalog filter badges without transferring every item to the client.")
+            .WithDescription("Get per-brand and per-type item counts for the current filter selection, used to drive the catalog filter badges without transferring every item to the client, and the lowest and highest price of the items the type and brand filters select (null when none match).")
             .WithTags("Items");
 
         // Routes for resolving catalog items using AI.
@@ -202,11 +202,23 @@ public static class CatalogApi
             .Select(g => new CatalogFacetCount(g.Key, g.Count()))
             .ToListAsync();
 
+        // The price range covers every item the whole selection lists (type AND brand),
+        // not only one page of it; both bounds are null when nothing matches.
+        var selection = typeScope;
+        if (type is { Length: > 0 })
+        {
+            selection = selection.Where(c => type.Contains(c.CatalogTypeId));
+        }
+        var minPrice = await selection.MinAsync(c => (decimal?)c.Price);
+        var maxPrice = await selection.MaxAsync(c => (decimal?)c.Price);
+
         return TypedResults.Ok(new CatalogFacets(
             brandCounts,
             typeCounts,
             brandCounts.Sum(b => b.Count),
-            typeCounts.Sum(t => t.Count)));
+            typeCounts.Sum(t => t.Count),
+            minPrice,
+            maxPrice));
     }
 
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]

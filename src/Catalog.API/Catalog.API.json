@@ -361,7 +361,7 @@
           "Items"
         ],
         "summary": "Get catalog facet counts",
-        "description": "Get per-brand and per-type item counts for the current filter selection, used to drive the catalog filter badges without transferring every item to the client.",
+        "description": "Get per-brand and per-type item counts for the current filter selection, used to drive the catalog filter badges without transferring every item to the client, and the lowest and highest price of the items the type and brand filters select (null when none match).",
         "operationId": "GetCatalogFacets",
         "parameters": [
           {
@@ -1109,7 +1109,9 @@
           "brandCounts",
           "typeCounts",
           "brandTotal",
-          "typeTotal"
+          "typeTotal",
+          "minPrice",
+          "maxPrice"
         ],
         "type": "object",
         "properties": {
@@ -1140,6 +1142,24 @@
               "string"
             ],
             "format": "int32"
+          },
+          "minPrice": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "maxPrice": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
           }
         }
       },
