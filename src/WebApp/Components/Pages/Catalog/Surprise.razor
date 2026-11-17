@@ -1,5 +1,6 @@
 @page "/surprise"
 @using System.Text.Json
+@using Polly.Timeout
 @using eShop.WebAppComponents.Item
 @inject NavigationManager Nav
 @inject CatalogService CatalogService
@@ -35,7 +36,7 @@
             var pick = await CatalogService.GetCatalogItems(Random.Shared.Next(firstPage.Count), 1, BrandIds, TypeIds);
             return pick.Data is [var item, ..] ? item : null;
         }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or TimeoutRejectedException or JsonException)
         {
             Logger.LogWarning(ex, "Could not pick a random catalog item");
             return null;
