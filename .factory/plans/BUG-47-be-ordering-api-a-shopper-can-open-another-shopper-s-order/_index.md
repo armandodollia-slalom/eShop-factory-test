@@ -9,7 +9,7 @@ verified-by: as-is/council
 automation-sha: 8aec4d40e963
 automation-plan-sha: ceb58dbf6250
 automation-score: 10
-automation-verified-at: "2026-11-17T19:05:05.990Z"
+automation-verified-at: "2026-11-17T19:09:58.527Z"
 ---
 # Test plan: BUG-47 [BE - Ordering API] - A shopper can open another shopper's order
 
