@@ -29,6 +29,10 @@
     font-weight: 600;
 }
 
+.catalog-price-range {
+    white-space: nowrap;
+}
+
 .catalog-price-range::before {
     content: "·";
     margin: 0 0.5rem;
@@ -190,6 +194,15 @@
         clip: rect(0 0 0 0);
         white-space: nowrap;
         border: 0;
+    }
+
+    /* On phones the range stacks under the count instead of wrapping beside the Sort field. */
+    .catalog-price-range {
+        display: block;
+    }
+
+    .catalog-price-range::before {
+        content: none;
     }
 }
 

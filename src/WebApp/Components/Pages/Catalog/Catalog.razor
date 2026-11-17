@@ -1,6 +1,5 @@
 @page "/"
 @inject NavigationManager Nav
-@using System.Text.Json
 @inject CatalogService CatalogService
 @inject ILogger<Catalog> Logger
 @attribute [StreamRendering]
@@ -10,7 +9,7 @@
 <SectionContent SectionName="page-header-subtitle">Start the season with the latest in clothing and equipment.</SectionContent>
 
 <div class="catalog">
-    <CatalogSearch BrandIds="@BrandIds" TypeIds="@TypeIds" Facets="@facets" />
+    <CatalogSearch BrandIds="@BrandIds" TypeIds="@TypeIds" Facets="@facets" FacetsLoading="@facetsLoading" />
 
     @if (catalogResult is null)
     {
@@ -169,6 +168,7 @@
 
     CatalogResult? catalogResult;
     CatalogFacets? facets;
+    bool facetsLoading = true;
 
     static IEnumerable<int> GetPageTokens(int totalPages, int current)
     {
@@ -210,32 +210,29 @@
         _ => null,
     };
 
+    // The products and the facets load in parallel and each renders as soon as it arrives
+    // ([StreamRendering]), so a slow facets query never holds back the product grid.
     protected override async Task OnInitializedAsync()
     {
-        var itemsTask = CatalogService.GetCatalogItems(
+        await Task.WhenAll(LoadItemsAsync(), LoadFacetsAsync());
+    }
+
+    private async Task LoadItemsAsync()
+    {
+        catalogResult = await CatalogService.GetCatalogItems(
             Page.GetValueOrDefault(1) - 1,
             PageSize,
             BrandIds,
             TypeIds);
-        var facetsTask = LoadFacetsAsync();
-        await Task.WhenAll(itemsTask, facetsTask);
-
-        catalogResult = await itemsTask;
-        facets = await facetsTask;
+        StateHasChanged();
     }
 
     // The price range and the filter counts are secondary: if the facets cannot be
     // loaded the catalog and its filters still render, just without them.
-    private async Task<CatalogFacets?> LoadFacetsAsync()
+    private async Task LoadFacetsAsync()
     {
-        try
-        {
-            return await CatalogService.GetCatalogFacets(BrandIds, TypeIds);
-        }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
-        {
-            Logger.LogWarning(ex, "Could not load the catalog facets");
-            return null;
-        }
+        facets = await CatalogService.TryGetCatalogFacets(BrandIds, TypeIds, Logger);
+        facetsLoading = false;
+        StateHasChanged();
     }
 }

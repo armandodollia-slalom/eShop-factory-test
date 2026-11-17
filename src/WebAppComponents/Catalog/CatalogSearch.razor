@@ -1,7 +1,8 @@
 @inject CatalogService CatalogService
 @inject NavigationManager Nav
 
-@if (catalogBrands is not null && catalogItemTypes is not null)
+@* Wait for the facets too (or their failure) so the chips and their count badges appear in one render. *@
+@if (catalogBrands is not null && catalogItemTypes is not null && !FacetsLoading)
 {
     <aside class="catalog-search">
         <details class="catalog-search-details" open>
@@ -95,6 +96,9 @@
     [Parameter] public int[]? BrandIds { get; set; }
     [Parameter] public int[]? TypeIds { get; set; }
     [Parameter] public CatalogFacets? Facets { get; set; }
+
+    // True while the parent is still loading Facets; false once they arrived or failed (Facets null).
+    [Parameter] public bool FacetsLoading { get; set; }
 
     private IReadOnlyList<int> Brands => BrandIds ?? [];
     private IReadOnlyList<int> Types => TypeIds ?? [];
