@@ -1,0 +1,8 @@
+description: BUG-43 case-insensitive catalog name search; needs only the default demo catalog.
+extends: default
+
+# No extra rows: the cases search the 101 demo catalog items Catalog.API seeds from src/Catalog.API/Setup/catalog.json.
+# Exactly four item names start with "Explorer" in any letter case: "Explorer 45L Backpack" (Bags, Solstix),
+# "Explorer Biking Computer" (Navigation, B&R), "Explorer Camping Tent" (Trekking, B&R) and
+# "Explorer Frost Boots" (Footwear, Daybird). Several names contain "Backpack" but none starts with it.
+# Nothing is written to any store.
