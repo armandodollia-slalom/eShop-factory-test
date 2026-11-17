@@ -1,8 +1,5 @@
 @inject CatalogService CatalogService
 @inject NavigationManager Nav
-@using System.Text.Json
-@using Microsoft.Extensions.Logging
-@inject ILogger<CatalogSearch> Logger
 
 @if (catalogBrands is not null && catalogItemTypes is not null)
 {
@@ -36,7 +33,7 @@
                         <a href="@BrandUri(null)"
                            class="catalog-search-tag @(BrandActiveCount == 0 ? "active" : "")">
                             <span>All</span>
-                            @if (facets is not null)
+                            @if (Facets is not null)
                             {
                                 <span class="catalog-search-tag-count">@BrandCount(null)</span>
                             }
@@ -45,12 +42,12 @@
                         {
                             var count = BrandCount(brand.Id);
                             var isActive = IsBrandActive(brand.Id);
-                            var isEmpty = facets is not null && count == 0 && !isActive;
+                            var isEmpty = Facets is not null && count == 0 && !isActive;
                             <a href="@BrandUri(brand.Id)"
                                class="catalog-search-tag @(isActive ? "active" : "") @(isEmpty ? "is-empty" : "")"
                                aria-disabled="@(isEmpty ? "true" : null)">
                                 <span>@brand.Brand</span>
-                                @if (facets is not null)
+                                @if (Facets is not null)
                                 {
                                     <span class="catalog-search-tag-count">@count</span>
                                 }
@@ -64,7 +61,7 @@
                         <a href="@TypeUri(null)"
                            class="catalog-search-tag @(TypeActiveCount == 0 ? "active" : "")">
                             <span>All</span>
-                            @if (facets is not null)
+                            @if (Facets is not null)
                             {
                                 <span class="catalog-search-tag-count">@TypeCount(null)</span>
                             }
@@ -73,12 +70,12 @@
                         {
                             var count = TypeCount(itemType.Id);
                             var isActive = IsTypeActive(itemType.Id);
-                            var isEmpty = facets is not null && count == 0 && !isActive;
+                            var isEmpty = Facets is not null && count == 0 && !isActive;
                             <a href="@TypeUri(itemType.Id)"
                                class="catalog-search-tag @(isActive ? "active" : "") @(isEmpty ? "is-empty" : "")"
                                aria-disabled="@(isEmpty ? "true" : null)">
                                 <span>@itemType.Type</span>
-                                @if (facets is not null)
+                                @if (Facets is not null)
                                 {
                                     <span class="catalog-search-tag-count">@count</span>
                                 }
@@ -94,10 +91,10 @@
 @code {
     IEnumerable<CatalogBrand>? catalogBrands;
     IEnumerable<CatalogItemType>? catalogItemTypes;
-    CatalogFacets? facets;
 
     [Parameter] public int[]? BrandIds { get; set; }
     [Parameter] public int[]? TypeIds { get; set; }
+    [Parameter] public CatalogFacets? Facets { get; set; }
 
     private IReadOnlyList<int> Brands => BrandIds ?? [];
     private IReadOnlyList<int> Types => TypeIds ?? [];
@@ -115,26 +112,9 @@
     {
         var brandsTask = CatalogService.GetBrands();
         var itemTypesTask = CatalogService.GetTypes();
-        var facetsTask = LoadFacetsAsync();
-        await Task.WhenAll(brandsTask, itemTypesTask, facetsTask);
+        await Task.WhenAll(brandsTask, itemTypesTask);
         catalogBrands = brandsTask.Result;
         catalogItemTypes = itemTypesTask.Result;
-        facets = facetsTask.Result;
-    }
-
-    // The counts are secondary: if the facets cannot be loaded the filters still
-    // render and work, just without their counts.
-    private async Task<CatalogFacets?> LoadFacetsAsync()
-    {
-        try
-        {
-            return await CatalogService.GetCatalogFacets(BrandIds, TypeIds);
-        }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
-        {
-            Logger.LogWarning(ex, "Could not load the catalog facets");
-            return null;
-        }
     }
 
     // Contextual counts. Within a facet, selections are additive (OR / union); across
@@ -144,15 +124,15 @@
     // selection. A facet that is absent from the response has no matching items (count 0).
     private int BrandCount(int? brandId)
     {
-        if (facets is null)
+        if (Facets is null)
         {
             return 0;
         }
         if (brandId is null)
         {
-            return facets.BrandTotal;
+            return Facets.BrandTotal;
         }
-        foreach (var count in facets.BrandCounts)
+        foreach (var count in Facets.BrandCounts)
         {
             if (count.Id == brandId)
             {
@@ -164,15 +144,15 @@
 
     private int TypeCount(int? typeId)
     {
-        if (facets is null)
+        if (Facets is null)
         {
             return 0;
         }
         if (typeId is null)
         {
-            return facets.TypeTotal;
+            return Facets.TypeTotal;
         }
-        foreach (var count in facets.TypeCounts)
+        foreach (var count in Facets.TypeCounts)
         {
             if (count.Id == typeId)
             {

@@ -10,7 +10,7 @@
 <SectionContent SectionName="page-header-subtitle">Start the season with the latest in clothing and equipment.</SectionContent>
 
 <div class="catalog">
-    <CatalogSearch BrandIds="@BrandIds" TypeIds="@TypeIds" />
+    <CatalogSearch BrandIds="@BrandIds" TypeIds="@TypeIds" Facets="@facets" />
 
     @if (catalogResult is null)
     {
@@ -224,8 +224,8 @@
         facets = await facetsTask;
     }
 
-    // The price range is secondary: if the facets cannot be loaded the catalog
-    // still renders, just without the range.
+    // The price range and the filter counts are secondary: if the facets cannot be
+    // loaded the catalog and its filters still render, just without them.
     private async Task<CatalogFacets?> LoadFacetsAsync()
     {
         try
