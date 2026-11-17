@@ -1,0 +1,26 @@
+# The factory's own rule (MIT). Written for the AI app factory from the defect description; not derived from any rule set.
+rules:
+  - id: factory.ts.sql-string-built
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: >-
+      A SQL statement is built from a string with a value spliced into it and then executed. A value that reaches it from
+      a request can change the statement (SQL injection). Pass values as query parameters (placeholders) instead.
+    metadata: { cwe: "CWE-89", category: security, licence: MIT, source: ai-app-factory }
+    patterns:
+      - pattern-either:
+          - pattern: $DB.$EXEC(`...${$V}...`, ...)
+          - pattern: $DB.$EXEC("..." + $V, ...)
+          - pattern: $DB.$EXEC($V + "...", ...)
+          - patterns:
+              - pattern-either:
+                  - pattern-inside: |
+                      $Q = `...${$V}...`;
+                      ...
+                  - pattern-inside: |
+                      $Q = "..." + $V;
+                      ...
+              - pattern: $DB.$EXEC($Q, ...)
+      - metavariable-regex:
+          metavariable: $EXEC
+          regex: ^(query|execute|exec|raw|\$queryRawUnsafe|\$executeRawUnsafe|unsafe|run|all|get|prepare)$
