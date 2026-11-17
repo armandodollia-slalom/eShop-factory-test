@@ -99,7 +99,7 @@ public class OrdersWebApiTest
         var result = await OrdersApi.GetOrdersByUserAsync(orderServices);
 
         // Assert
-        Assert.IsInstanceOfType<Ok<IEnumerable<OrderSummary>>>(result);
+        Assert.IsInstanceOfType<Ok<IEnumerable<OrderSummary>>>(result.Result);
     }
 
     [TestMethod]

@@ -34,10 +34,17 @@ public class OrderQueries(OrderingContext context)
         };
     }
 
-    public async Task<IEnumerable<OrderSummary>> GetOrdersFromUserAsync(string userId)
+    public async Task<IEnumerable<OrderSummary>> GetOrdersFromUserAsync(string userId, OrderStatus? status = null)
     {
-        return await context.Orders
-            .Where(o => o.Buyer.IdentityGuid == userId)  
+        var orders = context.Orders
+            .Where(o => o.Buyer.IdentityGuid == userId);
+
+        if (status is not null)
+        {
+            orders = orders.Where(o => o.OrderStatus == status);
+        }
+
+        return await orders
             .Select(o => new OrderSummary
             {
                 OrderNumber = o.Id,
