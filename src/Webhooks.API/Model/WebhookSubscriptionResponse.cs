@@ -24,7 +24,7 @@ public class WebhookSubscriptionResponse
     };
 
     // The token is the shared secret sent with every webhook call, so only its end is ever returned.
-    public static string GetTokenHint(string token)
+    private static string GetTokenHint(string token)
     {
         if (string.IsNullOrEmpty(token))
         {

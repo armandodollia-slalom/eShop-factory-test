@@ -1,9 +1,7 @@
-/// <reference types="node" />
-import { execFileSync } from 'child_process';
 import { Page } from '@playwright/test';
 import { test, expect } from '../demo';
-import { STACK, url } from './ports';
-import { DOCKER, loadScenario } from './scenario';
+import { url } from './ports';
+import { loadScenario } from './scenario';
 
 // HINT-1: the Webhooks API's read endpoints return tokenHint instead of the token, and the webhooks client's
 // Registered webhooks grid shows that hint (or "None") in its Token column.
@@ -20,6 +18,9 @@ const SHORT = { destination: 'http://receiver.test/short', token: 'wxyz', hint: 
 const NONE = { destination: 'http://receiver.test/none', hint: 'None' };
 const FIRST_SUBSCRIPTION_ID = 9101;
 const REGISTERED_DESTINATION = 'http://webhooksclient:8080/webhook-received';
+// A token made up for the test: the stack's webhooks client does not validate tokens (ValidateToken unset), so its
+// grant check accepts it, and the client's own configured token never has to be typed or recorded.
+const REGISTERED_TOKEN = 'fake-token-hint-7e2f';
 
 const CLIENT = () => url('webhooksclient');
 const API = (path = '') => `${url('webhooks')}/api/webhooks${path}?api-version=1.0`;
@@ -40,24 +41,6 @@ const tokenCell = (page: Page, destination: string) => rowFor(page, destination)
 
 /** The hint rule of the story: "…" plus the last 4 characters, "…" alone for 1 to 4 characters. */
 const hintOf = (token: string) => (token.length > 4 ? `${ELLIPSIS}${token.slice(-4)}` : ELLIPSIS);
-
-/**
- * WebhookClientOptions:Token as the running webhooks client reads it: the WebhookClientOptions__Token environment
- * variable when the stack sets one, else the value in the container's appsettings.json.
- */
-function configuredClientToken(): string {
-  const docker = (args: string[]) => execFileSync(DOCKER, args, { encoding: 'utf8', windowsHide: true }).trim();
-  const container = docker([
-    'ps', '-q',
-    '--filter', `label=com.docker.compose.project=${STACK.project}`,
-    '--filter', 'label=com.docker.compose.service=webhooksclient',
-  ]);
-  expect(container, 'running webhooksclient container').not.toBe('');
-  const fromEnv = docker(['exec', container, 'sh', '-c', 'printenv WebhookClientOptions__Token || true']);
-  if (fromEnv) return fromEnv;
-  const settings = JSON.parse(docker(['exec', container, 'cat', 'appsettings.json']));
-  return settings?.WebhookClientOptions?.Token ?? '';
-}
 
 async function signInToWebhooksClient(page: Page) {
   await test.step(`sign in to the webhooks client as ${USER}`, async () => {
@@ -103,28 +86,41 @@ test('TC-HINT-1-11 GET /api/webhooks without a bearer token is still refused wit
 });
 
 test('TC-HINT-1-12 after registering on /add-webhook the home page Token column shows "…" and the last 4 characters', async ({ page, demo }) => {
-  const clientToken = configuredClientToken();
-  expect(clientToken, 'WebhookClientOptions:Token on the stack').not.toBe('');
-  const hint = hintOf(clientToken);
+  const hint = hintOf(REGISTERED_TOKEN);
   await signInToWebhooksClient(page);
+  // /add-webhook prefills the Token box with the client's own configured token, which must never be recorded:
+  // its text stays invisible until the test has replaced it with its own token.
+  await page.addInitScript(() => {
+    const add = () => {
+      const style = document.createElement('style');
+      style.textContent = 'input[placeholder="Token"]:not([data-test-token]) { color: transparent !important; }';
+      (document.head ?? document.documentElement).appendChild(style);
+    };
+    if (document.documentElement) {
+      add();
+      return;
+    }
+    new MutationObserver((_, observer) => {
+      if (!document.documentElement) return;
+      observer.disconnect();
+      add();
+    }).observe(document, { childList: true });
+  });
 
   await test.step('open /add-webhook', async () => {
     await page.goto(`${CLIENT()}/add-webhook`);
     await expect(page.getByRole('heading', { name: 'Register a new webhook', exact: true })).toBeVisible();
     await waitForCircuit(page);
+    await tokenBox(page).fill('');
+    await tokenBox(page).evaluate(input => input.setAttribute('data-test-token', ''));
     await demo.caption(`Opened ${page.url()}`);
   });
 
-  await test.step("clear the Token box, fill it with the client's configured token and click Register", async () => {
-    await tokenBox(page).fill('');
-    await demo.type(tokenBox(page), clientToken);
+  await test.step(`fill the Token box with ${REGISTERED_TOKEN} and click Register`, async () => {
+    await demo.type(tokenBox(page), REGISTERED_TOKEN);
     await tokenBox(page).blur();
-    await expect(tokenBox(page)).toHaveValue(clientToken);
-    // A blurred input scrolls back to its start; put the caret at the end so the box shows the token's tail.
-    await tokenBox(page).focus();
-    await tokenBox(page).press('End');
-    await demo.caption(`Token ends in ${clientToken.slice(-4)}`);
-    await demo.highlight(tokenBox(page), `Token: the client's configured token, ending ${clientToken.slice(-4)}`);
+    await expect(tokenBox(page)).toHaveValue(REGISTERED_TOKEN);
+    await demo.highlight(tokenBox(page), `Token: ${REGISTERED_TOKEN}`);
     await registerButton(page).click();
     await expect(page).toHaveURL(`${CLIENT()}/`);
     await expect(errorMessage(page)).toHaveCount(0);
@@ -135,7 +131,7 @@ test('TC-HINT-1-12 after registering on /add-webhook the home page Token column 
     await expect(rowFor(page, REGISTERED_DESTINATION)).toHaveCount(1);
     await expect(rowFor(page, REGISTERED_DESTINATION).locator('td').nth(1)).toHaveText(REGISTERED_DESTINATION);
     await expect(tokenCell(page, REGISTERED_DESTINATION)).toHaveText(hint);
-    expect(await page.locator('body').innerText()).not.toContain(clientToken);
+    expect(await page.locator('body').innerText()).not.toContain(REGISTERED_TOKEN);
     await demo.highlight(rowFor(page, REGISTERED_DESTINATION), `new row: ${REGISTERED_DESTINATION} / Token ${hint}`);
     await demo.highlight(tokenCell(page, REGISTERED_DESTINATION), `Token ${hint}, not the whole token`);
   });

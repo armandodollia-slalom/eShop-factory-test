@@ -15,15 +15,16 @@ priority: P1
 ## Preconditions
 
 - Test stack up with scenario `hint-1`; signed in to the webhooks client as `alice` (`Pass123$`).
-- The token typed below must equal the client's configured token, `WebhookClientOptions:Token`, when the stack enables token validation; the spec reads it from the stack configuration at run time and never hard-codes it. Call it `<client-token>`; `<hint>` is `"…"` plus its last 4 characters (or `"…"` alone if it has 4 or fewer).
+- The stack's webhooks client does not validate tokens (`ValidateToken` unset), so the grant check accepts a token made up for the test: `fake-token-hint-7e2f`. Its hint is `"…7e2f"`.
+- The page prefills the Token box with the client's own configured token (`WebhookClientOptions:Token`); the story says that value is shown nowhere new, so the spec keeps the box's text invisible until it has replaced it, and no recording frame shows it.
 
 ## Steps
 
-1. Open `/add-webhook`, clear the Token box (the page prefills it) and fill it with `<client-token>` so it holds exactly that value, click **Register**.
+1. Open `/add-webhook`, clear the Token box, type `fake-token-hint-7e2f`, click **Register**.
 2. On the home page, read the **Registered webhooks** grid.
 
 ## Expected result
 
 - Registration returns to the home page with no error message (as today).
-- The grid has a new row whose Destination is the webhooks client's `/webhook-received` URL and whose Token cell text is exactly `<hint>`.
-- The full text of the home page does not contain `<client-token>`.
+- The grid has a new row whose Destination is the webhooks client's `/webhook-received` URL and whose Token cell text is exactly `"…7e2f"`.
+- The full text of the home page does not contain `fake-token-hint-7e2f`.

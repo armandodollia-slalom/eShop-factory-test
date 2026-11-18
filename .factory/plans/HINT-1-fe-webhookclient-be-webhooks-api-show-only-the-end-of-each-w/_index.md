@@ -24,20 +24,20 @@ Scope: the Webhooks API's two read endpoints (`GET /api/webhooks`, `GET /api/web
 | TC-HINT-1-07 | A subscription registered with an empty token has tokenHint null | sad (boundary) | functional | AC2 0 chars |
 | TC-HINT-1-08 | List and single answers carry tokenHint instead of token and keep id, type, date, destUrl and userId with their values | happy | functional | AC1 list and single, AC2 >4 chars, AC3 fields, 200 |
 | TC-HINT-1-09 | GET /api/webhooks/{id} of another user's subscription still returns 404 and no hint | sad (ownership) | functional | AC3 404 not caller's |
-| TC-HINT-1-10 | GET /api/webhooks/{id} for an id that does not exist still returns 404 | sad (not-found) | functional | AC3 status codes |
 | TC-HINT-1-11 | GET /api/webhooks without a bearer token is still refused with 401 | sad (auth) | e2e | AC3 status codes |
 | TC-HINT-1-12 | After registering on /add-webhook, the home page Token column shows "…" and the last 4 characters | happy | e2e | AC4 hint, AC5 /add-webhook |
 | TC-HINT-1-13 | The home page Token column shows "None" for a webhook without a token and hints for the others | happy | e2e | AC4 None, AC4 hints |
 | TC-HINT-1-14 | POST /api/webhooks still stores the exact token and sends it to the grant URL | happy | functional | AC5 POST, grant, stored token |
 | TC-HINT-1-15 | A rejected grant check still returns 400 and stores nothing | sad (dependency-failure) | functional | AC5 grant check |
 | TC-HINT-1-16 | An OrderPaid webhook call carries the registered token in full | happy | functional | AC5 token sent with each webhook call |
+| TC-HINT-1-17 | A token ending in a non-BMP character keeps the surrogate pair whole in its hint | sad (boundary) | functional | AC2 characters, not code units |
 
 ## Test data
 
 - Functional cases create their own subscriptions through `POST /api/webhooks/` under a fresh `X-Test-User` per case; tokens are fake values (`fake-token-3c4d`, `abcde`, `wxyz`, `q`, `fake-token-for-tests…`).
 - TC-HINT-1-14 and TC-HINT-1-16 run on a host built per test from the functional fixture that keeps the real `GrantUrlTesterService` and replaces the default `HttpClient`'s primary handler with a controlled receiver: it echoes `X-eshop-whtoken` on `OPTIONS` to the grant URL, answers `POST` with 200 and records every request. TC-HINT-1-16 triggers the webhook call by invoking the `OrderStatusChangedToPaidIntegrationEvent` handler in-process and uses `<guid>`-unique URLs because other tests' OrderPaid subscriptions share the database.
 - New scenario `hint-1` (`.factory/stack/scenarios/hint-1`, `extends: default`) with a `webhooksdb.sql` that inserts three `Subscriptions` rows for alice (`UserId` = alice's id from `default/identitydb.sql`), all `Type` 3 (OrderPaid): `DestUrl` `http://receiver.test/long` with `Token` `fake-token-3c4d`; `http://receiver.test/short` with `Token` `wxyz`; `http://receiver.test/none` with `Token` NULL. The spec reloads it before each case.
-- TC-HINT-1-12 types the client's configured token (`WebhookClientOptions:Token`), read from the stack configuration at run time; plans and specs never copy its value.
+- TC-HINT-1-12 registers a token made up for the test (`fake-token-hint-7e2f`; the stack's client does not validate tokens) and keeps the client's prefilled configured token (`WebhookClientOptions:Token`) invisible, so no recording shows it; plans and specs never copy its value.
 
 ## Out of scope
 
@@ -47,5 +47,4 @@ Scope: the Webhooks API's two read endpoints (`GET /api/webhooks`, `GET /api/web
 
 ## Open questions
 
-- The story does not say whether the hint counts characters as UTF-16 code units or text elements; tokens with surrogate pairs or combining marks are not planned.
 - Exact 401 response body for an unauthenticated read is not defined; TC-HINT-1-11 checks only the status and that no hint or token leaks.

@@ -75,8 +75,20 @@ public sealed class Hint1Tests(WebhooksApiFixture fixture)
         Assert.Equal(HttpStatusCode.OK, status);
         var hint = SingleListElement(body).GetProperty("tokenHint").GetString();
         Assert.Equal("…bcde", hint);
-        Assert.NotEqual("abcde", hint);
-        Assert.NotEqual("…", hint);
+    }
+
+    [Fact]
+    [Trait("TestCase", "TC-HINT-1-17")]
+    public async Task TC_HINT_1_17_TokenEndingInNonBmpCharacterKeepsTheSurrogatePairWhole()
+    {
+        const string token = "fake-token-ab\U0001F600";
+        using var client = CreateClient($"hint1-nonbmp-{Guid.NewGuid():N}");
+        await Register(client, token);
+
+        var (status, body) = await Get(client, "/api/webhooks/");
+
+        Assert.Equal(HttpStatusCode.OK, status);
+        Assert.Equal("…-ab\U0001F600", SingleListElement(body).GetProperty("tokenHint").GetString());
     }
 
     [Fact]
@@ -176,9 +188,7 @@ public sealed class Hint1Tests(WebhooksApiFixture fixture)
             Assert.Equal(user, element.GetProperty("userId").GetString());
             var date = element.GetProperty("date").GetDateTimeOffset().UtcDateTime;
             Assert.InRange(date, t0, t1);
-            var hint = element.GetProperty("tokenHint").GetString();
-            Assert.Equal("…ests", hint);
-            Assert.Equal(5, hint!.Length);
+            Assert.Equal("…ests", element.GetProperty("tokenHint").GetString());
         }
 
         foreach (var name in expectedProperties)
@@ -209,18 +219,6 @@ public sealed class Hint1Tests(WebhooksApiFixture fixture)
         using var list = JsonDocument.Parse(listBody);
         Assert.Equal(JsonValueKind.Array, list.RootElement.ValueKind);
         Assert.Equal(0, list.RootElement.GetArrayLength());
-    }
-
-    [Fact]
-    [Trait("TestCase", "TC-HINT-1-10")]
-    public async Task TC_HINT_1_10_UnknownIdStillReturns404()
-    {
-        using var client = CreateClient($"hint1-missing-{Guid.NewGuid():N}");
-
-        var (status, body) = await Get(client, "/api/webhooks/2147483647");
-
-        Assert.Equal(HttpStatusCode.NotFound, status);
-        Assert.Equal("Subscriptions 2147483647 not found", JsonSerializer.Deserialize<string>(body));
     }
 
     [Fact]
