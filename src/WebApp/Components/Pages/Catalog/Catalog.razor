@@ -90,8 +90,8 @@
             </div>
 
             @{
-                var totalPages = (int)Math.Ceiling(1.0 * catalogResult.Count / PageSize);
-                var current = Page.GetValueOrDefault(1);
+                var totalPages = PageCount(catalogResult.Count);
+                var current = currentPage;
             }
             @if (totalPages > 1)
             {
@@ -160,6 +160,7 @@
     public int[]? TypeIds { get; set; }
 
     CatalogResult? catalogResult;
+    int currentPage;
 
     static IEnumerable<int> GetPageTokens(int totalPages, int current)
     {
@@ -184,6 +185,9 @@
         }
     }
 
+    // The clamp in OnInitializedAsync and the pager must agree on the last page.
+    static int PageCount(int count) => (int)Math.Ceiling(1.0 * count / PageSize);
+
     private string PageUri(int page) => Nav.GetUriWithQueryParameter("page", page <= 1 ? (int?)null : page);
 
     private string ResetFiltersUri() => Nav.GetUriWithQueryParameters(new Dictionary<string, object?>()
@@ -195,10 +199,29 @@
 
     protected override async Task OnInitializedAsync()
     {
-        catalogResult = await CatalogService.GetCatalogItems(
-            Page.GetValueOrDefault(1) - 1,
+        currentPage = Page.GetValueOrDefault(1);
+
+        // The catalog API computes the offset as pageIndex * pageSize in an int, so a huge page
+        // number would overflow there; ask for the first page just to learn the count instead.
+        var offsetOverflows = (long)(currentPage - 1) * PageSize > int.MaxValue;
+        var result = await CatalogService.GetCatalogItems(
+            offsetOverflows ? 0 : currentPage - 1,
             PageSize,
             BrandIds,
             TypeIds);
+
+        // A page past the last one (an old bookmark or a typed URL) shows the last page instead.
+        var lastPage = PageCount(result.Count);
+        if (lastPage > 0 && currentPage > lastPage)
+        {
+            currentPage = lastPage;
+            result = await CatalogService.GetCatalogItems(
+                currentPage - 1,
+                PageSize,
+                BrandIds,
+                TypeIds);
+        }
+
+        catalogResult = result;
     }
 }
