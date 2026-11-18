@@ -1,0 +1,6 @@
+{"ts":"2026-11-17T10:45:49.160Z","story":"RANGE-1","kind":"stack-slot","stage":"UI verifier (self)","slot":2,"waitedSec":0,"outcome":"leased","delivery":"epic"}
+{"ts":"2026-11-17T11:07:56.692Z","story":"RANGE-1","kind":"stack-slot","stage":"UI verifier (review-fix-1)","slot":2,"waitedSec":1,"outcome":"leased","delivery":"epic"}
+{"ts":"2026-11-17T11:41:31.194Z","story":"RANGE-1","kind":"stack-slot","stage":"automation pass","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null}
+{"ts":"2026-11-17T11:57:47.159Z","story":"RANGE-1","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":4}
+{"ts":"2026-11-17T12:12:17.862Z","story":"RANGE-1","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":4}
+{"ts":"2026-11-17T12:21:02.410Z","story":"RANGE-1","kind":"stack-slot","stage":"pr-check fixer","slot":1,"waitedSec":1,"outcome":"leased","poolSize":null}

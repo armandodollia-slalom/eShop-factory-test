@@ -1,6 +1,7 @@
 @page "/"
 @inject NavigationManager Nav
 @inject CatalogService CatalogService
+@inject ILogger<Catalog> Logger
 @attribute [StreamRendering]
 
 <PageTitle>AdventureWorks</PageTitle>
@@ -8,7 +9,7 @@
 <SectionContent SectionName="page-header-subtitle">Start the season with the latest in clothing and equipment.</SectionContent>
 
 <div class="catalog">
-    <CatalogSearch BrandIds="@BrandIds" TypeIds="@TypeIds" />
+    <CatalogSearch BrandIds="@BrandIds" TypeIds="@TypeIds" Facets="@facets" FacetsLoading="@facetsLoading" />
 
     @if (catalogResult is null)
     {
@@ -48,7 +49,13 @@
     {
         <div class="catalog-results">
             <div class="catalog-toolbar">
-                <p class="catalog-count">@catalogResult.Count @(catalogResult.Count == 1 ? "product" : "products")</p>
+                <p class="catalog-count">
+                    @catalogResult.Count @(catalogResult.Count == 1 ? "product" : "products")
+                    @if (PriceRangeText(facets) is { } priceRange)
+                    {
+                        <span class="catalog-price-range">@priceRange</span>
+                    }
+                </p>
                 <div class="catalog-sort" data-catalog-sort>
                     <span class="catalog-sort-label" id="catalog-sort-label">Sort</span>
                     <div class="catalog-sort-field">
@@ -160,6 +167,8 @@
     public int[]? TypeIds { get; set; }
 
     CatalogResult? catalogResult;
+    CatalogFacets? facets;
+    bool facetsLoading = true;
 
     static IEnumerable<int> GetPageTokens(int totalPages, int current)
     {
@@ -193,12 +202,37 @@
         { "type", null },
     });
 
+    // The range spans the whole selection (every page, independent of the sort).
+    private static string? PriceRangeText(CatalogFacets? facets) => facets switch
+    {
+        { MinPrice: decimal min, MaxPrice: decimal max } when min == max => $"Price ${min.ToPriceDisplay()}",
+        { MinPrice: decimal min, MaxPrice: decimal max } => $"Prices ${min.ToPriceDisplay()} – ${max.ToPriceDisplay()}",
+        _ => null,
+    };
+
+    // The products and the facets load in parallel and each renders as soon as it arrives
+    // ([StreamRendering]), so a slow facets query never holds back the product grid.
     protected override async Task OnInitializedAsync()
+    {
+        await Task.WhenAll(LoadItemsAsync(), LoadFacetsAsync());
+    }
+
+    private async Task LoadItemsAsync()
     {
         catalogResult = await CatalogService.GetCatalogItems(
             Page.GetValueOrDefault(1) - 1,
             PageSize,
             BrandIds,
             TypeIds);
+        StateHasChanged();
+    }
+
+    // The price range and the filter counts are secondary: if the facets cannot be
+    // loaded the catalog and its filters still render, just without them.
+    private async Task LoadFacetsAsync()
+    {
+        facets = await CatalogService.TryGetCatalogFacets(BrandIds, TypeIds, Logger);
+        facetsLoading = false;
+        StateHasChanged();
     }
 }

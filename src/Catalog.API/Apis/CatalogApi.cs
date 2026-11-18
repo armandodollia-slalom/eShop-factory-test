@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -58,7 +58,7 @@ public static class CatalogApi
         api.MapGet("/items/facets", GetCatalogFacets)
             .WithName("GetCatalogFacets")
             .WithSummary("Get catalog facet counts")
-            .WithDescription("Get per-brand and per-type item counts for the current filter selection, used to drive the catalog filter badges without transferring every item to the client.")
+            .WithDescription("Get per-brand and per-type item counts for the current filter selection, used to drive the catalog filter badges without transferring every item to the client, and the lowest and highest price of the items the type and brand filters select (null when none match).")
             .WithTags("Items");
 
         // Routes for resolving catalog items using AI.
@@ -88,14 +88,14 @@ public static class CatalogApi
             .WithTags("Brands");
         api.MapGet("/catalogtypes",
             [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
-            async (CatalogContext context) => await context.CatalogTypes.OrderBy(x => x.Type).ToListAsync())
+        async (CatalogContext context) => await context.CatalogTypes.OrderBy(x => x.Type).ToListAsync())
             .WithName("ListItemTypes")
             .WithSummary("List catalog item types")
             .WithDescription("Get a list of the types of catalog items")
             .WithTags("Types");
         api.MapGet("/catalogbrands",
             [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
-            async (CatalogContext context) => await context.CatalogBrands.OrderBy(x => x.Brand).ToListAsync())
+        async (CatalogContext context) => await context.CatalogBrands.OrderBy(x => x.Brand).ToListAsync())
             .WithName("ListItemBrands")
             .WithSummary("List catalog item brands")
             .WithDescription("Get a list of the brands of catalog items")
@@ -202,11 +202,25 @@ public static class CatalogApi
             .Select(g => new CatalogFacetCount(g.Key, g.Count()))
             .ToListAsync();
 
+        // The price range covers every item the whole selection lists (type AND brand),
+        // not only one page of it; both bounds are null when nothing matches.
+        var selection = typeScope;
+        if (type is { Length: > 0 })
+        {
+            selection = selection.Where(c => type.Contains(c.CatalogTypeId));
+        }
+        var priceRange = await selection
+            .GroupBy(_ => 1)
+            .Select(g => new { Min = g.Min(c => c.Price), Max = g.Max(c => c.Price) })
+            .FirstOrDefaultAsync();
+
         return TypedResults.Ok(new CatalogFacets(
             brandCounts,
             typeCounts,
             brandCounts.Sum(b => b.Count),
-            typeCounts.Sum(t => t.Count)));
+            typeCounts.Sum(t => t.Count),
+            priceRange?.Min,
+            priceRange?.Max));
     }
 
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]

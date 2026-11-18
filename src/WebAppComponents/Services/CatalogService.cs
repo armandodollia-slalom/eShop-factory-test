@@ -1,6 +1,8 @@
 ﻿using System.Net.Http.Json;
+using System.Text.Json;
 using System.Web;
 using eShop.WebAppComponents.Catalog;
+using Microsoft.Extensions.Logging;
 
 namespace eShop.WebAppComponents.Services;
 
@@ -71,6 +73,21 @@ public class CatalogService(HttpClient httpClient) : ICatalogService
         var uri = $"{remoteServiceBaseUrl}items/facets?{filterQs}".TrimEnd('&', '?');
         var result = await httpClient.GetFromJsonAsync<CatalogFacets>(uri);
         return result!;
+    }
+
+    // The facets (filter counts and price range) are secondary to the catalog page: when
+    // they cannot be loaded, log it and return null so the page renders without them.
+    public async Task<CatalogFacets?> TryGetCatalogFacets(int[]? brands, int[]? types, ILogger logger)
+    {
+        try
+        {
+            return await GetCatalogFacets(brands, types);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
+        {
+            logger.LogWarning(ex, "Could not load the catalog facets");
+            return null;
+        }
     }
 
     private static string GetAllCatalogItemsUri(string baseUri, int pageIndex, int pageSize, int[]? brands, int[]? types)

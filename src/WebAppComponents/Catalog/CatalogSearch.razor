@@ -1,7 +1,8 @@
 @inject CatalogService CatalogService
 @inject NavigationManager Nav
 
-@if (catalogBrands is not null && catalogItemTypes is not null)
+@* Wait for the facets too (or their failure) so the chips and their count badges appear in one render. *@
+@if (catalogBrands is not null && catalogItemTypes is not null && !FacetsLoading)
 {
     <aside class="catalog-search">
         <details class="catalog-search-details" open>
@@ -33,18 +34,24 @@
                         <a href="@BrandUri(null)"
                            class="catalog-search-tag @(BrandActiveCount == 0 ? "active" : "")">
                             <span>All</span>
-                            <span class="catalog-search-tag-count">@BrandCount(null)</span>
+                            @if (Facets is not null)
+                            {
+                                <span class="catalog-search-tag-count">@BrandCount(null)</span>
+                            }
                         </a>
                         @foreach (var brand in catalogBrands)
                         {
                             var count = BrandCount(brand.Id);
                             var isActive = IsBrandActive(brand.Id);
-                            var isEmpty = count == 0 && !isActive;
+                            var isEmpty = Facets is not null && count == 0 && !isActive;
                             <a href="@BrandUri(brand.Id)"
                                class="catalog-search-tag @(isActive ? "active" : "") @(isEmpty ? "is-empty" : "")"
                                aria-disabled="@(isEmpty ? "true" : null)">
                                 <span>@brand.Brand</span>
-                                <span class="catalog-search-tag-count">@count</span>
+                                @if (Facets is not null)
+                                {
+                                    <span class="catalog-search-tag-count">@count</span>
+                                }
                             </a>
                         }
                     </div>
@@ -55,18 +62,24 @@
                         <a href="@TypeUri(null)"
                            class="catalog-search-tag @(TypeActiveCount == 0 ? "active" : "")">
                             <span>All</span>
-                            <span class="catalog-search-tag-count">@TypeCount(null)</span>
+                            @if (Facets is not null)
+                            {
+                                <span class="catalog-search-tag-count">@TypeCount(null)</span>
+                            }
                         </a>
                         @foreach (var itemType in catalogItemTypes)
                         {
                             var count = TypeCount(itemType.Id);
                             var isActive = IsTypeActive(itemType.Id);
-                            var isEmpty = count == 0 && !isActive;
+                            var isEmpty = Facets is not null && count == 0 && !isActive;
                             <a href="@TypeUri(itemType.Id)"
                                class="catalog-search-tag @(isActive ? "active" : "") @(isEmpty ? "is-empty" : "")"
                                aria-disabled="@(isEmpty ? "true" : null)">
                                 <span>@itemType.Type</span>
-                                <span class="catalog-search-tag-count">@count</span>
+                                @if (Facets is not null)
+                                {
+                                    <span class="catalog-search-tag-count">@count</span>
+                                }
                             </a>
                         }
                     </div>
@@ -79,10 +92,13 @@
 @code {
     IEnumerable<CatalogBrand>? catalogBrands;
     IEnumerable<CatalogItemType>? catalogItemTypes;
-    CatalogFacets? facets;
 
     [Parameter] public int[]? BrandIds { get; set; }
     [Parameter] public int[]? TypeIds { get; set; }
+    [Parameter] public CatalogFacets? Facets { get; set; }
+
+    // True while the parent is still loading Facets; false once they arrived or failed (Facets null).
+    [Parameter] public bool FacetsLoading { get; set; }
 
     private IReadOnlyList<int> Brands => BrandIds ?? [];
     private IReadOnlyList<int> Types => TypeIds ?? [];
@@ -100,11 +116,9 @@
     {
         var brandsTask = CatalogService.GetBrands();
         var itemTypesTask = CatalogService.GetTypes();
-        var facetsTask = CatalogService.GetCatalogFacets(BrandIds, TypeIds);
-        await Task.WhenAll(brandsTask, itemTypesTask, facetsTask);
+        await Task.WhenAll(brandsTask, itemTypesTask);
         catalogBrands = brandsTask.Result;
         catalogItemTypes = itemTypesTask.Result;
-        facets = facetsTask.Result;
     }
 
     // Contextual counts. Within a facet, selections are additive (OR / union); across
@@ -114,15 +128,15 @@
     // selection. A facet that is absent from the response has no matching items (count 0).
     private int BrandCount(int? brandId)
     {
-        if (facets is null)
+        if (Facets is null)
         {
             return 0;
         }
         if (brandId is null)
         {
-            return facets.BrandTotal;
+            return Facets.BrandTotal;
         }
-        foreach (var count in facets.BrandCounts)
+        foreach (var count in Facets.BrandCounts)
         {
             if (count.Id == brandId)
             {
@@ -134,15 +148,15 @@
 
     private int TypeCount(int? typeId)
     {
-        if (facets is null)
+        if (Facets is null)
         {
             return 0;
         }
         if (typeId is null)
         {
-            return facets.TypeTotal;
+            return Facets.TypeTotal;
         }
-        foreach (var count in facets.TypeCounts)
+        foreach (var count in Facets.TypeCounts)
         {
             if (count.Id == typeId)
             {
