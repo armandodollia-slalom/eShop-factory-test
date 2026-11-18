@@ -168,6 +168,8 @@ jobs:
       with:
         token: ${{ secrets.FACTORY_TOKEN }}
     - name: Remove the PR's videos
+      env:
+        HEAD_REF: ${{ github.event.pull_request.head.ref }}
       run: |
         factory pr-video cleanup --pr "$PR_NUMBER"
-        factory pr-video cleanup --key "${{ github.event.pull_request.head.ref }}"
+        factory pr-video cleanup --key "$HEAD_REF"
