@@ -6,10 +6,10 @@ plan-sha: f5d524c27fca
 verified-score: 10
 verified-at: "2026-11-18T20:11:15.805Z"
 verified-by: test-planner@c9e755e4/council
-automation-sha: f81f07aaa6d4
+automation-sha: 9316571d1429
 automation-plan-sha: f5d524c27fca
 automation-score: 10
-automation-verified-at: "2026-11-18T20:41:47.133Z"
+automation-verified-at: "2026-11-18T21:14:39.697Z"
 ---
 # Test plan: HINT-1 Show only the end of each webhook's token
 
