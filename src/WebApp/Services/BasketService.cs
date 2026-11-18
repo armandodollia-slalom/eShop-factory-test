@@ -1,6 +1,6 @@
 ﻿using eShop.Basket.API.Grpc;
-using GrpcBasketItem = eShop.Basket.API.Grpc.BasketItem;
 using GrpcBasketClient = eShop.Basket.API.Grpc.Basket.BasketClient;
+using GrpcBasketItem = eShop.Basket.API.Grpc.BasketItem;
 
 namespace eShop.WebApp.Services;
 
@@ -8,7 +8,7 @@ public class BasketService(GrpcBasketClient basketClient)
 {
     public async Task<IReadOnlyCollection<BasketQuantity>> GetBasketAsync()
     {
-        var result = await basketClient.GetBasketAsync(new ());
+        var result = await basketClient.GetBasketAsync(new());
         return MapToBasket(result);
     }
 
@@ -27,6 +27,7 @@ public class BasketService(GrpcBasketClient basketClient)
             {
                 ProductId = item.ProductId,
                 Quantity = item.Quantity,
+                GiftMessage = item.GiftMessage ?? string.Empty,
             };
             updatePayload.Items.Add(updateItem);
         }
@@ -39,11 +40,12 @@ public class BasketService(GrpcBasketClient basketClient)
         var result = new List<BasketQuantity>();
         foreach (var item in response.Items)
         {
-            result.Add(new BasketQuantity(item.ProductId, item.Quantity));
+            var giftMessage = string.IsNullOrEmpty(item.GiftMessage) ? null : item.GiftMessage;
+            result.Add(new BasketQuantity(item.ProductId, item.Quantity, giftMessage));
         }
 
         return result;
     }
 }
 
-public record BasketQuantity(int ProductId, int Quantity);
+public record BasketQuantity(int ProductId, int Quantity, string? GiftMessage = null);

@@ -2,6 +2,8 @@
 @inject NavigationManager Nav
 @inject BasketState Basket
 @inject IProductImageUrlProvider ProductImages
+@inject ILogger<CartPage> Logger
+@using Grpc.Core
 @attribute [StreamRendering]
 @attribute [Authorize]
 
@@ -38,12 +40,33 @@
             @foreach (var item in basketItems)
             {
                 var quantity = CurrentOrPendingQuantity(item.ProductId, item.Quantity);
+                var giftMessage = CurrentOrPendingGiftMessage(item.ProductId, item.GiftMessage);
+                var giftMessageFailed = giftMessageSaveFailed && GiftMessageProductId == item.ProductId;
                 <div class="cart-item" @key="@item.Id">
                     <div class="catalog-item-info">
                         <img alt="@item.ProductName" src="@ProductImages.GetProductImageUrl(item.ProductId)" />
                         <div class="catalog-item-content">
                             <p class="name">@item.ProductName</p>
+                            @if (giftMessage is not null)
+                            {
+                                <p class="gift-message">"@giftMessage"</p>
+                            }
                             <p class="price">$@item.UnitPrice.ToPriceDisplay()</p>
+                            <details class="gift-message-editor" open="@giftMessageFailed">
+                                <summary aria-label="@(giftMessage is null ? $"Add a gift message for {item.ProductName}" : $"Edit the gift message for {item.ProductName}")">@(giftMessage is null ? "Add a gift message" : "Edit")</summary>
+                                <form method="post" data-enhance class="gift-message-form">
+                                    <input type="hidden" name="_handler" value="gift-message" />
+                                    <AntiforgeryToken />
+                                    <input type="hidden" name="GiftMessageProductId" value="@item.ProductId" />
+                                    <input type="text" name="GiftMessageText" maxlength="@MaxGiftMessageLength" value="@(giftMessageFailed ? GiftMessageText : giftMessage)"
+                                           placeholder="Up to @MaxGiftMessageLength characters" aria-label="Gift message for @item.ProductName" />
+                                    <button type="submit" class="button button-secondary">Save</button>
+                                </form>
+                                @if (giftMessageFailed)
+                                {
+                                    <p class="gift-message-error" role="alert">We couldn't save your gift message. Please try again.</p>
+                                }
+                            </details>
                         </div>
                     </div>
                     <div class="catalog-item-quantity">
@@ -105,9 +128,19 @@
 </div>
 
 <form @formname="update-cart" @onsubmit="@UpdateQuantityAsync"></form>
+<form @formname="gift-message" @onsubmit="@SaveGiftMessageAsync"></form>
 
 @code {
+    private const int MaxGiftMessageLength = 60;
+
     private IReadOnlyCollection<BasketItem>? basketItems;
+    private bool giftMessageSaveFailed;
+
+    [SupplyParameterFromForm]
+    public int? GiftMessageProductId { get; set; }
+
+    [SupplyParameterFromForm]
+    public string? GiftMessageText { get; set; }
 
     [SupplyParameterFromForm]
     public int? UpdateQuantityId { get; set; }
@@ -136,5 +169,31 @@
         var quantity = UpdateQuantityValue!.Value;
         await Basket.SetQuantityAsync(id, quantity);
         basketItems = await Basket.GetBasketItemsAsync();
+    }
+
+    // While a gift message post is in process, show the submitted message rather than the stored one.
+    private string? CurrentOrPendingGiftMessage(int productId, string? cartGiftMessage)
+        => !giftMessageSaveFailed && GiftMessageProductId.GetValueOrDefault(-1) == productId
+        ? NormalizeGiftMessage(GiftMessageText)
+        : cartGiftMessage;
+
+    private static string? NormalizeGiftMessage(string? message)
+        => string.IsNullOrWhiteSpace(message) ? null : message.Trim();
+
+    private async Task SaveGiftMessageAsync()
+    {
+        var id = GiftMessageProductId!.Value;
+        var message = NormalizeGiftMessage(GiftMessageText);
+        try
+        {
+            await Basket.SetGiftMessageAsync(id, message);
+            basketItems = await Basket.GetBasketItemsAsync();
+        }
+        catch (Exception ex) when (ex is RpcException or HttpRequestException)
+        {
+            // Keep the bag as it was loaded and tell the shopper, rather than failing the whole page.
+            Logger.LogError(ex, "Could not save the gift message for product {ProductId}", id);
+            giftMessageSaveFailed = true;
+        }
     }
 }
