@@ -15,7 +15,10 @@ public class BasketState(
     private Task<IReadOnlyCollection<BasketItem>>? _cachedBasket;
     private HashSet<BasketStateChangedSubscription> _changeSubscriptions = new();
 
-    public async Task DeleteBasketAsync()
+    public Task DeleteBasketAsync()
+        => basketService.DeleteBasketAsync();
+
+    public async Task EmptyBasketAsync()
     {
         _cachedBasket = null;
         await basketService.DeleteBasketAsync();

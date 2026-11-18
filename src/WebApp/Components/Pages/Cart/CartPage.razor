@@ -146,7 +146,7 @@
 
     private async Task EmptyBagAsync()
     {
-        await Basket.DeleteBasketAsync();
+        await Basket.EmptyBasketAsync();
         basketItems = await Basket.GetBasketItemsAsync();
     }
 }
