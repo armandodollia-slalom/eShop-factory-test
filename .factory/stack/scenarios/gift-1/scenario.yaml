@@ -1,0 +1,7 @@
+description: GIFT-1 gift message on a shopping bag line; needs only the seeded user alice with an empty basket and no orders.
+extends: default
+
+# No extra rows. Every e2e case signs in as alice (Pass123$, seeded by `default` with an empty basket and no
+# orders) and adds catalog item 99 "Adventurer GPS Watch" ($199.99, default catalog) to the bag itself from
+# its product page. The spec reloads this scenario before each case, which clears Redis, so alice starts every
+# case with an empty basket and no orders; TC-GIFT-1-10 places alice's only order.
