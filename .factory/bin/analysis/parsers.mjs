@@ -6,6 +6,7 @@
 // `parse(text, { root })` and, for `factory doctor`, `sample`.
 import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
+import { cweOf, normalizeVendorSeverity, sarifTriage } from './commercial.mjs';
 
 const ANSI = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, 'g');
 const strip = (s) => String(s ?? '').replace(ANSI, '');
@@ -56,9 +57,26 @@ export function parseSarif(text) {
         message: strip(r.message?.text ?? r.message?.markdown ?? rule?.shortDescription?.text ?? ruleId),
         snippet: loc?.region?.snippet?.text ?? null,
         key: uri ? null : fingerprint ?? null,
+        // What a commercial scanner says beyond the level (absent fields stay absent: open-source tools' reports are
+        // unchanged): the vendor's severity (security-severity score or word), the weakness (CWE), the vendor's own
+        // fingerprint, and a suppression or triage decision made in the vendor's system.
+        ...vendorFields(r, rule, fingerprint),
       });
     }
   }
+  return out;
+}
+
+function vendorFields(r, rule, fingerprint) {
+  const props = { ...(rule?.properties ?? {}), ...(r.properties ?? {}) };
+  const out = {};
+  const sev = normalizeVendorSeverity(props['security-severity'] ?? props.severity ?? props.priority ?? null);
+  if (sev) out.vendorSeverity = sev;
+  const cwe = cweOf(props.cwe, props.tags, props.cwe_ids, rule?.relationships?.map((x) => x?.target?.id));
+  if (cwe) out.cwe = cwe;
+  if (fingerprint) out.vendorFingerprint = String(fingerprint);
+  const triage = sarifTriage(r);
+  if (triage) out.triage = triage;
   return out;
 }
 

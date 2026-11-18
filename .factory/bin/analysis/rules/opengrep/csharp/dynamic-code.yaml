@@ -8,6 +8,10 @@ rules:
       name, Assembly.Load of bytes). A value from outside runs code or builds an arbitrary type. Map the input to a fixed
       set of types or operations.
     metadata: { cwe: "CWE-95", category: security, licence: MIT, source: ai-app-factory }
+    # Test code drives the application from outside: a test client's request and response are not the server's input
+    # (dogfood C15: Playwright specs failed CI on SQL and SSRF rules). Secrets in tests are still the secret scan's.
+    paths:
+      exclude: ["e2e/**", "**/e2e/**", "tests/**", "test/**", "**/*.spec.*", "**/*.test.*", "**/*Tests/**", "**/*.Tests/**"]
     pattern-either:
       - pattern: CSharpScript.EvaluateAsync(...)
       - pattern: CSharpScript.RunAsync(...)

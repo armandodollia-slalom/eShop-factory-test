@@ -7,15 +7,11 @@ on:
       - 'src/ClientApp/**'
       - 'tests/ClientApp.UnitTests/**'
       - '.github/workflows/pr-validation-maui.yml'
+  # Every pull request runs it, so the ruleset can require it (a required check a paths filter skipped would hold the PR).
   pull_request:
-    branches: [ main ]
-    paths-ignore:
-      - '**.md'
-      - 'src/ClientApp/**'
-      - 'tests/ClientApp.UnitTests/**'
-      - '.github/workflows/pr-validation-maui.yml'
 jobs:
   test:
+    name: Playwright tests
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:

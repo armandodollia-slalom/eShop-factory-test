@@ -8,6 +8,10 @@ rules:
       the folder you meant (path traversal). Resolve the path, check it stays inside the base folder, or map ids to
       known files.
     metadata: { cwe: "CWE-22", category: security, licence: MIT, source: ai-app-factory }
+    # Test code drives the application from outside: a test client's request and response are not the server's input
+    # (dogfood C15: Playwright specs failed CI on SQL and SSRF rules). Secrets in tests are still the secret scan's.
+    paths:
+      exclude: ["e2e/**", "**/e2e/**", "tests/**", "test/**", "**/*.spec.*", "**/*.test.*", "**/*Tests/**", "**/*.Tests/**"]
     mode: taint
     pattern-sources:
       - pattern-either:

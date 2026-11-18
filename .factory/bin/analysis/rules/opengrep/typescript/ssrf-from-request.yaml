@@ -7,6 +7,10 @@ rules:
       The server fetches a URL that comes from the request. A caller can make it reach internal services or cloud
       metadata endpoints (server-side request forgery). Allow only known hosts, or map the input to a fixed URL.
     metadata: { cwe: "CWE-918", category: security, licence: MIT, source: ai-app-factory }
+    # Test code drives the application from outside: a test client's request and response are not the server's input
+    # (dogfood C15: Playwright specs failed CI on SQL and SSRF rules). Secrets in tests are still the secret scan's.
+    paths:
+      exclude: ["e2e/**", "**/e2e/**", "tests/**", "test/**", "**/*.spec.*", "**/*.test.*", "**/*Tests/**", "**/*.Tests/**"]
     mode: taint
     pattern-sources:
       - pattern-either:

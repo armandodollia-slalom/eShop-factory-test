@@ -8,6 +8,10 @@ rules:
       are practical. Use SHA-256 or better, AES-GCM, and a password hash (PBKDF2 with many iterations, or ASP.NET Core
       Identity's hasher) for passwords.
     metadata: { cwe: "CWE-327", category: security, licence: MIT, source: ai-app-factory }
+    # Test code drives the application from outside: a test client's request and response are not the server's input
+    # (dogfood C15: Playwright specs failed CI on SQL and SSRF rules). Secrets in tests are still the secret scan's.
+    paths:
+      exclude: ["e2e/**", "**/e2e/**", "tests/**", "test/**", "**/*.spec.*", "**/*.test.*", "**/*Tests/**", "**/*.Tests/**"]
     pattern-either:
       - pattern: MD5.Create(...)
       - pattern: SHA1.Create(...)
