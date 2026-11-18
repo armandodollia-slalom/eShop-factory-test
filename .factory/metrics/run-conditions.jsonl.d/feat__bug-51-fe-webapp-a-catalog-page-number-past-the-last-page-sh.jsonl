@@ -1,0 +1,4 @@
+{"ts":"2026-11-18T06:24:03.317Z","story":"BUG-51","kind":"stack-slot","stage":"UI verifier (self)","slot":1,"waitedSec":1,"outcome":"leased","delivery":"epic"}
+{"ts":"2026-11-18T06:40:00.166Z","story":"BUG-51","kind":"stack-slot","stage":"automation pass","slot":1,"waitedSec":1,"outcome":"leased","poolSize":null}
+{"ts":"2026-11-18T06:51:30.114Z","story":"BUG-51","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":4}
+{"ts":"2026-11-18T07:11:50.858Z","story":"BUG-51","kind":"stack-slot","stage":"pr-check fixer","slot":1,"waitedSec":1,"outcome":"leased","poolSize":null}
