@@ -1,8 +1,8 @@
 ﻿using System.Security.Claims;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
 using eShop.WebAppComponents.Catalog;
 using eShop.WebAppComponents.Services;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 
 namespace eShop.WebApp.Services;
 
@@ -32,7 +32,7 @@ public class BasketState(
 
     public async Task AddAsync(CatalogItem item)
     {
-        var items = (await FetchBasketItemsAsync()).Select(i => new BasketQuantity(i.ProductId, i.Quantity)).ToList();
+        var items = ToQuantities(await FetchBasketItemsAsync());
         bool found = false;
         for (var i = 0; i < items.Count; i++)
         {
@@ -70,7 +70,23 @@ public class BasketState(
             }
 
             _cachedBasket = null;
-            await basketService.UpdateBasketAsync(existingItems.Select(i => new BasketQuantity(i.ProductId, i.Quantity)).ToList());
+            await basketService.UpdateBasketAsync(ToQuantities(existingItems));
+            await NotifyChangeSubscribersAsync();
+        }
+    }
+
+    public async Task SetGiftMessageAsync(int productId, string? message)
+    {
+        var items = ToQuantities(await FetchBasketItemsAsync());
+        var index = items.FindIndex(row => row.ProductId == productId);
+        if (index >= 0)
+        {
+            // Build the update from copies so a failed write leaves the displayed basket as stored.
+            var trimmed = message?.Trim();
+            items[index] = items[index] with { GiftMessage = string.IsNullOrEmpty(trimmed) ? null : trimmed };
+
+            _cachedBasket = null;
+            await basketService.UpdateBasketAsync(items);
             await NotifyChangeSubscribersAsync();
         }
     }
@@ -108,6 +124,9 @@ public class BasketState(
         await DeleteBasketAsync();
     }
 
+    private static List<BasketQuantity> ToQuantities(IEnumerable<BasketItem> items)
+        => items.Select(i => new BasketQuantity(i.ProductId, i.Quantity, i.GiftMessage)).ToList();
+
     private Task NotifyChangeSubscribersAsync()
         => Task.WhenAll(_changeSubscriptions.Select(s => s.NotifyAsync()));
 
@@ -140,6 +159,7 @@ public class BasketState(
                     ProductName = catalogItem.Name,
                     UnitPrice = catalogItem.Price,
                     Quantity = item.Quantity,
+                    GiftMessage = item.GiftMessage,
                 };
                 basketItems.Add(orderItem);
             }
