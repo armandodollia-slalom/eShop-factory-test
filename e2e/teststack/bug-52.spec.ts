@@ -15,6 +15,9 @@ const MESSAGE = 'A token is needed to register a webhook.';
 const DESTINATION = 'http://webhooksclient:8080/webhook-received';
 const TOKEN = 'bug52-token';
 const RETRY_TOKEN = 'bug52-retry';
+// Lists show only a hint of the token: an ellipsis and its last four characters.
+const TOKEN_HINT = '…oken';
+const RETRY_TOKEN_HINT = '…etry';
 const ORDER_PAID = 3;
 
 const CLIENT = () => url('webhooksclient');
@@ -192,13 +195,13 @@ test('TC-BUG-52-03 Register with a token registers the webhook and returns to th
     await demo.caption(`After Register: ${page.url()}`);
   });
 
-  await test.step('the home page lists exactly one webhook with the token and no message is shown', async () => {
+  await test.step('the home page lists exactly one webhook with the token hint and no message is shown', async () => {
     await expect(page.getByText(MESSAGE)).toHaveCount(0);
     await expect(gridRows(page)).toHaveCount(1);
     const row = gridRows(page).first();
     await expect(row.locator('td').nth(1)).toHaveText(DESTINATION);
-    await expect(row.locator('td').nth(2)).toHaveText(TOKEN);
-    await demo.highlight(row, `one row: ${DESTINATION} / ${TOKEN}`);
+    await expect(row.locator('td').nth(2)).toHaveText(TOKEN_HINT);
+    await demo.highlight(row, `one row: ${DESTINATION} / ${TOKEN_HINT}`);
     await demo.absent(registeredSection(page), `no "${MESSAGE}"`);
   });
 
@@ -206,11 +209,12 @@ test('TC-BUG-52-03 Register with a token registers the webhook and returns to th
     const { status, body } = await listSubscriptions(page);
     expect(status).toBe(200);
     expect(body).toHaveLength(1);
-    expect(body[0]).toMatchObject({ token: TOKEN, destUrl: DESTINATION });
+    expect(body[0]).toMatchObject({ tokenHint: TOKEN_HINT, destUrl: DESTINATION });
+    expect(body[0]).not.toHaveProperty('token');
     // The API serializes WebhookType as its number: OrderPaid = 3 (src/Webhooks.API/Model/WebhookType.cs).
     expect(body[0].type).toBe(ORDER_PAID);
-    await demo.caption(`GET /api/webhooks -> ${status}, 1 subscription: type ${body[0].type} (OrderPaid), token ${body[0].token}`);
-    await demo.highlight(gridRows(page).first(), `API: 1 OrderPaid subscription, token ${TOKEN}`);
+    await demo.caption(`GET /api/webhooks -> ${status}, 1 subscription: type ${body[0].type} (OrderPaid), token hint ${body[0].tokenHint}`);
+    await demo.highlight(gridRows(page).first(), `API: 1 OrderPaid subscription, token hint ${TOKEN_HINT}`);
   });
 });
 
@@ -238,11 +242,11 @@ test('TC-BUG-52-04 After the empty-token message, entering a token and registeri
     await demo.caption(`After Register: ${page.url()}`);
   });
 
-  await test.step(`the home page lists exactly one webhook with token "${RETRY_TOKEN}" and no message`, async () => {
+  await test.step(`the home page lists exactly one webhook with token hint "${RETRY_TOKEN_HINT}" and no message`, async () => {
     await expect(gridRows(page)).toHaveCount(1);
-    await expect(gridRows(page).first().locator('td').nth(2)).toHaveText(RETRY_TOKEN);
+    await expect(gridRows(page).first().locator('td').nth(2)).toHaveText(RETRY_TOKEN_HINT);
     await expect(page.getByText(MESSAGE)).toHaveCount(0);
-    await demo.highlight(gridRows(page).first(), `one row, Token ${RETRY_TOKEN}`);
+    await demo.highlight(gridRows(page).first(), `one row, Token ${RETRY_TOKEN_HINT}`);
     await demo.absent(registeredSection(page), `no "${MESSAGE}"`);
   });
 });
