@@ -90,7 +90,7 @@
             </div>
 
             @{
-                var totalPages = (int)Math.Ceiling(1.0 * catalogResult.Count / PageSize);
+                var totalPages = PageCount(catalogResult.Count);
                 var current = currentPage;
             }
             @if (totalPages > 1)
@@ -185,6 +185,9 @@
         }
     }
 
+    // The clamp in OnInitializedAsync and the pager must agree on the last page.
+    static int PageCount(int count) => (int)Math.Ceiling(1.0 * count / PageSize);
+
     private string PageUri(int page) => Nav.GetUriWithQueryParameter("page", page <= 1 ? (int?)null : page);
 
     private string ResetFiltersUri() => Nav.GetUriWithQueryParameters(new Dictionary<string, object?>()
@@ -208,7 +211,7 @@
             TypeIds);
 
         // A page past the last one (an old bookmark or a typed URL) shows the last page instead.
-        var lastPage = (int)Math.Ceiling(1.0 * result.Count / PageSize);
+        var lastPage = PageCount(result.Count);
         if (lastPage > 0 && currentPage > lastPage)
         {
             currentPage = lastPage;
