@@ -3,7 +3,8 @@ name: graphify cache prune
 
 # Builds keep shared graphify cache entries for every doc version, so other branches can reuse
 # them. Once a week this deletes entries that no remote branch or open pull request needs (and
-# that are older than the grace period), then opens a pull request for review. No API key needed.
+# that are older than the grace period), then pushes a branch for review: a person opens its pull request from the
+# link in the run summary (the pipeline opens no PR before CI has run on its head). No API key needed.
 on:
   schedule:
     - cron: '0 7 * * 1'
@@ -16,7 +17,6 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
 
 concurrency:
   group: graphify-cache-prune
@@ -38,7 +38,7 @@ jobs:
         uv tool install "graphifyy[sql]==$version"
     - name: Prune
       run: scripts/graphify-build.sh --prune --grace-days "${{ inputs.grace_days || 14 }}" | tee -a "$GITHUB_STEP_SUMMARY"
-    - name: Open pull request
+    - name: Push the branch for review
       env:
         DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
       run: |
@@ -53,6 +53,4 @@ jobs:
         git add -A -- graphify-out/cache
         GRAPHIFY_ALLOW_CACHE_PRUNE=1 git commit -m "chore(graphify): prune unused semantic cache entries"
         git push -f origin "$branch"
-        gh pr view "$branch" --json number >/dev/null 2>&1 || gh pr create --base "$DEFAULT_BRANCH" --head "$branch" \
-          --title "chore(graphify): prune unused semantic cache entries" \
-          --body "Automated by \`.github/workflows/graphify-cache-prune.yml\`. Removes shared graphify cache entries that no remote branch or open pull request needs and that are older than the grace period. See \`scripts/graphify-prune-cache.sh\`."
+        echo "Pushed \`$branch\`. Open its pull request once its checks pass: ${{ github.server_url }}/${{ github.repository }}/compare/$DEFAULT_BRANCH...$branch?expand=1 (title: chore(graphify): prune unused semantic cache entries)." | tee -a "$GITHUB_STEP_SUMMARY"
