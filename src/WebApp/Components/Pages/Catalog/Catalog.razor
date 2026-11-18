@@ -91,7 +91,7 @@
 
             @{
                 var totalPages = (int)Math.Ceiling(1.0 * catalogResult.Count / PageSize);
-                var current = Page.GetValueOrDefault(1);
+                var current = currentPage;
             }
             @if (totalPages > 1)
             {
@@ -160,6 +160,7 @@
     public int[]? TypeIds { get; set; }
 
     CatalogResult? catalogResult;
+    int currentPage;
 
     static IEnumerable<int> GetPageTokens(int totalPages, int current)
     {
@@ -195,10 +196,25 @@
 
     protected override async Task OnInitializedAsync()
     {
-        catalogResult = await CatalogService.GetCatalogItems(
-            Page.GetValueOrDefault(1) - 1,
+        currentPage = Page.GetValueOrDefault(1);
+        var result = await CatalogService.GetCatalogItems(
+            currentPage - 1,
             PageSize,
             BrandIds,
             TypeIds);
+
+        // A page past the last one (an old bookmark or a typed URL) shows the last page instead.
+        var lastPage = (int)Math.Ceiling(1.0 * result.Count / PageSize);
+        if (lastPage > 0 && currentPage > lastPage)
+        {
+            currentPage = lastPage;
+            result = await CatalogService.GetCatalogItems(
+                currentPage - 1,
+                PageSize,
+                BrandIds,
+                TypeIds);
+        }
+
+        catalogResult = result;
     }
 }
