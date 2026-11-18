@@ -1,0 +1,5 @@
+description: BUG-52 webhooks client registration with an empty Token box; needs only the seeded user alice and no webhook subscriptions.
+extends: default
+
+# No extra rows: every case signs in to the webhooks client as alice (Pass123$) and starts from an empty subscription list;
+# the spec reloads this scenario before each case so a webhook registered by one case is gone for the next.
