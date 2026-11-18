@@ -4,10 +4,17 @@
 public class CancelOrderCommandHandler : IRequestHandler<CancelOrderCommand, bool>
 {
     private readonly IOrderRepository _orderRepository;
+    private readonly IBuyerRepository _buyerRepository;
+    private readonly IIdentityService _identityService;
 
-    public CancelOrderCommandHandler(IOrderRepository orderRepository)
+    public CancelOrderCommandHandler(
+        IOrderRepository orderRepository,
+        IBuyerRepository buyerRepository,
+        IIdentityService identityService)
     {
         _orderRepository = orderRepository;
+        _buyerRepository = buyerRepository;
+        _identityService = identityService;
     }
 
     /// <summary>
@@ -19,9 +26,13 @@ public class CancelOrderCommandHandler : IRequestHandler<CancelOrderCommand, boo
     public async Task<bool> Handle(CancelOrderCommand command, CancellationToken cancellationToken)
     {
         var orderToUpdate = await _orderRepository.GetAsync(command.OrderNumber);
-        if (orderToUpdate == null)
+        var buyer = await _buyerRepository.FindAsync(_identityService.GetUserIdentity());
+
+        // Thrown rather than returning false so the surrounding transaction rolls back the idempotency
+        // request, and a missing order looks the same as another buyer's order.
+        if (orderToUpdate == null || buyer == null || orderToUpdate.BuyerId != buyer.Id)
         {
-            return false;
+            throw new OrderNotFoundException(command.OrderNumber);
         }
 
         orderToUpdate.SetCancelledStatus();
