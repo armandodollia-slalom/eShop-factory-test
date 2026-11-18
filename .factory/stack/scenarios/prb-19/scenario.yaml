@@ -1,0 +1,6 @@
+description: PRB-19 "Empty bag" on the shopping bag page; needs only the seeded user alice with an empty basket.
+extends: default
+
+# No extra rows. Every case starts from alice's empty basket (the spec reloads this scenario before each case):
+# TC-PRB-19-04 opens the never-filled bag, and the other cases fill it themselves through the product pages with
+# items from the default catalog: 99 "Adventurer GPS Watch" ($199.99) and 1 "Wanderer Black Hiking Boots" ($109.99).
