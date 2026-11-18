@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using eShop.Basket.API.Repositories;
 using eShop.Basket.API.Extensions;
 using eShop.Basket.API.Model;
+using eShop.Basket.API.Repositories;
 
 namespace eShop.Basket.API.Grpc;
 
@@ -9,6 +9,8 @@ public class BasketService(
     IBasketRepository repository,
     ILogger<BasketService> logger) : Basket.BasketBase
 {
+    private const int MaxGiftMessageLength = 60;
+
     [AllowAnonymous]
     public override async Task<CustomerBasketResponse> GetBasket(GetBasketRequest request, ServerCallContext context)
     {
@@ -84,6 +86,7 @@ public class BasketService(
             {
                 ProductId = item.ProductId,
                 Quantity = item.Quantity,
+                GiftMessage = item.GiftMessage ?? string.Empty,
             });
         }
 
@@ -103,9 +106,26 @@ public class BasketService(
             {
                 ProductId = item.ProductId,
                 Quantity = item.Quantity,
+                GiftMessage = NormalizeGiftMessage(item.GiftMessage),
             });
         }
 
         return response;
+    }
+
+    private static string NormalizeGiftMessage(string giftMessage)
+    {
+        var trimmed = giftMessage?.Trim();
+        if (string.IsNullOrEmpty(trimmed))
+        {
+            return null;
+        }
+
+        if (trimmed.Length > MaxGiftMessageLength)
+        {
+            throw new RpcException(new Status(StatusCode.InvalidArgument, $"A gift message cannot be longer than {MaxGiftMessageLength} characters."));
+        }
+
+        return trimmed;
     }
 }

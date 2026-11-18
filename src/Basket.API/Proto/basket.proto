@@ -20,6 +20,7 @@ message CustomerBasketResponse {
 message BasketItem {
     int32 product_id = 2;
     int32 quantity = 6;
+    string gift_message = 7;
 }
 
 message UpdateBasketRequest {
