@@ -1,6 +1,7 @@
+import { execFileSync } from 'child_process';
 import { Page } from '@playwright/test';
 import { test, expect, Demo } from '../demo';
-import { url } from './ports';
+import { SLOT, url } from './ports';
 import { loadScenario } from './scenario';
 
 // BUG-52: on the webhooks client's /add-webhook page, Register with an empty Token box must say a token is needed
@@ -15,9 +16,10 @@ const MESSAGE = 'A token is needed to register a webhook.';
 const DESTINATION = 'http://webhooksclient:8080/webhook-received';
 const TOKEN = 'bug52-token';
 const RETRY_TOKEN = 'bug52-retry';
-// Lists show only a hint of the token: an ellipsis and its last four characters.
-const TOKEN_HINT = '…oken';
-const RETRY_TOKEN_HINT = '…etry';
+// Since HINT-1 the grid and the API show only a hint of a token: an ellipsis and its last four characters.
+const hintOf = (token: string) => `…${token.slice(-4)}`;
+const TOKEN_HINT = hintOf(TOKEN);
+const RETRY_TOKEN_HINT = hintOf(RETRY_TOKEN);
 const ORDER_PAID = 3;
 
 const CLIENT = () => url('webhooksclient');
@@ -112,6 +114,24 @@ async function listSubscriptions(page: Page) {
   return { status: response.status(), body: await response.json() };
 }
 
+type StoredSubscription = { id: number; token: string; destUrl: string; type: number };
+
+// Since HINT-1 the API and the grid show only a hint of the token, so the exact token registered is read from the
+// Subscriptions table of the stack's webhooks database. The password is the container's own POSTGRES_PASSWORD.
+function storedSubscriptions(): StoredSubscription[] {
+  const sql = 'select "Id", "Token", "DestUrl", "Type" from "Subscriptions" order by "Id"';
+  const output = execFileSync(
+    process.env.FACTORY_BIN ?? 'factory',
+    ['teststack', '--slot', String(SLOT), 'compose', 'exec', '-T', 'postgres', 'sh', '-c',
+      `PGPASSWORD="$POSTGRES_PASSWORD" psql -U postgres -d webhooksdb -At -F '|' -c '${sql}'`],
+    { encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'] },
+  );
+  return output.trim().split('\n').filter(Boolean).map((line: string) => {
+    const [id, token, destUrl, type] = line.split('|');
+    return { id: Number(id), token, destUrl, type: Number(type) };
+  });
+}
+
 test('TC-BUG-52-01 Register with an empty Token box shows "A token is needed to register a webhook." next to the form', async ({ page, demo }) => {
   await signInToWebhooksClient(page);
   await openAddWebhook(page, demo);
@@ -201,12 +221,15 @@ test('TC-BUG-52-03 Register with a token registers the webhook and returns to th
     const row = gridRows(page).first();
     await expect(row.locator('td').nth(1)).toHaveText(DESTINATION);
     await expect(row.locator('td').nth(2)).toHaveText(TOKEN_HINT);
-    await demo.highlight(row, `one row: ${DESTINATION} / ${TOKEN_HINT}`);
+    await demo.caption(`Token column: ${TOKEN_HINT}, the hint of ${TOKEN}`);
+    await demo.highlight(row, `one row: ${DESTINATION} / Token ${TOKEN_HINT}, the hint of ${TOKEN}`);
     await demo.absent(registeredSection(page), `no "${MESSAGE}"`);
   });
 
+  let apiId = 0;
   await test.step(`GET /api/webhooks as ${USER} returns the one OrderPaid subscription`, async () => {
     const { status, body } = await listSubscriptions(page);
+    apiId = body[0]?.id;
     expect(status).toBe(200);
     expect(body).toHaveLength(1);
     expect(body[0]).toMatchObject({ tokenHint: TOKEN_HINT, destUrl: DESTINATION });
@@ -215,6 +238,15 @@ test('TC-BUG-52-03 Register with a token registers the webhook and returns to th
     expect(body[0].type).toBe(ORDER_PAID);
     await demo.caption(`GET /api/webhooks -> ${status}, 1 subscription: type ${body[0].type} (OrderPaid), token hint ${body[0].tokenHint}`);
     await demo.highlight(gridRows(page).first(), `API: 1 OrderPaid subscription, token hint ${TOKEN_HINT}`);
+  });
+
+  await test.step(`the stored subscription's token is exactly "${TOKEN}"`, async () => {
+    const stored = storedSubscriptions();
+    expect(stored).toHaveLength(1);
+    expect(stored[0]).toMatchObject({ token: TOKEN, destUrl: DESTINATION, type: ORDER_PAID });
+    expect(stored[0].id).toBe(apiId);
+    await demo.caption(`Stored subscription ${stored[0].id}: token ${stored[0].token}, ${stored[0].destUrl}, type ${stored[0].type}`);
+    await demo.highlight(gridRows(page).first(), `row ${stored[0].id} stores token ${stored[0].token}`);
   });
 });
 
@@ -246,7 +278,16 @@ test('TC-BUG-52-04 After the empty-token message, entering a token and registeri
     await expect(gridRows(page)).toHaveCount(1);
     await expect(gridRows(page).first().locator('td').nth(2)).toHaveText(RETRY_TOKEN_HINT);
     await expect(page.getByText(MESSAGE)).toHaveCount(0);
-    await demo.highlight(gridRows(page).first(), `one row, Token ${RETRY_TOKEN_HINT}`);
+    await demo.caption(`Token column: ${RETRY_TOKEN_HINT}, the hint of ${RETRY_TOKEN}`);
+    await demo.highlight(gridRows(page).first(), `one row, Token ${RETRY_TOKEN_HINT}, the hint of ${RETRY_TOKEN}`);
     await demo.absent(registeredSection(page), `no "${MESSAGE}"`);
+  });
+
+  await test.step(`the stored subscription's token is exactly "${RETRY_TOKEN}"`, async () => {
+    const stored = storedSubscriptions();
+    expect(stored).toHaveLength(1);
+    expect(stored[0]).toMatchObject({ token: RETRY_TOKEN, destUrl: DESTINATION, type: ORDER_PAID });
+    await demo.caption(`Stored subscription ${stored[0].id}: token ${stored[0].token}`);
+    await demo.highlight(gridRows(page).first(), `row ${stored[0].id} stores token ${stored[0].token}`);
   });
 });

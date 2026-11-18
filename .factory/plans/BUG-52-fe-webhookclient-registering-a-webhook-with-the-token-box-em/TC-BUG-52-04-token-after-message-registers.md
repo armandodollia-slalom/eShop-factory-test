@@ -23,9 +23,11 @@ priority: P2
 2. Clear the Token box and click `Register`; wait until the text `A token is needed to register a webhook.` is visible.
 3. Type `bug52-retry` into the Token box.
 4. Click `Register`.
+5. Read the `Subscriptions` table of the Webhooks database.
 
 ## Expected result
 
 - After step 4 the browser is on the webhooks client home page (`/`).
-- The registered-webhooks grid shows exactly one row, with Token `bug52-retry`.
+- The registered-webhooks grid shows exactly one row, with Token `…etry` (the HINT-1 hint of `bug52-retry`; the grid never shows the full token).
 - The text `A token is needed to register a webhook.` is not shown.
+- Step 5 shows exactly one `Subscriptions` row, with `Token` `bug52-retry`, `DestUrl` `http://webhooksclient:8080/webhook-received`, `Type` `3` (OrderPaid).

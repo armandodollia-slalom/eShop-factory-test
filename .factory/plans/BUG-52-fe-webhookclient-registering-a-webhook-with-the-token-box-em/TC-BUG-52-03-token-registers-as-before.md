@@ -23,10 +23,12 @@ priority: P1
 2. Clear the Token box and type `bug52-token`.
 3. Click `Register`.
 4. As `alice` (bearer token for scope `webhooks`), send `GET <webhooks>/api/webhooks?api-version=1.0`.
+5. Read the `Subscriptions` table of the Webhooks database.
 
 ## Expected result
 
 - After step 3 the browser is on the webhooks client home page (`/`), not `/add-webhook`.
 - No `error-message` paragraph with text `A token is needed to register a webhook.` is shown.
-- The registered-webhooks grid on the home page shows exactly one row whose Token column is `bug52-token` and whose Destination is `http://webhooksclient:8080/webhook-received`.
-- Step 4 returns `200` with exactly one subscription: `token` `bug52-token`, `destUrl` `http://webhooksclient:8080/webhook-received`, type `OrderPaid`.
+- The registered-webhooks grid on the home page shows exactly one row whose Destination is `http://webhooksclient:8080/webhook-received` and whose Token column is the hint `…oken` (since HINT-1 the grid shows only the end of the token, never `bug52-token` itself).
+- Step 4 returns `200` with exactly one subscription: `tokenHint` `…oken`, `destUrl` `http://webhooksclient:8080/webhook-received`, `type` `3` (OrderPaid); the subscription has no `token` property.
+- Step 5 shows exactly one `Subscriptions` row with the same id as the API's subscription, `Token` `bug52-token`, `DestUrl` `http://webhooksclient:8080/webhook-received`, `Type` `3`.

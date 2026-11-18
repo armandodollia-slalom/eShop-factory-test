@@ -2,14 +2,14 @@
 story: BUG-52
 story-issue: "https://github.com/armandodollia-slalom/eShop-factory-test/issues/283"
 story-sha: 952e849884b0
-plan-sha: a05b2746b425
-verified-score: 9
-verified-at: "2026-11-18T13:20:45.556Z"
-verified-by: test-planner@6ab9e852/council
-automation-sha: d89e46491f19
-automation-plan-sha: a05b2746b425
+automation-sha: ac66db0ff3e0
+automation-plan-sha: da27200bcf69
 automation-score: 10
-automation-verified-at: "2026-11-18T13:34:31.876Z"
+automation-verified-at: "2026-11-18T22:25:39.189Z"
+plan-sha: da27200bcf69
+verified-score: 10
+verified-at: "2026-11-18T22:15:48.186Z"
+verified-by: test-planner@c9e755e4/council
 ---
 # Test plan: BUG-52 [FE - WebhookClient] - Registering a webhook with the Token box empty does nothing
 
@@ -21,6 +21,8 @@ The webhooks client's "Register a new webhook" page (`/add-webhook`) must, when 
 | TC-BUG-52-02 | Register with an empty Token box registers no webhook | sad | e2e | Expected: no webhook is registered |
 | TC-BUG-52-03 | Register with a token registers the webhook and returns to the home page as before | happy | e2e | Expected: Register with a token behaves exactly as today |
 | TC-BUG-52-04 | After the empty-token message, entering a token and registering succeeds | happy | e2e | Expected: Register with a token behaves exactly as today; Expected: message for the empty box |
+
+Since HINT-1, the home page grid and `GET /api/webhooks` show only a token hint (`…` plus the last four characters) and never the full token; TC-BUG-52-03 and TC-BUG-52-04 therefore check the hint in the grid and API and the full token in the stored `Subscriptions` row.
 
 ## Out of scope
 
