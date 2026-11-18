@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -88,14 +88,14 @@ public static class CatalogApi
             .WithTags("Brands");
         api.MapGet("/catalogtypes",
             [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
-        async (CatalogContext context) => await context.CatalogTypes.OrderBy(x => x.Type).ToListAsync())
+            async (CatalogContext context) => await context.CatalogTypes.OrderBy(x => x.Type).ToListAsync())
             .WithName("ListItemTypes")
             .WithSummary("List catalog item types")
             .WithDescription("Get a list of the types of catalog items")
             .WithTags("Types");
         api.MapGet("/catalogbrands",
             [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
-        async (CatalogContext context) => await context.CatalogBrands.OrderBy(x => x.Brand).ToListAsync())
+            async (CatalogContext context) => await context.CatalogBrands.OrderBy(x => x.Brand).ToListAsync())
             .WithName("ListItemBrands")
             .WithSummary("List catalog item brands")
             .WithDescription("Get a list of the brands of catalog items")
