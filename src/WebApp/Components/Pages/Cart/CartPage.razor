@@ -182,7 +182,12 @@
 
     private async Task SaveGiftMessageAsync()
     {
-        var id = GiftMessageProductId!.Value;
+        // A post without a product id names no line to change: leave the bag as it is and re-render it.
+        if (GiftMessageProductId is not { } id)
+        {
+            return;
+        }
+
         try
         {
             await Basket.SetGiftMessageAsync(id, GiftMessageText);
