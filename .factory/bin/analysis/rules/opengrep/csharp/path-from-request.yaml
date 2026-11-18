@@ -8,6 +8,10 @@ rules:
       parameter, or Request.Query/Form/RouteValues) and opened. "../" in it reaches files outside the folder you meant
       (path traversal). Use Path.GetFileName, then check the full path stays under the base folder.
     metadata: { cwe: "CWE-22", category: security, licence: MIT, source: ai-app-factory }
+    # Test code drives the application from outside: a test client's request and response are not the server's input
+    # (dogfood C15: Playwright specs failed CI on SQL and SSRF rules). Secrets in tests are still the secret scan's.
+    paths:
+      exclude: ["e2e/**", "**/e2e/**", "tests/**", "test/**", "**/*.spec.*", "**/*.test.*", "**/*Tests/**", "**/*.Tests/**"]
     mode: taint
     pattern-sources:
       - patterns:

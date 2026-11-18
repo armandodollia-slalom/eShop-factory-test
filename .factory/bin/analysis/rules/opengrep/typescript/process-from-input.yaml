@@ -7,6 +7,10 @@ rules:
       A shell command is run with a value that is not a fixed string. A value from a request can add its own commands
       (command injection). Run the program with execFile/spawn and an argument array, without a shell.
     metadata: { cwe: "CWE-78", category: security, licence: MIT, source: ai-app-factory }
+    # Test code drives the application from outside: a test client's request and response are not the server's input
+    # (dogfood C15: Playwright specs failed CI on SQL and SSRF rules). Secrets in tests are still the secret scan's.
+    paths:
+      exclude: ["e2e/**", "**/e2e/**", "tests/**", "test/**", "**/*.spec.*", "**/*.test.*", "**/*Tests/**", "**/*.Tests/**"]
     pattern-either:
       - patterns:
           - pattern-either:

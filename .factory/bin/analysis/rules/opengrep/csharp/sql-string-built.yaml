@@ -8,6 +8,10 @@ rules:
       from a request changes the statement (SQL injection). Use parameters (SqlParameter, FromSql with an interpolated
       FormattableString, or Dapper's parameter object).
     metadata: { cwe: "CWE-89", category: security, licence: MIT, source: ai-app-factory }
+    # Test code drives the application from outside: a test client's request and response are not the server's input
+    # (dogfood C15: Playwright specs failed CI on SQL and SSRF rules). Secrets in tests are still the secret scan's.
+    paths:
+      exclude: ["e2e/**", "**/e2e/**", "tests/**", "test/**", "**/*.spec.*", "**/*.test.*", "**/*Tests/**", "**/*.Tests/**"]
     pattern-either:
       # A command or adapter type only: an interpolated string passed to any other constructor (new Uri($"..."),
       # new ArgumentException($"...")) is not SQL (dogfood C15: the unconstrained constructor matched them as injections).

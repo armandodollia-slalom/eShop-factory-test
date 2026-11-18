@@ -15,6 +15,15 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { classify, identify, stripRulePrefix } from './baseline.mjs';
 import { parserFor } from './parsers.mjs';
 import { commandValidator, installBinary, pruneData, ruleSet } from './fetch.mjs';
+import { expandSecretEnv, severityOf, triageOf } from './commercial.mjs';
+
+// A tool's env with {placeholders} filled and `${NAME}` references read from the CI system's secret store (exposed as
+// environment variables); a reference that is not set stops the tool (the job fails closed). Values are never printed.
+function toolEnv(id, t, v) {
+  const r = expandSecretEnv(Object.fromEntries(Object.entries(t.env ?? {}).map(([k, x]) => [k, expandOne(String(x), v)])));
+  if (r.missing.length) throw new Error(`${id}: ${r.missing.join(', ')} not set (add ${r.missing.length > 1 ? 'them' : 'it'} to the CI system's secret store)`);
+  return { ...process.env, ...r.env };
+}
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const argv = process.argv.slice(2);
@@ -88,8 +97,12 @@ async function runTool(id, t, { cwd, vars }) {
   const out = path.join(os.tmpdir(), `factory-analysis-${id}-${process.pid}-${Math.random().toString(36).slice(2)}.out`);
   const v = { ...vars, out, root: cwd };
   const [cmd, args] = argvOf(expand(t.run, v));
-  const env = { ...process.env, ...Object.fromEntries(Object.entries(t.env ?? {}).map(([k, x]) => [k, expandOne(String(x), v)])) };
+  const env = toolEnv(id, t, v);
   const r = sh(cmd, args, { cwd, env, timeoutSec: t.timeoutSec ?? 600 });
+  if (t.submitOnly) {
+    if (r.status !== 0) throw new Error(`${id}: the upload failed (exit ${r.status}): ${String(r.stderr).trim().slice(-500)}`);
+    return [];
+  }
   try {
     if (r.error) throw new Error(`${id} could not run: ${r.error.message}`);
     const all = `${r.stdout ?? ''}${r.stderr ?? ''}`;
@@ -152,12 +165,16 @@ async function main() {
       const vars = { files: [...changed.keys()], base, mergeBase, range: `${mergeBase}..HEAD`, bin, ruleDirs: ruleDirs(id, t, bin), rulesArg: t.rulesArg, cache, extra: data.vars ?? {} };
       if (t.prepare) {
         const [c, a] = argvOf(expand(t.prepare, { ...vars, root }));
-        const env = { ...process.env, ...Object.fromEntries(Object.entries(t.env ?? {}).map(([k, x]) => [k, expandOne(String(x), { ...vars, root })])) };
+        const env = toolEnv(id, t, { ...vars, root });
         const p = sh(c, a, { timeoutSec: t.timeoutSec ?? 600, env });
         if (!(t.okExit ?? [0]).includes(p.status) || (t.errorPattern && new RegExp(t.errorPattern).test(`${p.stdout}${p.stderr}`))) throw new Error(`${id}: prepare failed (exit ${p.status}): ${String(p.stderr).trim().slice(-500)}`);
         for (const removed of pruneData(cache, t.data)) console.log(`${id}: removed excluded data ${path.basename(removed)} (licence)`);
       }
       const head = await runTool(id, t, { cwd: root, vars });
+      if (t.submitOnly) {
+        summary.push(`${id}: uploaded; the scanner's result for this commit is read from its server by the review gate`);
+        continue;
+      }
       let baseFindings = [];
       if (t.baseline === 'merge-base' && head.length) {
         const wt = fs.mkdtempSync(path.join(os.tmpdir(), 'factory-analysis-base-'));
@@ -171,7 +188,8 @@ async function main() {
         }
       }
       const { introduced, preexisting } = classify(head, { scope: 'repo', baseline: t.baseline, changed, base: baseFindings });
-      const blocking = (f) => (t.block?.levels ?? []).includes(f.level) || (t.block?.rules ?? []).some((r) => (r.endsWith('*') ? String(f.rule).startsWith(r.slice(0, -1)) : r === f.rule));
+      const blocking = (f) => !(t.commercial && triageOf(f)) && severityOf(t, f) === 'blocking';
+      for (const f of t.commercial ? introduced.filter((x) => triageOf(x)) : []) console.log(`triaged  ${id} ${f.rule} ${f.file ?? '(no file)'}${f.line ? `:${f.line}` : ''}: ${triageOf(f)} in the scanner's own system (by a person; does not fail this job)`);
       const where = (f) => `${f.file ?? '(no file)'}${f.line ? `:${f.line}` : ''}`;
       const short = (m) => String(m ?? '').split('\n')[0].slice(0, 300);
       for (const f of introduced) console.log(`${blocking(f) ? 'BLOCKING' : 'finding '} ${id} ${f.rule} ${where(f)}: ${short(f.message)}`);

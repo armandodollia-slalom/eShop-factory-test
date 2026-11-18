@@ -7,6 +7,10 @@ rules:
       Code is built at run time from a value that is not a fixed string (eval, new Function, a timer given a string). A
       value from outside runs as code. Use a lookup table or a parser for the data instead.
     metadata: { cwe: "CWE-95", category: security, licence: MIT, source: ai-app-factory }
+    # Test code drives the application from outside: a test client's request and response are not the server's input
+    # (dogfood C15: Playwright specs failed CI on SQL and SSRF rules). Secrets in tests are still the secret scan's.
+    paths:
+      exclude: ["e2e/**", "**/e2e/**", "tests/**", "test/**", "**/*.spec.*", "**/*.test.*", "**/*Tests/**", "**/*.Tests/**"]
     pattern-either:
       - patterns:
           - pattern-either:

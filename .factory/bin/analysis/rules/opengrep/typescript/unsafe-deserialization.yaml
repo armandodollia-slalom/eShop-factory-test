@@ -8,6 +8,10 @@ rules:
       funcster, js-yaml's unsafe loaders). Data from outside can execute. Parse plain data (JSON.parse, yaml.load with the
       default safe schema) and validate it.
     metadata: { cwe: "CWE-502", category: security, licence: MIT, source: ai-app-factory }
+    # Test code drives the application from outside: a test client's request and response are not the server's input
+    # (dogfood C15: Playwright specs failed CI on SQL and SSRF rules). Secrets in tests are still the secret scan's.
+    paths:
+      exclude: ["e2e/**", "**/e2e/**", "tests/**", "test/**", "**/*.spec.*", "**/*.test.*", "**/*Tests/**", "**/*.Tests/**"]
     pattern-either:
       - pattern: $S.unserialize(...)
       - pattern: unserialize(...)

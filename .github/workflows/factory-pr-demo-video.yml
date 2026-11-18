@@ -9,35 +9,73 @@ name: PR demo video
 # documented from the stack's OpenAPI with example calls the specs made. See docs/ai-pipeline/pr-demo-video.md.
 on:
   pull_request:
-    types: [opened, reopened, synchronize, ready_for_review, closed]
+    types: [ opened, reopened, synchronize, ready_for_review, closed ]
+  push:
+    branches:
+    - feat/**
+    - epic/**
+    - bugfix/**
 
 permissions:
   contents: write
   pull-requests: write
 
 concurrency:
-  group: pr-demo-video-${{ github.event.pull_request.number }}
+  group: pr-demo-video-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 env:
   GH_TOKEN: ${{ github.token }}
   PR_NUMBER: ${{ github.event.pull_request.number }}
-  HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+  HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
   RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-  BASE_REF: origin/${{ github.event.pull_request.base.ref }}
+  BASE_REF: origin/${{ github.event.pull_request.base.ref || github.event.repository.default_branch }}
+  # A push of a story branch before its PR exists (implement.preOpen) records under the branch's name, and the pipeline
+  # puts the sections into the PR body before it opens; a PR event writes into the PR's description.
+  TARGET: ${{ github.event.pull_request.number && format('--pr {0}', github.event.pull_request.number) || format('--key {0}', github.ref_name) }}
 
 jobs:
+  reuse:
+    name: reuse
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+      contents: read
+    outputs:
+      reused: ${{ steps.check.outputs.reused }}
+    steps:
+    - id: check
+      name: The same jobs already passed on this head before the PR opened
+      env:
+        GH_TOKEN: ${{ github.token }}
+        HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        BASE_REF: ${{ github.event.pull_request.base.ref }}
+        WORKFLOW_REF: ${{ github.workflow_ref }}
+        ALLOW_SKIPPED: cleanup
+      run: |-
+        set -u
+        wf="${WORKFLOW_REF#*/*/}"; wf="${wf%@*}"
+        reused=false
+        behind=$(gh api "repos/$GITHUB_REPOSITORY/compare/$BASE_REF...$HEAD_SHA" --jq .behind_by 2>/dev/null || echo unknown)
+        run=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$HEAD_SHA&event=push&per_page=50" --jq "[.workflow_runs[] | select(.path == \"$wf\" and .conclusion == \"success\")][0].id // empty" 2>/dev/null || true)
+        if [ "$behind" = "0" ] && [ -n "$run" ]; then
+          open=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run/jobs?per_page=100" --jq "[.jobs[] | . as \$j | select(\$j.name != \"reuse\" and \$j.conclusion != \"success\" and ((\$j.conclusion == \"skipped\" and ((env.ALLOW_SKIPPED // \"\") | split(\",\") | index(\$j.name) != null)) | not))] | length" 2>/dev/null || echo 1)
+          if [ "$open" = "0" ]; then reused=true; echo "Every job of $wf passed on $HEAD_SHA in its story-branch push run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$run (reused, not repeated)"; fi
+        fi
+        [ "$reused" = true ] || echo "No complete green push run of $wf on $HEAD_SHA with the base not ahead (behind_by=$behind, run=${run:-none}): the jobs run in full"
+        echo "reused=$reused" >> "$GITHUB_OUTPUT"
   record:
     # Fork and Dependabot PRs get a read-only token, so they can't publish.
     if: >-
-      github.event.action != 'closed' && !github.event.pull_request.draft &&
-      github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]'
+      ${{ !cancelled() && needs.reuse.outputs.reused != 'true' && (github.event_name == 'push' || (github.event.action != 'closed' && !github.event.pull_request.draft && github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
     - uses: actions/checkout@v4
       with:
-        ref: ${{ github.event.pull_request.head.sha }}
+        ref: ${{ env.HEAD_SHA }}
         fetch-depth: 0
     - uses: actions/setup-node@v4
       with:
@@ -61,12 +99,11 @@ jobs:
         if [ -n "$list" ] || [ "$api" = true ]; then echo "stack=true" >> "$GITHUB_OUTPUT"; fi
     - name: No frontend change
       if: steps.specs.outputs.video != 'true'
-      run: factory pr-video publish --pr "$PR_NUMBER" --remove
+      run: factory pr-video publish $TARGET --remove
     - name: No spec changed
       if: steps.specs.outputs.video == 'true' && steps.specs.outputs.list == ''
       run: >-
-        factory pr-video publish --pr "$PR_NUMBER" --head-sha "$HEAD_SHA" --run-url "$RUN_URL"
-        --note "No \`e2e/teststack/*.spec.ts\` changed in this PR, so there is no demo video. User-facing changes need one: see the factory's feature-demo-video skill (\`skills/feature-demo-video\` in the factory install)."
+        factory pr-video publish $TARGET --head-sha "$HEAD_SHA" --run-url "$RUN_URL" --note "No \`e2e/teststack/*.spec.ts\` changed in this PR, so there is no demo video. User-facing changes need one: see the factory's feature-demo-video skill (\`skills/feature-demo-video\` in the factory install)."
 
     # Backend-only PRs start the stack even without a changed spec, so their API summary gets OpenAPI details.
     - name: "Toolchain (yours: .github/actions/factory-toolchain)"
@@ -92,7 +129,7 @@ jobs:
       if: steps.specs.outputs.record == 'true' && steps.specs.outputs.video == 'true'
       env:
         SPECS: ${{ steps.specs.outputs.list }}
-      run: factory pr-video publish --pr "$PR_NUMBER" --specs "$SPECS" --head-sha "$HEAD_SHA" --run-url "$RUN_URL"
+      run: factory pr-video publish $TARGET --specs "$SPECS" --head-sha "$HEAD_SHA" --run-url "$RUN_URL"
     # Only edits the PR description, so a failure here does not fail the recording.
     - name: Add the API summary to the PR
       if: always() && steps.specs.outcome == 'success'
@@ -101,12 +138,12 @@ jobs:
         SPECS: ${{ steps.specs.outputs.list }}
         API: ${{ steps.specs.outputs.api }}
         FRONTEND: ${{ steps.specs.outputs.frontend }}
-      run: factory pr-video api --pr "$PR_NUMBER" --base "$BASE_REF" --api "$API" --frontend "$FRONTEND" --specs "$SPECS" --head-sha "$HEAD_SHA" --run-url "$RUN_URL"
+      run: factory pr-video api $TARGET --base "$BASE_REF" --api "$API" --frontend "$FRONTEND" --specs "$SPECS" --head-sha "$HEAD_SHA" --run-url "$RUN_URL"
     - name: Upload the videos
       if: always() && steps.specs.outputs.record == 'true' && steps.specs.outputs.video == 'true'
       uses: actions/upload-artifact@v4
       with:
-        name: pr-demo-video-${{ env.PR_NUMBER }}
+        name: pr-demo-video-${{ env.PR_NUMBER || github.run_id }}
         path: artifacts/e2e-videos/
         retention-days: 14
         if-no-files-found: ignore
@@ -115,11 +152,12 @@ jobs:
       run: |
         echo "::error::A changed e2e spec failed; its video is marked failed in the PR description."
         exit 1
+    needs:
+    - reuse
 
   cleanup:
     if: >-
-      github.event.action == 'closed' && !github.event.pull_request.merged &&
-      github.event.pull_request.head.repo.full_name == github.repository
+      github.event.action == 'closed' && !github.event.pull_request.merged && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -130,4 +168,6 @@ jobs:
       with:
         token: ${{ secrets.FACTORY_TOKEN }}
     - name: Remove the PR's videos
-      run: factory pr-video cleanup --pr "$PR_NUMBER"
+      run: |
+        factory pr-video cleanup --pr "$PR_NUMBER"
+        factory pr-video cleanup --key "${{ github.event.pull_request.head.ref }}"

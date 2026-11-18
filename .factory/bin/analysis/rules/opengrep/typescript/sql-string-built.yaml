@@ -10,6 +10,10 @@ rules:
       A SQL statement is built from a string with a value spliced into it and then executed. A value that reaches it from
       a request can change the statement (SQL injection). Pass values as query parameters (placeholders) instead.
     metadata: { cwe: "CWE-89", category: security, licence: MIT, source: ai-app-factory }
+    # Test code drives the application from outside: a test client's request and response are not the server's input
+    # (dogfood C15: Playwright specs failed CI on SQL and SSRF rules). Secrets in tests are still the secret scan's.
+    paths:
+      exclude: ["e2e/**", "**/e2e/**", "tests/**", "test/**", "**/*.spec.*", "**/*.test.*", "**/*Tests/**", "**/*.Tests/**"]
     patterns:
       - pattern-either:
           - pattern: $DB.$EXEC($ARG, ...)

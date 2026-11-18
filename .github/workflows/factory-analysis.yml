@@ -8,7 +8,43 @@ permissions:
 on:
   pull_request:
 
+  push:
+    branches:
+    - feat/**
+    - epic/**
+    - bugfix/**
 jobs:
+  reuse:
+    name: reuse
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+      contents: read
+    outputs:
+      reused: ${{ steps.check.outputs.reused }}
+    steps:
+    - id: check
+      name: The same jobs already passed on this head before the PR opened
+      env:
+        GH_TOKEN: ${{ github.token }}
+        HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        BASE_REF: ${{ github.event.pull_request.base.ref }}
+        WORKFLOW_REF: ${{ github.workflow_ref }}
+        ALLOW_SKIPPED: ""
+      run: |-
+        set -u
+        wf="${WORKFLOW_REF#*/*/}"; wf="${wf%@*}"
+        reused=false
+        behind=$(gh api "repos/$GITHUB_REPOSITORY/compare/$BASE_REF...$HEAD_SHA" --jq .behind_by 2>/dev/null || echo unknown)
+        run=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$HEAD_SHA&event=push&per_page=50" --jq "[.workflow_runs[] | select(.path == \"$wf\" and .conclusion == \"success\")][0].id // empty" 2>/dev/null || true)
+        if [ "$behind" = "0" ] && [ -n "$run" ]; then
+          open=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run/jobs?per_page=100" --jq "[.jobs[] | . as \$j | select(\$j.name != \"reuse\" and \$j.conclusion != \"success\" and ((\$j.conclusion == \"skipped\" and ((env.ALLOW_SKIPPED // \"\") | split(\",\") | index(\$j.name) != null)) | not))] | length" 2>/dev/null || echo 1)
+          if [ "$open" = "0" ]; then reused=true; echo "Every job of $wf passed on $HEAD_SHA in its story-branch push run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$run (reused, not repeated)"; fi
+        fi
+        [ "$reused" = true ] || echo "No complete green push run of $wf on $HEAD_SHA with the base not ahead (behind_by=$behind, run=${run:-none}): the jobs run in full"
+        echo "reused=$reused" >> "$GITHUB_OUTPUT"
   secrets:
     name: "Secret scan"
     runs-on: ubuntu-latest
@@ -23,8 +59,11 @@ jobs:
         node-version: 20.x
     - name: "Secret scan"
       env:
-        BASE_REF: ${{ github.base_ref }}
+        BASE_REF: ${{ github.base_ref || github.event.repository.default_branch }}
       run: FACTORY_CACHE_DIR="$RUNNER_TEMP/factory-cache" node .factory/bin/analysis/ci.mjs --job secrets --base "origin/$BASE_REF"
+    needs:
+    - reuse
+    if: ${{ !cancelled() && needs.reuse.outputs.reused != 'true' }}
   dependencies:
     name: "Dependency audit"
     runs-on: ubuntu-latest
@@ -42,8 +81,11 @@ jobs:
       uses: ./.github/actions/factory-toolchain
     - name: "Dependency audit"
       env:
-        BASE_REF: ${{ github.base_ref }}
+        BASE_REF: ${{ github.base_ref || github.event.repository.default_branch }}
       run: FACTORY_CACHE_DIR="$RUNNER_TEMP/factory-cache" node .factory/bin/analysis/ci.mjs --job dependencies --base "origin/$BASE_REF"
+    needs:
+    - reuse
+    if: ${{ !cancelled() && needs.reuse.outputs.reused != 'true' }}
   sast:
     name: "Security patterns (SAST)"
     runs-on: ubuntu-latest
@@ -58,8 +100,11 @@ jobs:
         node-version: 20.x
     - name: "Security patterns (SAST)"
       env:
-        BASE_REF: ${{ github.base_ref }}
+        BASE_REF: ${{ github.base_ref || github.event.repository.default_branch }}
       run: FACTORY_CACHE_DIR="$RUNNER_TEMP/factory-cache" node .factory/bin/analysis/ci.mjs --job sast --base "origin/$BASE_REF"
+    needs:
+    - reuse
+    if: ${{ !cancelled() && needs.reuse.outputs.reused != 'true' }}
   workflows:
     name: "Workflow lint"
     runs-on: ubuntu-latest
@@ -74,5 +119,8 @@ jobs:
         node-version: 20.x
     - name: "Workflow lint"
       env:
-        BASE_REF: ${{ github.base_ref }}
+        BASE_REF: ${{ github.base_ref || github.event.repository.default_branch }}
       run: FACTORY_CACHE_DIR="$RUNNER_TEMP/factory-cache" node .factory/bin/analysis/ci.mjs --job workflows --base "origin/$BASE_REF"
+    needs:
+    - reuse
+    if: ${{ !cancelled() && needs.reuse.outputs.reused != 'true' }}

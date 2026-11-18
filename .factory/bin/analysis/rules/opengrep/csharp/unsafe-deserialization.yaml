@@ -8,6 +8,10 @@ rules:
       LosFormatter, ObjectStateFormatter, or Json.NET with TypeNameHandling other than None). Data from outside can run
       code. Use System.Text.Json or DataContractSerializer with known types.
     metadata: { cwe: "CWE-502", category: security, licence: MIT, source: ai-app-factory }
+    # Test code drives the application from outside: a test client's request and response are not the server's input
+    # (dogfood C15: Playwright specs failed CI on SQL and SSRF rules). Secrets in tests are still the secret scan's.
+    paths:
+      exclude: ["e2e/**", "**/e2e/**", "tests/**", "test/**", "**/*.spec.*", "**/*.test.*", "**/*Tests/**", "**/*.Tests/**"]
     pattern-either:
       - pattern: new BinaryFormatter(...)
       - pattern: new SoapFormatter(...)
