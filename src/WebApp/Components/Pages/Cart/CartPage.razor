@@ -11,6 +11,10 @@
 <SectionContent SectionName="page-header-title">Shopping bag</SectionContent>
 
 <div class='cart'>
+    @if (giftMessageProductMissing)
+    {
+        <p class="gift-message-error" role="alert">Choose an item in your bag to add a gift message to.</p>
+    }
     @if (basketItems is null)
     {
         <p class="cart-empty">Loading...</p>
@@ -32,10 +36,6 @@
     else
     {
         <div class='cart-items'>
-            @if (giftMessageProductMissing)
-            {
-                <p class="gift-message-error" role="alert">Choose an item in your bag to add a gift message to.</p>
-            }
             <div class='cart-item-header'>
                 <div class='catalog-item-info'>Products</div>
                 <div class='catalog-item-quantity'>Quantity</div>
