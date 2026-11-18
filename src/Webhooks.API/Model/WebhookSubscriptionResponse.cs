@@ -1,4 +1,6 @@
-﻿namespace Webhooks.API.Model;
+﻿using System.Globalization;
+
+namespace Webhooks.API.Model;
 
 public class WebhookSubscriptionResponse
 {
@@ -31,8 +33,10 @@ public class WebhookSubscriptionResponse
             return null;
         }
 
-        return token.Length > VisibleTokenCharacters
-            ? Ellipsis + token[^VisibleTokenCharacters..]
+        // Count text elements, not UTF-16 code units, so a surrogate pair or combining sequence is never split.
+        var characters = new StringInfo(token);
+        return characters.LengthInTextElements > VisibleTokenCharacters
+            ? Ellipsis + characters.SubstringByTextElements(characters.LengthInTextElements - VisibleTokenCharacters)
             : Ellipsis;
     }
 }
