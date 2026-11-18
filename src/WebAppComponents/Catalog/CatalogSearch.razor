@@ -71,6 +71,26 @@
                         }
                     </div>
                 </div>
+                <div class="catalog-search-group">
+                    <h3>Availability</h3>
+                    @* A plain GET form keeps the page statically rendered: ticking the box submits it with
+                       the current brand and type selection, and without a page number. *@
+                    <form class="catalog-search-availability" method="get" action="@AvailabilityAction()">
+                        @foreach (var brandId in Brands)
+                        {
+                            <input type="hidden" name="brand" value="@brandId" />
+                        }
+                        @foreach (var typeId in Types)
+                        {
+                            <input type="hidden" name="type" value="@typeId" />
+                        }
+                        <label class="catalog-search-check">
+                            <input type="checkbox" name="onlyAvailable" value="true" checked="@OnlyAvailable" onchange="this.form.submit()" />
+                            <span>In stock only</span>
+                        </label>
+                        <noscript><button type="submit" class="catalog-search-apply">Apply</button></noscript>
+                    </form>
+                </div>
             </div>
         </details>
     </aside>
@@ -83,6 +103,7 @@
 
     [Parameter] public int[]? BrandIds { get; set; }
     [Parameter] public int[]? TypeIds { get; set; }
+    [Parameter] public bool OnlyAvailable { get; set; }
 
     private IReadOnlyList<int> Brands => BrandIds ?? [];
     private IReadOnlyList<int> Types => TypeIds ?? [];
@@ -90,8 +111,8 @@
     private int BrandActiveCount => Brands.Count;
     private int TypeActiveCount => Types.Count;
 
-    bool HasActiveFilter => Brands.Count > 0 || Types.Count > 0;
-    int ActiveFilterCount => Brands.Count + Types.Count;
+    bool HasActiveFilter => Brands.Count > 0 || Types.Count > 0 || OnlyAvailable;
+    int ActiveFilterCount => Brands.Count + Types.Count + (OnlyAvailable ? 1 : 0);
 
     private bool IsBrandActive(int id) => Brands.Contains(id);
     private bool IsTypeActive(int id) => Types.Contains(id);
@@ -169,7 +190,11 @@
         { "page", null },
         { "brand", null },
         { "type", null },
+        { "onlyAvailable", null },
     });
+
+    // A GET form replaces the action's query with its own fields, so the action is just the path.
+    private string AvailabilityAction() => new Uri(Nav.Uri).GetLeftPart(UriPartial.Path);
 
     // A null id clears the facet ("All"). Otherwise toggle the id's membership in the
     // current set and return an array (emitted as repeated query params) or null when the

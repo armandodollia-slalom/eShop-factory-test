@@ -9,7 +9,12 @@ public record CatalogItem(
     int CatalogBrandId,
     CatalogBrand CatalogBrand,
     int CatalogTypeId,
-    CatalogItemType CatalogType);
+    CatalogItemType CatalogType,
+    // Fails closed on purpose: an item whose stock is not reported is shown as out of stock and cannot be added to the bag.
+    int AvailableStock = 0)
+{
+    public bool IsOutOfStock => AvailableStock <= 0;
+}
 
 public record CatalogResult(int PageIndex, int PageSize, int Count, List<CatalogItem> Data);
 public record CatalogBrand(int Id, string Brand);
