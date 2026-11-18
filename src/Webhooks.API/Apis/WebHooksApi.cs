@@ -14,10 +14,10 @@ public static class WebHooksApi
         {
             var userId = user.GetUserId();
             var data = await context.Subscriptions.Where(s => s.UserId == userId).ToListAsync();
-            return TypedResults.Ok(data);
+            return TypedResults.Ok(data.Select(WebhookSubscriptionResponse.FromSubscription).ToList());
         });
 
-        api.MapGet("/{id:int}", async Task<Results<Ok<WebhookSubscription>, NotFound<string>>> (
+        api.MapGet("/{id:int}", async Task<Results<Ok<WebhookSubscriptionResponse>, NotFound<string>>> (
             WebhooksContext context,
             ClaimsPrincipal user,
             int id) =>
@@ -27,7 +27,7 @@ public static class WebHooksApi
                 .SingleOrDefaultAsync(s => s.Id == id && s.UserId == userId);
             if (subscription != null)
             {
-                return TypedResults.Ok(subscription);
+                return TypedResults.Ok(WebhookSubscriptionResponse.FromSubscription(subscription));
             }
             return TypedResults.NotFound($"Subscriptions {id} not found");
         });
