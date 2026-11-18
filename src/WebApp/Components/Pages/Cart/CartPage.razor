@@ -10,11 +10,14 @@
 <PageTitle>Shopping Bag | AdventureWorks</PageTitle>
 <SectionContent SectionName="page-header-title">Shopping bag</SectionContent>
 
-<div class='cart'>
-    @if (giftMessageProductMissing)
-    {
+@if (giftMessageProductMissing)
+{
+    <div class="cart-notice">
         <p class="gift-message-error" role="alert">Choose an item in your bag to add a gift message to.</p>
-    }
+    </div>
+}
+
+<div class='cart'>
     @if (basketItems is null)
     {
         <p class="cart-empty">Loading...</p>

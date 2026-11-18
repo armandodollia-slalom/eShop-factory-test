@@ -7,6 +7,12 @@
     padding: 0 var(--page-pad) 4rem;
 }
 
+.cart-notice {
+    max-width: var(--content-max);
+    margin: 0 auto;
+    padding: 0 var(--page-pad) 1rem;
+}
+
 .cart-empty {
     display: flex;
     flex-direction: column;
