@@ -147,7 +147,7 @@ public static class CatalogApi
 
         if (name is not null)
         {
-            root = root.Where(c => c.Name.StartsWith(name));
+            root = root.Where(c => c.Name.Contains(name));
         }
         if (type is { Length: > 0 })
         {
