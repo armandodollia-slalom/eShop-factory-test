@@ -32,6 +32,10 @@
     else
     {
         <div class='cart-items'>
+            @if (giftMessageProductMissing)
+            {
+                <p class="gift-message-error" role="alert">Choose an item in your bag to add a gift message to.</p>
+            }
             <div class='cart-item-header'>
                 <div class='catalog-item-info'>Products</div>
                 <div class='catalog-item-quantity'>Quantity</div>
@@ -135,6 +139,7 @@
 
     private IReadOnlyCollection<BasketItem>? basketItems;
     private bool giftMessageSaveFailed;
+    private bool giftMessageProductMissing;
 
     [SupplyParameterFromForm]
     public int? GiftMessageProductId { get; set; }
@@ -182,9 +187,10 @@
 
     private async Task SaveGiftMessageAsync()
     {
-        // A post without a product id names no line to change: leave the bag as it is and re-render it.
+        // A post without a product id names no line to change: leave the bag as it is and say why nothing was saved.
         if (GiftMessageProductId is not { } id)
         {
+            giftMessageProductMissing = true;
             return;
         }
 
