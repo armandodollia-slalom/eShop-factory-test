@@ -32,6 +32,7 @@ else
         <li class="orders-header orders-item">
             <div>Number</div>
             <div>Date</div>
+            <div>Ships to</div>
             <div class="total-header">Total</div>
             <div>Status</div>
         </li>
@@ -43,6 +44,9 @@ else
                 </div>
                 <div class="order-date">
                     @order.Date
+                </div>
+                <div class="order-ships-to">
+                    @order.City, @order.Country
                 </div>
                 <div class="order-total">
                    $@order.Total.ToPriceDisplay()

@@ -103,6 +103,12 @@
     color: var(--color-ink-2);
 }
 
+.order-ships-to {
+    min-width: 0;
+    color: var(--color-ink-2);
+    overflow-wrap: anywhere;
+}
+
 .order-total {
     color: var(--color-ink);
     text-align: right;
