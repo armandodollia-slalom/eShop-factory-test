@@ -85,9 +85,10 @@ public class BasketState(
             var trimmed = message?.Trim();
             items[index] = items[index] with { GiftMessage = string.IsNullOrEmpty(trimmed) ? null : trimmed };
 
+            // No change notification: subscribers show quantities, which a gift message does not change,
+            // and a failing refresh there must not report a stored message as unsaved.
             _cachedBasket = null;
             await basketService.UpdateBasketAsync(items);
-            await NotifyChangeSubscribersAsync();
         }
     }
 

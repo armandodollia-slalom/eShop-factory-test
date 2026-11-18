@@ -200,13 +200,23 @@
         try
         {
             await Basket.SetGiftMessageAsync(id, GiftMessageText);
-            basketItems = await Basket.GetBasketItemsAsync();
         }
         catch (Exception ex) when (ex is RpcException or HttpRequestException)
         {
             // Keep the bag as it was loaded and tell the shopper, rather than failing the whole page.
             Logger.LogError(ex, "Could not save the gift message for product {ProductId}", id);
             giftMessageSaveFailed = true;
+            return;
+        }
+
+        try
+        {
+            basketItems = await Basket.GetBasketItemsAsync();
+        }
+        catch (Exception ex) when (ex is RpcException or HttpRequestException)
+        {
+            // The message is stored; the line keeps the earlier load but shows the submitted message as current.
+            Logger.LogWarning(ex, "Could not reload the bag after saving the gift message for product {ProductId}", id);
         }
     }
 }
