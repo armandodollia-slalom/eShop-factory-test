@@ -4,6 +4,8 @@
 @inject IProductImageUrlProvider ProductImages
 @inject ILogger<CartPage> Logger
 @using Grpc.Core
+@using Polly.CircuitBreaker
+@using Polly.Timeout
 @attribute [StreamRendering]
 @attribute [Authorize]
 
@@ -188,6 +190,11 @@
     private static string? NormalizeGiftMessage(string? message)
         => string.IsNullOrWhiteSpace(message) ? null : message.Trim();
 
+    // Failures of the basket and catalog calls, including those the standard resilience pipeline raises
+    // when a call times out or its circuit is open.
+    private static bool IsRemoteCallFailure(Exception ex)
+        => ex is RpcException or HttpRequestException or TimeoutRejectedException or BrokenCircuitException;
+
     private async Task SaveGiftMessageAsync()
     {
         // A post without a product id names no line to change: leave the bag as it is and say why nothing was saved.
@@ -201,7 +208,7 @@
         {
             await Basket.SetGiftMessageAsync(id, GiftMessageText);
         }
-        catch (Exception ex) when (ex is RpcException or HttpRequestException)
+        catch (Exception ex) when (IsRemoteCallFailure(ex))
         {
             // Keep the bag as it was loaded and tell the shopper, rather than failing the whole page.
             Logger.LogError(ex, "Could not save the gift message for product {ProductId}", id);
@@ -213,7 +220,7 @@
         {
             basketItems = await Basket.GetBasketItemsAsync();
         }
-        catch (Exception ex) when (ex is RpcException or HttpRequestException)
+        catch (Exception ex) when (IsRemoteCallFailure(ex))
         {
             // The message is stored; the line keeps the earlier load but shows the submitted message as current.
             Logger.LogWarning(ex, "Could not reload the bag after saving the gift message for product {ProductId}", id);
