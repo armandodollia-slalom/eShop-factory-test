@@ -1,3 +1,7 @@
+{"ts":"2026-11-14T19:55:49.162Z","story":"BUG-12","kind":"stack-slot","stage":"UI verifier (self)","slot":1,"waitedSec":1,"outcome":"leased","delivery":"epic"}
+{"ts":"2026-11-14T20:01:56.604Z","story":"BUG-12","kind":"stack-slot","stage":"automation agent","slot":1,"waitedSec":3,"outcome":"leased","poolSize":null}
+{"ts":"2026-11-14T20:06:44.640Z","story":"BUG-12","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":1,"outcome":"leased","poolSize":null}
+{"ts":"2026-11-14T20:16:25.313Z","story":"BUG-12","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":1,"outcome":"leased","poolSize":null}
 {"ts":"2026-11-14T20:08:06.543Z","story":"BUG-15","kind":"stack-slot","stage":"automation agent","slot":1,"waitedSec":265,"outcome":"leased","poolSize":null}
 {"ts":"2026-11-14T20:14:55.027Z","story":"BUG-15","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null}
 {"ts":"2026-11-14T20:30:09.706Z","story":"BUG-15","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":1,"outcome":"leased","poolSize":null}
