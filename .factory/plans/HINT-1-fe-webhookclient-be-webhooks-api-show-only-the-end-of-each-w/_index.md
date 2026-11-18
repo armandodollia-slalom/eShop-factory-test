@@ -2,14 +2,14 @@
 story: HINT-1
 story-issue: "https://github.com/armandodollia-slalom/eShop-factory-test/issues/297"
 story-sha: 571f589dcad2
-plan-sha: f5d524c27fca
-verified-score: 10
-verified-at: "2026-11-18T20:11:15.805Z"
-verified-by: test-planner@c9e755e4/council
-automation-sha: 9316571d1429
-automation-plan-sha: f5d524c27fca
+automation-sha: f47aca47e5bd
+automation-plan-sha: 3f7bb016d372
 automation-score: 10
-automation-verified-at: "2026-11-18T21:14:39.697Z"
+automation-verified-at: "2026-11-18T21:47:57.209Z"
+plan-sha: 3f7bb016d372
+verified-score: 10
+verified-at: "2026-11-18T21:39:11.494Z"
+verified-by: test-planner@c9e755e4/council
 ---
 # Test plan: HINT-1 Show only the end of each webhook's token
 
@@ -48,3 +48,4 @@ Scope: the Webhooks API's two read endpoints (`GET /api/webhooks`, `GET /api/web
 ## Open questions
 
 - Exact 401 response body for an unauthenticated read is not defined; TC-HINT-1-11 checks only the status and that no hint or token leaks.
+- AC2 says "characters" without defining them for text outside the Basic Multilingual Plane. TC-HINT-1-17 reads it literally as user-visible characters (text elements), not UTF-16 code units, so a surrogate pair is never split.
