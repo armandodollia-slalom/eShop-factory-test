@@ -48,7 +48,13 @@ public class BasketService(
             logger.LogDebug("Begin UpdateBasket call from method {Method} for basket id {Id}", context.Method, userId);
         }
 
-        var customerBasket = MapToCustomerBasket(userId, request);
+        // Callers built from an older contract (the mobile app) send items without the gift message field;
+        // their lines keep the message already stored for that product instead of losing it.
+        var storedGiftMessages = request.Items.All(item => item.HasGiftMessage)
+            ? null
+            : await GetStoredGiftMessagesAsync(userId);
+
+        var customerBasket = MapToCustomerBasket(userId, request, storedGiftMessages);
         var response = await repository.UpdateBasketAsync(customerBasket);
         if (response is null)
         {
@@ -93,7 +99,22 @@ public class BasketService(
         return response;
     }
 
-    private static CustomerBasket MapToCustomerBasket(string userId, UpdateBasketRequest customerBasketRequest)
+    private async Task<Dictionary<int, string>> GetStoredGiftMessagesAsync(string userId)
+    {
+        var storedGiftMessages = new Dictionary<int, string>();
+        var storedBasket = await repository.GetBasketAsync(userId);
+        foreach (var item in storedBasket?.Items ?? [])
+        {
+            if (!string.IsNullOrEmpty(item.GiftMessage))
+            {
+                storedGiftMessages.TryAdd(item.ProductId, item.GiftMessage);
+            }
+        }
+
+        return storedGiftMessages;
+    }
+
+    private static CustomerBasket MapToCustomerBasket(string userId, UpdateBasketRequest customerBasketRequest, Dictionary<int, string> storedGiftMessages)
     {
         var response = new CustomerBasket
         {
@@ -106,7 +127,9 @@ public class BasketService(
             {
                 ProductId = item.ProductId,
                 Quantity = item.Quantity,
-                GiftMessage = NormalizeGiftMessage(item.GiftMessage),
+                GiftMessage = item.HasGiftMessage
+                    ? NormalizeGiftMessage(item.GiftMessage)
+                    : storedGiftMessages.GetValueOrDefault(item.ProductId),
             });
         }
 
