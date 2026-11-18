@@ -12,3 +12,5 @@
 {"ts":"2026-11-18T09:48:33.609Z","story":"GIFT-1","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":4}
 {"ts":"2026-11-18T10:07:44.693Z","kind":"provider-slow","story":"GIFT-1","agent":"pr-check-defender","seconds":315,"sessionId":"aa3b230b-e514-471d-8a6e-e6d1c57254ee","requests":12,"resent":2,"stalledSec":235,"errors":2,"rateLimited":false,"overloaded":true,"startupSec":1}
 {"ts":"2026-11-18T10:15:36.498Z","story":"GIFT-1","kind":"stack-slot","stage":"UI verifier (pr-check-return-2-7)","slot":1,"waitedSec":1,"outcome":"leased","delivery":"epic"}
+{"ts":"2026-11-18T10:43:14.909Z","story":"GIFT-1","kind":"stack-slot","stage":"automation pass","slot":1,"waitedSec":2,"outcome":"leased","poolSize":null}
+{"ts":"2026-11-18T10:55:05.999Z","story":"GIFT-1","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":4}

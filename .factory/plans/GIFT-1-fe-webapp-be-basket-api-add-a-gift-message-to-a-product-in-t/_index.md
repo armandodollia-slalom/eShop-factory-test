@@ -6,10 +6,10 @@ plan-sha: 599ff29a1ffd
 verified-score: 10
 verified-at: "2026-11-18T08:04:07.683Z"
 verified-by: test-planner@6ab9e852/council
-automation-sha: 1bfe984f4392
+automation-sha: df602ccafe23
 automation-plan-sha: 599ff29a1ffd
 automation-score: 10
-automation-verified-at: "2026-11-18T09:56:15.934Z"
+automation-verified-at: "2026-11-18T11:03:47.207Z"
 ---
 # Test plan: GIFT-1 Add a gift message to a product in the shopping bag
 
