@@ -197,8 +197,12 @@
     protected override async Task OnInitializedAsync()
     {
         currentPage = Page.GetValueOrDefault(1);
+
+        // The catalog API computes the offset as pageIndex * pageSize in an int, so a huge page
+        // number would overflow there; ask for the first page just to learn the count instead.
+        var offsetOverflows = (long)(currentPage - 1) * PageSize > int.MaxValue;
         var result = await CatalogService.GetCatalogItems(
-            currentPage - 1,
+            offsetOverflows ? 0 : currentPage - 1,
             PageSize,
             BrandIds,
             TypeIds);
