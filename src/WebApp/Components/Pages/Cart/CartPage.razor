@@ -183,10 +183,9 @@
     private async Task SaveGiftMessageAsync()
     {
         var id = GiftMessageProductId!.Value;
-        var message = NormalizeGiftMessage(GiftMessageText);
         try
         {
-            await Basket.SetGiftMessageAsync(id, message);
+            await Basket.SetGiftMessageAsync(id, GiftMessageText);
             basketItems = await Basket.GetBasketItemsAsync();
         }
         catch (Exception ex) when (ex is RpcException or HttpRequestException)
