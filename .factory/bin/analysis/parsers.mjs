@@ -54,6 +54,10 @@ export function parseSarif(text) {
         level: level(r.level ?? rule?.defaultConfiguration?.level ?? 'warning'),
         file: uri,
         line: Number.isInteger(loc?.region?.startLine) ? loc.region.startLine : null,
+        // The match's columns where the tool gives them (a secret scanner: the span its rule matched; secrets.mjs reads
+        // the value there to tell a copy of a value already on the base from a new one).
+        ...(Number.isInteger(loc?.region?.startColumn) ? { column: loc.region.startColumn } : {}),
+        ...(Number.isInteger(loc?.region?.endColumn) && loc?.region?.endLine === loc?.region?.startLine ? { endColumn: loc.region.endColumn } : {}),
         message: strip(r.message?.text ?? r.message?.markdown ?? rule?.shortDescription?.text ?? ruleId),
         snippet: loc?.region?.snippet?.text ?? null,
         key: uri ? null : fingerprint ?? null,
