@@ -220,9 +220,10 @@
         {
             basketItems = await Basket.GetBasketItemsAsync();
         }
-        catch (Exception ex) when (IsRemoteCallFailure(ex))
+        catch (Exception ex) when (IsRemoteCallFailure(ex) || ex is KeyNotFoundException)
         {
-            // The message is stored; the line keeps the earlier load but shows the submitted message as current.
+            // The message is stored (a KeyNotFoundException means a line's product left the catalog since the
+            // bag was loaded); the line keeps the earlier load but shows the submitted message as current.
             Logger.LogWarning(ex, "Could not reload the bag after saving the gift message for product {ProductId}", id);
         }
     }
