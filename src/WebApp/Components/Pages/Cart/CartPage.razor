@@ -99,12 +99,18 @@
                     <img role="presentation" src="icons/arrow-left.svg" />
                     <p>Continue shopping</p>
                 </a>
+                <form method="post" data-enhance class="cart-summary-empty">
+                    <input type="hidden" name="_handler" value="empty-cart" />
+                    <AntiforgeryToken />
+                    <button type="submit" class="button button-secondary">Empty bag</button>
+                </form>
             </div>
         </div>
     }
 </div>
 
 <form @formname="update-cart" @onsubmit="@UpdateQuantityAsync"></form>
+<form @formname="empty-cart" @onsubmit="@EmptyBagAsync"></form>
 
 @code {
     private IReadOnlyCollection<BasketItem>? basketItems;
@@ -135,6 +141,12 @@
         var id = UpdateQuantityId!.Value;
         var quantity = UpdateQuantityValue!.Value;
         await Basket.SetQuantityAsync(id, quantity);
+        basketItems = await Basket.GetBasketItemsAsync();
+    }
+
+    private async Task EmptyBagAsync()
+    {
+        await Basket.DeleteBasketAsync();
         basketItems = await Basket.GetBasketItemsAsync();
     }
 }

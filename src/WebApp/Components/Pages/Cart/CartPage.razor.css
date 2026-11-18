@@ -336,6 +336,10 @@
     margin: 0;
 }
 
+.cart-summary-empty .button {
+    width: 100%;
+}
+
 .cart-summary .filter-badge {
     background: var(--color-ink);
     color: var(--color-surface);
