@@ -13,6 +13,10 @@ public sealed class WebhooksApiFixture : WebApplicationFactory<Program>, IAsyncL
     private string _databaseConnectionString = null!;
     private string _rabbitMqConnectionString = null!;
 
+    // The Postgres and RabbitMQ connection strings of this fixture's app host, for hosts a test builds on the same resources.
+    internal string DatabaseConnectionString => _databaseConnectionString;
+    internal string RabbitMqConnectionString => _rabbitMqConnectionString;
+
     public WebhooksApiFixture()
     {
         var options = new DistributedApplicationOptions
@@ -67,7 +71,7 @@ public sealed class WebhooksApiFixture : WebApplicationFactory<Program>, IAsyncL
         }
     }
 
-    private sealed class TestAuthenticationStartupFilter : IStartupFilter
+    internal sealed class TestAuthenticationStartupFilter : IStartupFilter
     {
         public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next) =>
             app =>

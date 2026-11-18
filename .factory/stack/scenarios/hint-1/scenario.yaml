@@ -1,0 +1,11 @@
+description: HINT-1 token hints in the Webhooks API and the webhooks client's Registered webhooks grid; alice has three OrderPaid subscriptions (long token, 4-character token, no token).
+extends: default
+
+# alice (Pass123$, Id 50ddac7e-9b69-4d68-a91b-25100ef2e403 from default/identitydb.sql) owns three OrderPaid (Type 3) subscriptions:
+#   9101 http://receiver.test/long   token fake-token-3c4d -> hint "…3c4d" (TC-HINT-1-13; TC-HINT-1-11 reads it anonymously)
+#   9102 http://receiver.test/short  token wxyz            -> hint "…"     (TC-HINT-1-13, 4 characters never shown whole)
+#   9103 http://receiver.test/none   token NULL            -> "None"       (TC-HINT-1-13)
+# TC-HINT-1-12 registers a fourth through /add-webhook. The spec reloads this scenario before each case.
+postgres:
+  webhooksdb:
+    - sql: webhooksdb.sql
