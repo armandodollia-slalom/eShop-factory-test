@@ -1,4 +1,5 @@
 @page "/"
+@using System.Globalization
 @inject NavigationManager Nav
 @inject CatalogService CatalogService
 @attribute [StreamRendering]
@@ -153,13 +154,36 @@
     [SupplyParameterFromQuery]
     public int? Page { get; set; }
 
+    // Bound as strings so a link with a value that is not a number (mistyped, truncated
+    // or empty) is ignored instead of failing the query binding; numeric values still filter.
     [SupplyParameterFromQuery(Name = "brand")]
-    public int[]? BrandIds { get; set; }
+    public string[]? BrandQuery { get; set; }
 
     [SupplyParameterFromQuery(Name = "type")]
-    public int[]? TypeIds { get; set; }
+    public string[]? TypeQuery { get; set; }
+
+    int[]? BrandIds;
+    int[]? TypeIds;
 
     CatalogResult? catalogResult;
+
+    private static int[]? ParseIds(string[]? values)
+    {
+        if (values is null)
+        {
+            return null;
+        }
+
+        var ids = new List<int>(values.Length);
+        foreach (var value in values)
+        {
+            if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var id))
+            {
+                ids.Add(id);
+            }
+        }
+        return [.. ids];
+    }
 
     static IEnumerable<int> GetPageTokens(int totalPages, int current)
     {
@@ -195,6 +219,8 @@
 
     protected override async Task OnInitializedAsync()
     {
+        BrandIds = ParseIds(BrandQuery);
+        TypeIds = ParseIds(TypeQuery);
         catalogResult = await CatalogService.GetCatalogItems(
             Page.GetValueOrDefault(1) - 1,
             PageSize,

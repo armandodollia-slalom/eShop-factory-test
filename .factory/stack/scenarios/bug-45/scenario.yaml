@@ -1,0 +1,5 @@
+description: BUG-45 catalog links whose brand or type value is not a number; needs only the default catalog.
+extends: default
+
+# No extra rows. Every case opens the catalog anonymously with one link and reads the default catalog:
+# 101 products in total, brand id 1 "Daybird" with 10 products, type id 7 "Navigation" with 11 products.
