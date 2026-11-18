@@ -77,14 +77,16 @@ public class BasketState(
 
     public async Task SetGiftMessageAsync(int productId, string? message)
     {
-        var existingItems = await FetchBasketItemsAsync();
-        if (existingItems.FirstOrDefault(row => row.ProductId == productId) is { } row)
+        var items = ToQuantities(await FetchBasketItemsAsync());
+        var index = items.FindIndex(row => row.ProductId == productId);
+        if (index >= 0)
         {
+            // Build the update from copies so a failed write leaves the displayed basket as stored.
             var trimmed = message?.Trim();
-            row.GiftMessage = string.IsNullOrEmpty(trimmed) ? null : trimmed;
+            items[index] = items[index] with { GiftMessage = string.IsNullOrEmpty(trimmed) ? null : trimmed };
 
             _cachedBasket = null;
-            await basketService.UpdateBasketAsync(ToQuantities(existingItems));
+            await basketService.UpdateBasketAsync(items);
             await NotifyChangeSubscribersAsync();
         }
     }
