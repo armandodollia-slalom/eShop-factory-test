@@ -9,7 +9,7 @@ verified-by: test-planner@c9e755e4/council
 automation-sha: 10383df46219
 automation-plan-sha: f03c61a1aa20
 automation-score: 10
-automation-verified-at: "2026-11-18T20:34:45.930Z"
+automation-verified-at: "2026-11-18T20:41:05.829Z"
 ---
 # Test plan: BUG-54 [BE - Ordering API] - A shopper can cancel another shopper's order
 
