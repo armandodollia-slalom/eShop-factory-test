@@ -1,6 +1,4 @@
-﻿using System.Globalization;
-
-namespace Webhooks.API.Model;
+﻿namespace Webhooks.API.Model;
 
 public class WebhookSubscriptionResponse
 {
