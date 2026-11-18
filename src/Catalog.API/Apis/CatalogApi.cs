@@ -138,7 +138,8 @@ public static class CatalogApi
         [AsParameters] CatalogServices services,
         [Description("The name of the item to return")] string? name,
         [Description("The types of items to return. Repeat the parameter to filter by multiple types.")] int[]? type,
-        [Description("The brands of items to return. Repeat the parameter to filter by multiple brands.")] int[]? brand)
+        [Description("The brands of items to return. Repeat the parameter to filter by multiple brands.")] int[]? brand,
+        [Description("The order of the items: name-asc (default), name-desc, price-asc or price-desc. Unknown values use the default.")] string? sort = null)
     {
         var pageSize = paginationRequest.PageSize;
         var pageIndex = paginationRequest.PageIndex;
@@ -161,15 +162,24 @@ public static class CatalogApi
         var totalItems = await root
             .LongCountAsync();
 
-        var itemsOnPage = await root
-            .Include(ci => ci.CatalogBrand)
-            .OrderBy(c => c.Name)
+        var itemsOnPage = await ApplySort(root.Include(ci => ci.CatalogBrand), sort)
             .Skip(pageSize * pageIndex)
             .Take(pageSize)
             .ToListAsync();
 
         return TypedResults.Ok(new PaginatedItems<CatalogItem>(pageIndex, pageSize, totalItems, itemsOnPage));
     }
+
+    // Sorting happens before paging so the order holds across pages; Name then Id break ties
+    // so a page never repeats or skips an item.
+    private static IOrderedQueryable<CatalogItem> ApplySort(IQueryable<CatalogItem> items, string? sort) =>
+        sort switch
+        {
+            "name-desc" => items.OrderByDescending(c => c.Name).ThenByDescending(c => c.Id),
+            "price-asc" => items.OrderBy(c => c.Price).ThenBy(c => c.Name).ThenBy(c => c.Id),
+            "price-desc" => items.OrderByDescending(c => c.Price).ThenBy(c => c.Name).ThenBy(c => c.Id),
+            _ => items.OrderBy(c => c.Name).ThenBy(c => c.Id),
+        };
 
     public static async Task<Ok<CatalogFacets>> GetCatalogFacets(
         [AsParameters] CatalogServices services,

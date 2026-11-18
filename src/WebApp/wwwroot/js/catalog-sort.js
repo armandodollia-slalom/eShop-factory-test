@@ -1,11 +1,12 @@
-// Client-side sort for the catalog grid. A custom, on-theme "Sort" control in the toolbar
-// (an ARIA select-only combobox: a button-like trigger plus a listbox popup) reorders the
-// product cards on the current page by name or price (ascending or descending). The choice
-// is persisted to localStorage so it sticks across pages and visits, and re-applied after
-// every Blazor enhanced navigation and after streaming-render populates the grid. This is
-// pure DOM reordering of existing nodes; it never touches framework state and adds no motion.
+// Sort control for the catalog. A custom, on-theme "Sort" control in the toolbar (an ARIA
+// select-only combobox: a button-like trigger plus a listbox popup) chooses the order of the
+// whole catalog: picking an option navigates to the catalog with a `sort` query parameter
+// (back to page 1), and the server sorts before paging. The choice is persisted to
+// localStorage; when the catalog is opened without `sort`, the stored choice is restored by
+// replacing the URL, so it sticks across reloads and visits.
 (function () {
     const STORAGE_KEY = 'aw.catalog.sort.v1';
+    const DEFAULT_SORT = 'name-asc';
     const OPTIONS = [
         { value: 'name-asc', label: 'Name: A to Z' },
         { value: 'name-desc', label: 'Name: Z to A' },
@@ -15,14 +16,14 @@
     const VALID = new Set(OPTIONS.map(o => o.value));
     const LABELS = new Map(OPTIONS.map(o => [o.value, o.label]));
 
-    // -- preference + sort engine -------------------------------------------------
+    // -- preference + navigation --------------------------------------------------
 
     function readPref() {
         try {
             const value = localStorage.getItem(STORAGE_KEY);
-            return VALID.has(value) ? value : 'name-asc';
+            return VALID.has(value) ? value : DEFAULT_SORT;
         } catch {
-            return 'name-asc';
+            return DEFAULT_SORT;
         }
     }
 
@@ -30,50 +31,37 @@
         try {
             localStorage.setItem(STORAGE_KEY, value);
         } catch {
-            /* private mode / storage disabled: the sort still works for this page */
+            /* private mode / storage disabled: the sort still applies through the URL */
         }
     }
 
-    function comparatorFor(mode) {
-        const name = el => el.dataset.sortName || '';
-        const price = el => parseFloat(el.dataset.sortPrice) || 0;
-
-        const byName = (a, b) => name(a).localeCompare(name(b), undefined, { sensitivity: 'base', numeric: true });
-        const byPrice = (a, b) => price(a) - price(b);
-
-        let primary;
-        switch (mode) {
-            case 'name-asc': primary = byName; break;
-            case 'name-desc': primary = (a, b) => byName(b, a); break;
-            case 'price-asc': primary = byPrice; break;
-            case 'price-desc': primary = (a, b) => byPrice(b, a); break;
-            default: primary = byName; break;
-        }
-
-        // Name order is the tie-breaker so equal prices fall back to a stable, alphabetical order.
-        return (a, b) => primary(a, b) || byName(a, b);
+    // The catalog URL for a sort: the default order carries no parameter, and a new order
+    // starts again at page 1. Filters stay as they are.
+    function sortedUrl(value) {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('page');
+        if (value === DEFAULT_SORT) url.searchParams.delete('sort');
+        else url.searchParams.set('sort', value);
+        return url.toString();
     }
 
-    let sorting = false;
+    // The sort the catalog is showing: the URL's, or the default when it has none or an unknown one.
+    function currentSort() {
+        const value = new URLSearchParams(window.location.search).get('sort');
+        return VALID.has(value) ? value : DEFAULT_SORT;
+    }
 
-    function applySort(mode) {
-        const grid = document.querySelector('.catalog-items');
-        if (!grid) return;
-
-        const items = Array.from(grid.querySelectorAll(':scope > .catalog-item'));
-        if (items.length < 2) return;
-
-        const sorted = items.slice().sort(comparatorFor(mode));
-        const changed = sorted.some((el, i) => el !== items[i]);
-        if (!changed) return;
-
-        const fragment = document.createDocumentFragment();
-        for (const el of sorted) {
-            fragment.appendChild(el);
+    // Enhanced navigation keeps the page shell; before Blazor has started (the first load) a
+    // plain location change is used instead.
+    function navigate(url, replace, enhanced) {
+        if (url === window.location.href) return;
+        if (enhanced && window.Blazor && typeof window.Blazor.navigateTo === 'function') {
+            window.Blazor.navigateTo(url, { replaceHistoryEntry: replace });
+        } else if (replace) {
+            window.location.replace(url);
+        } else {
+            window.location.assign(url);
         }
-        sorting = true;
-        grid.appendChild(fragment);
-        sorting = false;
     }
 
     // -- custom combobox control --------------------------------------------------
@@ -86,7 +74,7 @@
 
     function reflect(r, value) {
         const valueEl = r.querySelector('[data-catalog-sort-value]');
-        if (valueEl) valueEl.textContent = LABELS.get(value) || LABELS.get('name-asc');
+        if (valueEl) valueEl.textContent = LABELS.get(value) || LABELS.get(DEFAULT_SORT);
         for (const opt of optionsOf(r)) {
             opt.setAttribute('aria-selected', opt.dataset.value === value ? 'true' : 'false');
         }
@@ -123,10 +111,10 @@
     }
 
     function selectValue(r, value) {
-        if (!VALID.has(value)) value = 'name-asc';
+        if (!VALID.has(value)) value = DEFAULT_SORT;
         writePref(value);
         reflect(r, value);
-        applySort(value);
+        if (value !== currentSort()) navigate(sortedUrl(value), false, true);
     }
 
     function move(r, delta) {
@@ -216,49 +204,32 @@
         }
     });
 
-    // -- keep the grid + control in sync ------------------------------------------
+    // -- restore the stored choice -------------------------------------------------
 
-    function sync() {
+    // Runs on the first load and after every enhanced navigation. On the catalog, a valid
+    // `sort` in the URL is the current choice and becomes the stored one; without `sort`
+    // the stored choice (when it is not the default) is restored by replacing the URL.
+    function sync(enhanced) {
+        if (!document.querySelector('.catalog')) return;
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('sort')) {
+            const value = params.get('sort');
+            if (VALID.has(value)) writePref(value);
+            return;
+        }
         const pref = readPref();
-        const r = root();
-        if (r) reflect(r, pref);
-        applySort(pref);
-        observeCatalog();
-    }
-
-    // Streaming render and enhanced navigation both repopulate the grid without firing a
-    // full page load. Observe the catalog container and re-apply the sort whenever its
-    // children change so a persisted preference survives the streamed first paint and
-    // every subsequent filter / pagination morph. applySort is idempotent and guarded by
-    // the `sorting` flag, so its own reordering does not loop.
-    let observer = null;
-    let observed = null;
-    let scheduled = false;
-    function observeCatalog() {
-        const container = document.querySelector('.catalog');
-        if (!container || observed === container) return;
-        if (observer) observer.disconnect();
-        observed = container;
-        observer = new MutationObserver(function () {
-            if (sorting || scheduled) return;
-            scheduled = true;
-            requestAnimationFrame(function () {
-                scheduled = false;
-                applySort(readPref());
-            });
-        });
-        observer.observe(container, { childList: true, subtree: true });
+        if (pref !== DEFAULT_SORT) navigate(sortedUrl(pref), true, enhanced);
     }
 
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', sync);
+        document.addEventListener('DOMContentLoaded', () => sync(false));
     } else {
-        sync();
+        sync(false);
     }
 
     (function hookEnhancedNav() {
         if (window.Blazor && typeof window.Blazor.addEventListener === 'function') {
-            window.Blazor.addEventListener('enhancedload', sync);
+            window.Blazor.addEventListener('enhancedload', () => sync(true));
         } else {
             setTimeout(hookEnhancedNav, 150);
         }
