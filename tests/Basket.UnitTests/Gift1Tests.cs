@@ -71,6 +71,64 @@ public class Gift1Tests
         Assert.AreEqual(string.Empty, response.Items[0].GiftMessage);
     }
 
+    [TestMethod]
+    public async Task UpdateBasketKeepsStoredGiftMessageForItemSentWithoutTheField()
+    {
+        var repository = CreateRepositoryWithStoredMessage();
+        var service = new BasketService(repository, NullLogger<BasketService>.Instance);
+        var request = new UpdateBasketRequest();
+        request.Items.Add(new eShop.Basket.API.Grpc.BasketItem { ProductId = 1, Quantity = 3 });
+
+        var response = await service.UpdateBasket(request, CreateContext(BuyerId));
+
+        await repository.Received(1).UpdateBasketAsync(Arg.Is<CustomerBasket>(basket =>
+            basket.Items.Count == 1 && basket.Items[0].Quantity == 3 && basket.Items[0].GiftMessage == GiftMessage));
+        Assert.AreEqual(GiftMessage, response.Items[0].GiftMessage);
+    }
+
+    [TestMethod]
+    public async Task UpdateBasketClearsStoredGiftMessageWhenFieldIsSentEmpty()
+    {
+        var repository = CreateRepositoryWithStoredMessage();
+        var service = new BasketService(repository, NullLogger<BasketService>.Instance);
+        var request = new UpdateBasketRequest();
+        request.Items.Add(new eShop.Basket.API.Grpc.BasketItem { ProductId = 1, Quantity = 1, GiftMessage = string.Empty });
+
+        var response = await service.UpdateBasket(request, CreateContext(BuyerId));
+
+        await repository.Received(1).UpdateBasketAsync(Arg.Is<CustomerBasket>(basket =>
+            basket.Items.Count == 1 && basket.Items[0].GiftMessage == null));
+        Assert.AreEqual(string.Empty, response.Items[0].GiftMessage);
+    }
+
+    [TestMethod]
+    public async Task UpdateBasketRejectsOverlongGiftMessageInMixedRequestBeforeCallingRepository()
+    {
+        var repository = CreateRepositoryWithStoredMessage();
+        var service = new BasketService(repository, NullLogger<BasketService>.Instance);
+        var request = new UpdateBasketRequest();
+        request.Items.Add(new eShop.Basket.API.Grpc.BasketItem { ProductId = 1, Quantity = 1 });
+        request.Items.Add(new eShop.Basket.API.Grpc.BasketItem { ProductId = 2, Quantity = 1, GiftMessage = new string('a', 61) });
+
+        var exception = await Assert.ThrowsAsync<RpcException>(() => service.UpdateBasket(request, CreateContext(BuyerId)));
+
+        Assert.AreEqual(StatusCode.InvalidArgument, exception.StatusCode);
+        Assert.IsEmpty(repository.ReceivedCalls());
+    }
+
+    private static IBasketRepository CreateRepositoryWithStoredMessage()
+    {
+        var repository = Substitute.For<IBasketRepository>();
+        repository.GetBasketAsync(BuyerId).Returns(Task.FromResult(new CustomerBasket
+        {
+            BuyerId = BuyerId,
+            Items = [new BasketItem { ProductId = 1, Quantity = 1, GiftMessage = GiftMessage }]
+        }));
+        repository.UpdateBasketAsync(Arg.Any<CustomerBasket>())
+            .Returns(call => call.Arg<CustomerBasket>());
+        return repository;
+    }
+
     private TestServerCallContext CreateContext(string userId)
     {
         var context = TestServerCallContext.Create(cancellationToken: TestContext.CancellationToken);

@@ -48,13 +48,16 @@ public class BasketService(
             logger.LogDebug("Begin UpdateBasket call from method {Method} for basket id {Id}", context.Method, userId);
         }
 
+        // Mapping validates every supplied gift message, so an invalid request never reaches the repository.
+        var customerBasket = MapToCustomerBasket(userId, request);
+
         // Callers built from an older contract (the mobile app) send items without the gift message field;
         // their lines keep the message already stored for that product instead of losing it.
-        var storedGiftMessages = request.Items.All(item => item.HasGiftMessage)
-            ? null
-            : await GetStoredGiftMessagesAsync(userId);
+        if (!request.Items.All(item => item.HasGiftMessage))
+        {
+            await KeepStoredGiftMessagesAsync(userId, request, customerBasket);
+        }
 
-        var customerBasket = MapToCustomerBasket(userId, request, storedGiftMessages);
         var response = await repository.UpdateBasketAsync(customerBasket);
         if (response is null)
         {
@@ -99,7 +102,7 @@ public class BasketService(
         return response;
     }
 
-    private async Task<Dictionary<int, string>> GetStoredGiftMessagesAsync(string userId)
+    private async Task KeepStoredGiftMessagesAsync(string userId, UpdateBasketRequest request, CustomerBasket customerBasket)
     {
         var storedGiftMessages = new Dictionary<int, string>();
         var storedBasket = await repository.GetBasketAsync(userId);
@@ -111,10 +114,16 @@ public class BasketService(
             }
         }
 
-        return storedGiftMessages;
+        for (var i = 0; i < request.Items.Count; i++)
+        {
+            if (!request.Items[i].HasGiftMessage)
+            {
+                customerBasket.Items[i].GiftMessage = storedGiftMessages.GetValueOrDefault(request.Items[i].ProductId);
+            }
+        }
     }
 
-    private static CustomerBasket MapToCustomerBasket(string userId, UpdateBasketRequest customerBasketRequest, Dictionary<int, string> storedGiftMessages)
+    private static CustomerBasket MapToCustomerBasket(string userId, UpdateBasketRequest customerBasketRequest)
     {
         var response = new CustomerBasket
         {
@@ -127,9 +136,7 @@ public class BasketService(
             {
                 ProductId = item.ProductId,
                 Quantity = item.Quantity,
-                GiftMessage = item.HasGiftMessage
-                    ? NormalizeGiftMessage(item.GiftMessage)
-                    : storedGiftMessages.GetValueOrDefault(item.ProductId),
+                GiftMessage = item.HasGiftMessage ? NormalizeGiftMessage(item.GiftMessage) : null,
             });
         }
 
