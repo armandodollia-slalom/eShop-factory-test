@@ -123,6 +123,19 @@ async function expectEmptyNotFound(response: Awaited<ReturnType<typeof cancel>>)
   expect(body.toString('utf8')).not.toContain(FAILED_TEXT);
 }
 
+test('TC-BUG-54-01 alice cancels her own Submitted order: 200 and the order reads Cancelled', async ({ request }) => {
+  const a = await placeOrder(request, ALICE);
+  await test.step(`as alice: PUT /api/orders/cancel { orderNumber: ${a} } answers 200`, async () => {
+    const response = await cancel(request, a, ALICE);
+    expect(response.status()).toBe(200);
+  });
+  await test.step(`as alice: GET /api/orders/${a} reads status Cancelled`, async () => {
+    const order = await getOrder(request, ALICE, a);
+    expect(order.status).toBe('Cancelled');
+    expect(order.orderNumber).toBe(a);
+  });
+});
+
 test("TC-BUG-54-03 alice's order is still Submitted after bob's refused cancel", async ({ request }) => {
   const a = await placeOrder(request, ALICE);
   await test.step(`as alice: GET /api/orders/${a} reads Submitted before bob's attempt`, async () => {
