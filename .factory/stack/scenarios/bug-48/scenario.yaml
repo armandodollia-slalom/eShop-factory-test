@@ -1,0 +1,8 @@
+description: BUG-48 catalog items by ids carry their brand; needs only the demo catalog of the default scenario.
+extends: default
+
+# No extra rows. The cases read the demo catalog the default scenario seeds (catalogdb.sql):
+#   item 1 "Wanderer Black Hiking Boots", catalogBrandId 1 -> brand 1 "Daybird"     (TC-BUG-48-01, -02)
+#   item 2 "Summit Pro Harness",          catalogBrandId 2 -> brand 2 "Gravitator"  (TC-BUG-48-01, -02)
+#   the first item of the name-ordered catalog list                                 (TC-BUG-48-03)
+# All requests are anonymous reads; nothing is written.
