@@ -103,6 +103,12 @@
     color: var(--color-ink-2);
 }
 
+.order-ships-to {
+    min-width: 0;
+    color: var(--color-ink-2);
+    overflow-wrap: anywhere;
+}
+
 .order-total {
     color: var(--color-ink);
     text-align: right;
@@ -138,5 +144,12 @@
     .orders-item {
         gap: 1rem;
         flex-wrap: wrap;
+    }
+
+    /* Too narrow for five equal columns: the destination takes its own full-width line under the row. */
+    .orders-item > .ships-to-header,
+    .orders-item > .order-ships-to {
+        flex-basis: 100%;
+        order: 1;
     }
 }

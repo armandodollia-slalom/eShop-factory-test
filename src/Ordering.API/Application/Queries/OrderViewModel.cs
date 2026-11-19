@@ -29,6 +29,8 @@ public record OrderSummary
     public DateTime Date { get; init; }
     public string Status { get; init; }
     public double Total { get; init; }
+    public string City { get; init; }
+    public string Country { get; init; }
 }
 
 public record CardType

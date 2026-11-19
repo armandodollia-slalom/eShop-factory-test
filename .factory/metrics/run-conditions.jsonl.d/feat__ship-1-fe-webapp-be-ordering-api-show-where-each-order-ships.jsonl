@@ -1,0 +1,4 @@
+{"ts":"2026-11-18T13:14:14.405Z","story":"SHIP-1","kind":"stack-slot","stage":"UI verifier (self)","slot":2,"waitedSec":0,"outcome":"leased","delivery":"epic"}
+{"ts":"2026-11-18T13:29:11.926Z","story":"SHIP-1","kind":"stack-slot","stage":"automation pass","slot":2,"waitedSec":0,"outcome":"leased","poolSize":null}
+{"ts":"2026-11-18T13:42:38.506Z","story":"SHIP-1","kind":"stack-slot","stage":"precheck","slot":2,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":3}
+{"ts":"2026-11-18T13:53:06.596Z","story":"SHIP-1","kind":"stack-slot","stage":"precheck","slot":2,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":4}

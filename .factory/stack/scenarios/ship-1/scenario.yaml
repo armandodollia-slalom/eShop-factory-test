@@ -1,0 +1,9 @@
+description: SHIP-1 "Ships to" column of My orders; needs only the seeded users alice and bob and no orders.
+extends: default
+
+# No extra rows. Every case starts with no orders:
+# - alice (Pass123$, Id 50ddac7e-9b69-4d68-a91b-25100ef2e403) places the orders each case needs through
+#   POST /api/orders, each with the delivery address the case gives (Redmond/U.S., Paris/France,
+#   Llanfairpwllgwyngyllgogerychwyrndrobwllllantysiliogogogoch/United Kingdom).
+# - bob (Pass123$, Id bc8b0071-21af-41ab-b1d2-15c4efc368df) keeps no orders, for the empty state (TC-SHIP-1-05).
+# Card type 2 (Visa) is seeded by Ordering.API at startup.
