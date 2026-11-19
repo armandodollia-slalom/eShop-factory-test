@@ -20,11 +20,13 @@ public static class CatalogApi
 
         // Routes for querying catalog items.
         v1.MapGet("/items", GetAllItemsV1)
+            .WithPaginationValidation()
             .WithName("ListItems")
             .WithSummary("List catalog items")
             .WithDescription("Get a paginated list of items in the catalog.")
             .WithTags("Items");
         v2.MapGet("/items", GetAllItems)
+            .WithPaginationValidation()
             .WithName("ListItems-V2")
             .WithSummary("List catalog items")
             .WithDescription("Get a paginated list of items in the catalog.")
@@ -40,6 +42,7 @@ public static class CatalogApi
             .WithDescription("Get an item from the catalog")
             .WithTags("Items");
         v1.MapGet("/items/by/{name:minlength(1)}", GetItemsByName)
+            .WithPaginationValidation()
             .WithName("GetItemsByName")
             .WithSummary("Get catalog items by name")
             .WithDescription("Get a paginated list of catalog items with the specified name.")
@@ -63,6 +66,7 @@ public static class CatalogApi
 
         // Routes for resolving catalog items using AI.
         v1.MapGet("/items/withsemanticrelevance/{text:minlength(1)}", GetItemsBySemanticRelevanceV1)
+            .WithPaginationValidation()
             .WithName("GetRelevantItems")
             .WithSummary("Search catalog for relevant items")
             .WithDescription("Search the catalog for items related to the specified text")
@@ -70,6 +74,7 @@ public static class CatalogApi
 
         // Routes for resolving catalog items using AI.
         v2.MapGet("/items/withsemanticrelevance", GetItemsBySemanticRelevance)
+            .WithPaginationValidation()
             .WithName("GetRelevantItems-V2")
             .WithSummary("Search catalog for relevant items")
             .WithDescription("Search the catalog for items related to the specified text")
@@ -77,11 +82,13 @@ public static class CatalogApi
 
         // Routes for resolving catalog items by type and brand.
         v1.MapGet("/items/type/{typeId}/brand/{brandId?}", GetItemsByBrandAndTypeId)
+            .WithPaginationValidation()
             .WithName("GetItemsByTypeAndBrand")
             .WithSummary("Get catalog items by type and brand")
             .WithDescription("Get catalog items of the specified type and brand")
             .WithTags("Types");
         v1.MapGet("/items/type/all/brand/{brandId:int?}", GetItemsByBrandId)
+            .WithPaginationValidation()
             .WithName("GetItemsByBrand")
             .WithSummary("List catalog items by brand")
             .WithDescription("Get a list of catalog items for the specified brand")
@@ -506,6 +513,37 @@ public static class CatalogApi
         services.Context.CatalogItems.Remove(item);
         await services.Context.SaveChangesAsync();
         return TypedResults.NoContent();
+    }
+
+    // Rejects a negative page index or a page size below 1 with a validation problem before the handler runs,
+    // so the query never reaches the database with an invalid Skip/Take.
+    private static RouteHandlerBuilder WithPaginationValidation(this RouteHandlerBuilder builder) =>
+        builder.AddEndpointFilter(async (context, next) =>
+        {
+            if (context.Arguments.OfType<PaginationRequest>().FirstOrDefault() is { } paginationRequest
+                && ValidatePagination(paginationRequest) is { Count: > 0 } errors)
+            {
+                return TypedResults.ValidationProblem(errors);
+            }
+
+            return await next(context);
+        });
+
+    private static Dictionary<string, string[]> ValidatePagination(PaginationRequest paginationRequest)
+    {
+        var errors = new Dictionary<string, string[]>();
+
+        if (paginationRequest.PageIndex < 0)
+        {
+            errors[nameof(PaginationRequest.PageIndex)] = ["The page index must be 0 or greater."];
+        }
+
+        if (paginationRequest.PageSize < 1)
+        {
+            errors[nameof(PaginationRequest.PageSize)] = ["The page size must be 1 or greater."];
+        }
+
+        return errors;
     }
 
     private static async Task<ProblemHttpResult?> ValidateBrandAndType(CatalogContext context, CatalogItem item)
