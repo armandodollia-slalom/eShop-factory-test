@@ -14,5 +14,4 @@ public class AccountOptions
 
     public static string InvalidCredentialsErrorMessage = "Invalid username or password";
     public static string LockedOutErrorMessage = "Your account is temporarily locked after too many failed sign-in attempts. Please wait a few minutes and try again.";
-    public static string NotAllowedErrorMessage = "Your account is not allowed to sign in yet. Please confirm your account or contact support, then try again.";
 }
