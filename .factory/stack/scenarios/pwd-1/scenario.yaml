@@ -1,0 +1,9 @@
+description: PWD-1 change password; twelve dedicated shoppers (pwd1-*) with the password Factoryfake1$ on top of the demo catalog.
+extends: default
+
+# Every PWD-1 case changes, or tries to change, its own shopper's password, so each case has a user of its own
+# (identitydb.sql lists which case uses which) and none signs in as alice or bob. Users pwd1-menu ... pwd1-max,
+# ids 00000000-0000-0000-0001-000000000001 ... 12, all start with Factoryfake1$.
+postgres:
+  identitydb:
+    - sql: identitydb.sql

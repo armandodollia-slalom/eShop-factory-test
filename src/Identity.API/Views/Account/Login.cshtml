@@ -3,12 +3,7 @@
 <div class="login-page">
     @if (Model.EnableLocalLogin)
     {
-        <aside class="login-visual" aria-hidden="true">
-            <div class="login-visual-inner">
-                <p class="login-visual-kicker">AdventureWorks</p>
-                <p class="login-visual-line">Gear up for what's next.</p>
-            </div>
-        </aside>
+        <partial name="_LoginVisual" />
 
         <section class="login-card" aria-labelledby="login-title">
             <div class="login-card-header">
