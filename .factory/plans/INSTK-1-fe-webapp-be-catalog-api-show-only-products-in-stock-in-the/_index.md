@@ -6,10 +6,10 @@ plan-sha: 045e633569bc
 verified-score: 9
 verified-at: "2026-11-19T16:17:25.374Z"
 verified-by: test-planner@3b45d17c/council
-automation-sha: 08ba29bc766b
+automation-sha: 64a4d52dfe18
 automation-plan-sha: 045e633569bc
 automation-score: 10
-automation-verified-at: "2026-11-19T19:13:07.002Z"
+automation-verified-at: "2026-11-19T20:18:20.064Z"
 ---
 # Test plan: INSTK-1 Show only products in stock in the catalog
 

@@ -156,11 +156,16 @@ async function captionUrl(page: Page, demo: Demo, prefix: string) {
 }
 
 // The cards sit three to a row; one frame per row keeps every card name of the page readable.
-// The caption is cleared first so it does not cover the names of the lowest row.
+// The caption is cleared first so it does not cover the names of the lowest row. Each row is centred before its frame
+// so its names and prices sit clear of the sticky header above and the floating widget in the bottom-right corner.
 async function frameRows(page: Page, demo: Demo, frame: (card: Locator, row: number) => Promise<void>) {
   await demo.caption('');
   const total = await cards(page).count();
-  for (let row = 1; (row - 1) * 3 < total; row++) await frame(cards(page).nth((row - 1) * 3), row);
+  for (let row = 1; (row - 1) * 3 < total; row++) {
+    const card = cards(page).nth((row - 1) * 3);
+    await card.evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }));
+    await frame(card, row);
+  }
 }
 
 test.describe('WebApp catalog', () => {
