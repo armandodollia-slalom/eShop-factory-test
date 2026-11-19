@@ -1,4 +1,10 @@
-﻿@inject WebhooksClient WebhooksClient
+﻿@using System.Net
+@inject WebhooksClient WebhooksClient
+
+@if (message is not null)
+{
+    <div class="error-message" role="alert">@message</div>
+}
 
 @if (webhooks is null)
 {
@@ -10,6 +16,9 @@ else if (webhooks.Any())
         <PropertyColumn Sortable="@true" IsDefaultSortColumn="true" InitialSortDirection="@SortDirection.Descending" Title="Date" Property="@(hook => hook.Date)" />
         <PropertyColumn Sortable="@true" Title="Destination" Property="@(hook => hook.DestUrl)" />
         <PropertyColumn Sortable="@true" Title="Token" Property="@(hook => hook.Token)" />
+        <TemplateColumn>
+            <button class="action" type="button" disabled="@removing.Contains(context.Id)" @onclick="@(() => RemoveAsync(context))">Remove</button>
+        </TemplateColumn>
     </QuickGrid>
 }
 else
@@ -19,9 +28,75 @@ else
 
 @code {
     IQueryable<WebhookResponse>? webhooks;
+    string? message;
+    readonly HashSet<int> removing = [];
+
+    const string CouldNotRemove = "The webhook could not be removed. Please try again.";
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
         webhooks = (await WebhooksClient.LoadWebhooks()).AsQueryable();
+    }
+
+    private async Task RemoveAsync(WebhookResponse hook)
+    {
+        // A second click while the first DELETE is in flight would get 404 and show a false "no longer exists".
+        if (!removing.Add(hook.Id))
+        {
+            return;
+        }
+
+        message = null;
+        try
+        {
+            bool removed;
+            HttpStatusCode status;
+            try
+            {
+                using var response = await WebhooksClient.DeleteWebhookAsync(hook.Id);
+                removed = response.IsSuccessStatusCode;
+                status = response.StatusCode;
+            }
+            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+            {
+                message = CouldNotRemove;
+                return;
+            }
+
+            if (removed)
+            {
+                RemoveRow(hook.Id);
+            }
+            else if (status == HttpStatusCode.NotFound)
+            {
+                message = "This webhook no longer exists.";
+                try
+                {
+                    await LoadAsync();
+                }
+                catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+                {
+                    RemoveRow(hook.Id);
+                }
+            }
+            else
+            {
+                message = CouldNotRemove;
+            }
+        }
+        finally
+        {
+            removing.Remove(hook.Id);
+        }
+    }
+
+    private void RemoveRow(int id)
+    {
+        webhooks = webhooks?.Where(h => h.Id != id).ToList().AsQueryable();
     }
 }

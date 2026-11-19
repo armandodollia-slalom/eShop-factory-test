@@ -1,0 +1,6 @@
+description: WHK-1 remove a registered webhook from the webhooks client; needs only the seeded users alice and bob and no webhook subscriptions.
+extends: default
+
+# No extra rows: every case signs in to the WebhookClient as alice (and bob for TC-WHK-1-05), password Pass123$,
+# registers its own webhooks through /add-webhook with case-specific tokens (whk1-NN-...), and expects to start
+# with no webhook subscriptions, which `default` guarantees.
