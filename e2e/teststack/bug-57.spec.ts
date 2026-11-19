@@ -126,11 +126,6 @@ async function placeKnownCardTypeOrder(request: APIRequestContext, cardTypeId: n
   });
 }
 
-test('TC-BUG-57-01 an order with card type 2 (Visa) is placed with 200 and listed in alice\'s orders', async ({ request }) => {
-  await expectKnownCardTypes(request);
-  await placeKnownCardTypeOrder(request, 2, 'Visa');
-});
-
 test('TC-BUG-57-02 repeating alice\'s order with card type 99 answers 400 under CardTypeId and places no order', async ({ request }) => {
   await expectKnownCardTypes(request);
   await placeKnownCardTypeOrder(request, 2, 'Visa');
