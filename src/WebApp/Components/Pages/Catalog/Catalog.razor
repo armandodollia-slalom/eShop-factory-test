@@ -159,10 +159,12 @@
     [SupplyParameterFromQuery(Name = "type")]
     public int[]? TypeIds { get; set; }
 
+    // Bound as text: a typed bool fails the whole page on a hand-edited value such as
+    // ?inStock=yes. Anything that does not parse as true leaves the filter off.
     [SupplyParameterFromQuery(Name = "inStock")]
-    public bool? InStock { get; set; }
+    public string? InStock { get; set; }
 
-    private bool InStockOnly => InStock is true;
+    private bool InStockOnly => bool.TryParse(InStock, out var inStock) && inStock;
 
     CatalogResult? catalogResult;
     int currentPage;
