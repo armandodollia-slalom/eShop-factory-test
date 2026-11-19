@@ -4,6 +4,7 @@
 @using Microsoft.AspNetCore.Authentication
 @inject LogOutService LogOutService
 @inject NavigationManager Nav
+@inject IConfiguration Configuration
 
 <AuthorizeView>
     <Authorized>
@@ -14,6 +15,7 @@
             <div class="user-menu-panel">
                 <p class="user-menu-name">@context.User.Identity?.Name</p>
                 <a class="user-menu-item" href="user/orders">My orders</a>
+                <a class="user-menu-item" href="@ChangePasswordUrl">Change password</a>
                 <form class="user-menu-item" method="post" action="user/logout" @formname="logout" @onsubmit="LogOutAsync">
                     <AntiforgeryToken />
                     <button type="submit">Log out</button>
@@ -29,6 +31,8 @@
 @code {
     [CascadingParameter]
     public HttpContext? HttpContext { get; set; }
+
+    private string ChangePasswordUrl => $"{Configuration.GetRequiredValue("IdentityUrl").TrimEnd('/')}/Manage/ChangePassword";
 
     private Task LogOutAsync()
         => LogOutService.LogOutAsync(HttpContext!);
