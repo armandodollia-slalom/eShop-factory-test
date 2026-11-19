@@ -4,27 +4,6 @@
     padding: 0 var(--page-pad) 4rem;
 }
 
-.item-back {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    margin-bottom: 1.25rem;
-    color: var(--color-ink-2);
-    font-size: var(--text-sm);
-    font-weight: 600;
-    text-decoration: none;
-    transition: color var(--dur-1) var(--ease);
-}
-
-.item-back:hover {
-    color: var(--color-ink);
-}
-
-.item-back img {
-    width: 1.1rem;
-    height: 1.1rem;
-}
-
 .item-details {
     display: grid;
     grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
@@ -158,11 +137,6 @@
     font-weight: 600;
     text-decoration: underline;
     text-underline-offset: 2px;
-}
-
-.item-notfound {
-    color: var(--color-ink-2);
-    font-size: var(--text-lg);
 }
 
 /* "More from {brand}": the catalog's product cards below the details. */

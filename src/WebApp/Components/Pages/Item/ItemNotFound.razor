@@ -1,0 +1,25 @@
+@page "/item/not-found"
+@layout Layout.MainLayout
+
+@* The router's NotFoundPage: rendered with a 404 when ItemPage calls NavigationManager.NotFound(). *@
+<SectionContent SectionName="page-header-title">Not found</SectionContent>
+<div class="item-page">
+    <CatalogBackLink />
+    <p class="item-notfound">Sorry, we couldn't find any such product.</p>
+</div>
+
+@code {
+    [CascadingParameter]
+    public HttpContext? HttpContext { get; set; }
+
+    protected override void OnInitialized()
+    {
+        // The route exists only so the router can use this page as its NotFoundPage.
+        // Opened directly it is still a not-found answer, so it answers 404 too.
+        var response = HttpContext?.Response;
+        if (response is { HasStarted: false, StatusCode: StatusCodes.Status200OK })
+        {
+            response.StatusCode = StatusCodes.Status404NotFound;
+        }
+    }
+}

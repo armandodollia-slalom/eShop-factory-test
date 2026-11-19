@@ -1,0 +1,10 @@
+.item-page {
+    max-width: var(--content-max);
+    margin: 0 auto;
+    padding: 0 var(--page-pad) 4rem;
+}
+
+.item-notfound {
+    color: var(--color-ink-2);
+    font-size: var(--text-lg);
+}

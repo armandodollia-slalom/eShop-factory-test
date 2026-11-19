@@ -1,0 +1,20 @@
+.item-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 1.25rem;
+    color: var(--color-ink-2);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    text-decoration: none;
+    transition: color var(--dur-1) var(--ease);
+}
+
+.item-back:hover {
+    color: var(--color-ink);
+}
+
+.item-back img {
+    width: 1.1rem;
+    height: 1.1rem;
+}
