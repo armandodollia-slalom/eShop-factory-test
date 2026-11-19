@@ -1,0 +1,7 @@
+description: BUG-58 sign-in with spaces around the user name; needs only the seeded users alice and bob (Pass123$), not locked out.
+extends: default
+
+# No extra rows. The cases sign in through Identity's login page:
+#   alice (Pass123$) signs in with her name spaced in several ways and plain, so her account must not be locked out;
+#   bob makes exactly one failed attempt (wrong password), far below the lockout threshold;
+#   nosuchuser is deliberately absent from the default users.
