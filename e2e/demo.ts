@@ -112,6 +112,29 @@ export function createDemo(page: Page): Demo & { dispose(): Promise<void> } {
   };
 }
 
+/**
+ * Blazor's enhanced form post and navigation merge the DOM and drop Playwright's overlay host (<x-pw-glass>),
+ * which Playwright re-attaches only on a new document, so demo.caption/highlight/absent draw nothing on the
+ * video afterwards. `overlayGone` tells when that happened; `drawCaption` then draws the caption in the page.
+ */
+export async function overlayGone(page: Page) {
+  return (await page.locator('x-pw-glass').count()) === 0;
+}
+
+/** Draw a caption styled like demo.caption inside the page itself (element `#e2e-caption`). */
+export async function drawCaption(page: Page, text: string) {
+  await page.evaluate(value => {
+    const el = document.createElement('div');
+    el.id = 'e2e-caption';
+    el.textContent = value;
+    el.style.cssText = 'position:fixed; left:50%; bottom:28px; transform:translateX(-50%); z-index:2147483647;'
+      + ' max-width:80%; padding:10px 18px; border-radius:10px; background:rgba(15,23,42,.85); color:#fff;'
+      + ' font:500 18px/1.4 system-ui, sans-serif; text-align:center; box-shadow:0 4px 18px rgba(0,0,0,.35);'
+      + ' pointer-events:none;';
+    document.body.appendChild(el);
+  }, text);
+}
+
 /** `test` with a `demo` fixture that narrates the test's video. */
 export const test = withStepKeyframes(base.extend<{ demo: Demo }>({
   demo: async ({ page }, use) => {

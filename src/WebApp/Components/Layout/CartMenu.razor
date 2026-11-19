@@ -5,7 +5,7 @@
 @inject NavigationManager NavigationManager
 @implements IDisposable
 
-@if (TotalQuantity is int qty && qty > 0)
+@if (TotalQuantity is long qty && qty > 0)
 {
     <a class="cart-button" aria-label="@AriaLabel" href="cart">
         <img class="cart-button-icon" role="presentation" src="icons/cart.svg" />
@@ -26,7 +26,8 @@ else
     [CascadingParameter]
     public HttpContext? HttpContext { get; set; }
 
-    private int? TotalQuantity => basketItems?.Sum(i => i.Quantity);
+    // Summed as long so a bag whose quantities add up past int.MaxValue cannot overflow and break the page.
+    private long? TotalQuantity => basketItems?.Sum(i => (long)i.Quantity);
 
     private string AriaLabel => $"Shopping bag, {TotalQuantity} item{(TotalQuantity == 1 ? "" : "s")}";
 
