@@ -127,8 +127,21 @@ namespace IdentityServerHost.Quickstart.UI
                     }
                 }
 
-                await _events.RaiseAsync(new UserLoginFailureEvent(model.Username, "invalid credentials", clientId: context?.Client.ClientId));
-                ModelState.AddModelError(string.Empty, AccountOptions.InvalidCredentialsErrorMessage);
+                if (result.IsLockedOut)
+                {
+                    await _events.RaiseAsync(new UserLoginFailureEvent(model.Username, "locked out", clientId: context?.Client.ClientId));
+                    ModelState.AddModelError(string.Empty, AccountOptions.LockedOutErrorMessage);
+                }
+                else if (result.IsNotAllowed)
+                {
+                    await _events.RaiseAsync(new UserLoginFailureEvent(model.Username, "not allowed", clientId: context?.Client.ClientId));
+                    ModelState.AddModelError(string.Empty, AccountOptions.NotAllowedErrorMessage);
+                }
+                else
+                {
+                    await _events.RaiseAsync(new UserLoginFailureEvent(model.Username, "invalid credentials", clientId: context?.Client.ClientId));
+                    ModelState.AddModelError(string.Empty, AccountOptions.InvalidCredentialsErrorMessage);
+                }
             }
 
             // something went wrong, show form with error

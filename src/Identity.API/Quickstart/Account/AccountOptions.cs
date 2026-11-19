@@ -1,4 +1,4 @@
-// Copyright (c) Brock Allen & Dominick Baier. All rights reserved.
+﻿// Copyright (c) Brock Allen & Dominick Baier. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 namespace IdentityServerHost.Quickstart.UI;
@@ -13,4 +13,6 @@ public class AccountOptions
     public static bool AutomaticRedirectAfterSignOut = true;
 
     public static string InvalidCredentialsErrorMessage = "Invalid username or password";
+    public static string LockedOutErrorMessage = "Your account is temporarily locked after too many failed sign-in attempts. Please wait a few minutes and try again.";
+    public static string NotAllowedErrorMessage = "Your account is not allowed to sign in yet. Please confirm your account or contact support, then try again.";
 }
