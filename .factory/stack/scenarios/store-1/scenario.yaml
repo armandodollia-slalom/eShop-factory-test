@@ -1,0 +1,5 @@
+description: STORE-1 store locator; needs only the seeded demo catalog (item 99 Adventurer GPS Watch for the footer link on an item page).
+extends: default
+
+# No extra rows: the four stores are a fixed list in the WebApp page, every case runs as an anonymous shopper,
+# and TC-STORE-1-02 starts from catalog item 99, which the default catalog seed already contains.

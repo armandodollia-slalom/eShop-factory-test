@@ -1,0 +1,62 @@
+@page "/stores"
+
+<PageTitle>Store locator | AdventureWorks</PageTitle>
+<SectionContent SectionName="page-header-title">Store locator</SectionContent>
+
+<div class="stores">
+    <form class="stores-search" method="get" data-enhance>
+        <label for="stores-city">City</label>
+        <input id="stores-city" name="city" type="text" value="@City" />
+        <button class="button button-primary" type="submit">Find stores</button>
+    </form>
+
+    @if (matches.Count == 0)
+    {
+        <p class="stores-empty" role="status">No stores in "@query".</p>
+    }
+    else
+    {
+        <ul class="stores-list">
+            @foreach (var store in matches)
+            {
+                <li class="stores-item">
+                    <h2 class="store-name">@store.Name</h2>
+                    <p class="store-address">@store.StreetAddress</p>
+                    <p class="store-city">@store.City</p>
+                    <p class="store-hours">@store.OpeningHours</p>
+                </li>
+            }
+        </ul>
+    }
+</div>
+
+@code {
+    private static readonly Store[] Stores =
+    [
+        new("AdventureWorks Seattle", "1200 Pine St", "Seattle", "Mon–Sat 9:00–20:00"),
+        new("AdventureWorks Redmond", "15700 NE 61st Ct", "Redmond", "Mon–Fri 10:00–19:00"),
+        new("AdventureWorks Portland", "800 SW Broadway", "Portland", "Mon–Sun 10:00–18:00"),
+        new("AdventureWorks Denver", "1600 16th St", "Denver", "Tue–Sun 9:00–17:00"),
+    ];
+
+    private string query = "";
+    private IReadOnlyList<Store> matches = Stores;
+
+    [SupplyParameterFromQuery(Name = "city")]
+    public string? City { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        query = City?.Trim() ?? "";
+        matches = Filter(Stores, query);
+    }
+
+    // Keeps the stores whose city starts with the text, ignoring case and surrounding spaces; empty text keeps them all.
+    internal static IReadOnlyList<Store> Filter(IEnumerable<Store> stores, string? city)
+    {
+        var prefix = city?.Trim() ?? "";
+        return stores.Where(s => s.City.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)).ToList();
+    }
+
+    internal sealed record Store(string Name, string StreetAddress, string City, string OpeningHours);
+}

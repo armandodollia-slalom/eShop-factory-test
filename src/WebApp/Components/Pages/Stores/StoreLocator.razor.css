@@ -1,0 +1,61 @@
+.stores {
+    max-width: var(--content-max);
+    margin: 0 auto;
+    padding: 0 var(--page-pad) 4rem;
+}
+
+.stores-search {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+}
+
+.stores-search label {
+    color: var(--color-ink);
+    font-weight: 700;
+}
+
+.stores-search input {
+    flex: 0 1 18rem;
+    min-width: 0;
+    padding: 0.6rem 0.85rem;
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--radius-pill);
+    color: var(--color-ink);
+    font-size: var(--text-base);
+}
+
+.stores-empty {
+    color: var(--color-ink-2);
+    font-size: var(--text-lg);
+}
+
+.stores-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-width: 56rem;
+}
+
+.stores-item {
+    padding: 1.1rem 0;
+    border-bottom: 1px solid var(--color-line);
+}
+
+.stores-item p {
+    margin: 0.2rem 0 0;
+    color: var(--color-ink-2);
+}
+
+.store-name {
+    margin: 0;
+    color: var(--color-ink);
+    font-size: var(--text-lg);
+    font-weight: 700;
+}
+
+.store-hours {
+    font-weight: 600;
+}
