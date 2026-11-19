@@ -6,6 +6,10 @@ plan-sha: f71afd1e8355
 verified-score: 9
 verified-at: "2026-11-19T01:36:54.058Z"
 verified-by: test-planner@3b45d17c/council
+automation-sha: c821f0739f8c
+automation-plan-sha: f71afd1e8355
+automation-score: 10
+automation-verified-at: "2026-11-19T02:36:21.396Z"
 ---
 # Test plan: PWD-1 Let shoppers replace their own credentials
 

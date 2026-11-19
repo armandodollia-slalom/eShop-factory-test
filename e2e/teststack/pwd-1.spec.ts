@@ -135,7 +135,11 @@ async function freshSignInRefused(browser: Browser, user: string, password: stri
     await page.goto(WEBAPP);
     await expect(signInLink(page)).toBeVisible();
     await expect(accountButton(page)).toHaveCount(0);
-    await demo.caption(`Back on ${page.url()}: not signed in`);
+    await signInLink(page).hover();
+    await expect(menuPanel(page)).toHaveCount(0);
+    const signInHref = new URL((await signInLink(page).getAttribute('href'))!, page.url());
+    await demo.caption(`Back on ${page.url()}: header icon is "Sign in" -> ${signInHref.pathname}`);
+    await demo.caption('Hovering the icon opens no user menu (no name, no Log out)');
     await demo.highlight(signInLink(page), 'Header shows the sign-in entry, no user menu');
     await demo.dispose();
     await context.close();
@@ -230,8 +234,12 @@ test('TC-PWD-1-03 valid change shows the confirmation and a "Back to the shop" l
     await expect(page.locator('.catalog-item').first()).toBeVisible();
     await expect(accountButton(page)).toBeVisible();
     await expect(signInLink(page)).toHaveCount(0);
-    await demo.caption(`Now on ${page.url()}, still signed in`);
-    await demo.highlight(accountButton(page), 'Shop home, header shows the user menu (still signed in)');
+    await demo.caption(`Now on ${page.url()}`);
+    await demo.highlight(page.locator('.catalog-item').first(), 'Shop home with the catalog');
+    await openUserMenu(page);
+    await expect(menuPanel(page).locator('.user-menu-name')).toHaveText('pwd1-change');
+    await demo.caption('Header user menu: pwd1-change, Log out (still signed in)');
+    await demo.highlight(menuPanel(page), 'User menu for pwd1-change with Log out');
   });
 });
 
