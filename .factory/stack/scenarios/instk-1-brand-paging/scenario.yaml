@@ -1,0 +1,7 @@
+description: INSTK-1 brand paging; scenario instk-1 plus item 70 GripTrek Hiking Poles (WildRunner) out of stock.
+extends: instk-1
+
+# Separate from instk-1 so the counts every other INSTK-1 case relies on (90 in stock) stay true.
+postgres:
+  catalogdb:
+    - sql: stock.sql
