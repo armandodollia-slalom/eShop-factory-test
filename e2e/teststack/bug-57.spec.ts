@@ -126,9 +126,10 @@ async function placeKnownCardTypeOrder(request: APIRequestContext, cardTypeId: n
   });
 }
 
-test('TC-BUG-57-02 repeating alice\'s order with card type 99 answers 400 under CardTypeId and places no order', async ({ request }) => {
+// TC-BUG-57-02's precondition is TC-BUG-57-01's card type 2 order placed in the same test, so both cases share one test.
+test('TC-BUG-57-01 an order with card type 2 (Visa) is placed with 200; TC-BUG-57-02 repeating it with card type 99 answers 400 under CardTypeId and places no order', async ({ request }) => {
   await expectKnownCardTypes(request);
-  await placeKnownCardTypeOrder(request, 2, 'Visa');
+  await test.step('TC-BUG-57-01: place the card type 2 (Visa) order', () => placeKnownCardTypeOrder(request, 2, 'Visa'));
   const m = await test.step("GET /api/orders and record alice's order count M after the Visa order", async () => (await listOrders(request)).length);
 
   await test.step('POST the same order with cardTypeId 99 answers 400 with a CardTypeId problem', async () => {

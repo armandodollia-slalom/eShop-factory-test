@@ -6,10 +6,10 @@ plan-sha: 8c35157153bf
 verified-score: 10
 verified-at: "2026-11-19T16:04:05.871Z"
 verified-by: test-planner@3b45d17c/council
-automation-sha: 57ac741c352c
+automation-sha: af6f8e1fdf2a
 automation-plan-sha: 8c35157153bf
 automation-score: 10
-automation-verified-at: "2026-11-19T16:18:20.437Z"
+automation-verified-at: "2026-11-19T16:38:39.138Z"
 ---
 # Test plan: BUG-57 [BE - Ordering API] - Placing an order with a card type the shop does not know answers with a server error
 
