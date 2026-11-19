@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -88,14 +88,14 @@ public static class CatalogApi
             .WithTags("Brands");
         api.MapGet("/catalogtypes",
             [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
-            async (CatalogContext context) => await context.CatalogTypes.OrderBy(x => x.Type).ToListAsync())
+        async (CatalogContext context) => await context.CatalogTypes.OrderBy(x => x.Type).ToListAsync())
             .WithName("ListItemTypes")
             .WithSummary("List catalog item types")
             .WithDescription("Get a list of the types of catalog items")
             .WithTags("Types");
         api.MapGet("/catalogbrands",
             [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
-            async (CatalogContext context) => await context.CatalogBrands.OrderBy(x => x.Brand).ToListAsync())
+        async (CatalogContext context) => await context.CatalogBrands.OrderBy(x => x.Brand).ToListAsync())
             .WithName("ListItemBrands")
             .WithSummary("List catalog item brands")
             .WithDescription("Get a list of the brands of catalog items")
@@ -129,7 +129,7 @@ public static class CatalogApi
         [AsParameters] PaginationRequest paginationRequest,
         [AsParameters] CatalogServices services)
     {
-        return await GetAllItems(paginationRequest, services, null, null, null);
+        return await GetAllItems(paginationRequest, services, null, null, null, null);
     }
 
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
@@ -138,7 +138,8 @@ public static class CatalogApi
         [AsParameters] CatalogServices services,
         [Description("The name of the item to return")] string? name,
         [Description("The types of items to return. Repeat the parameter to filter by multiple types.")] int[]? type,
-        [Description("The brands of items to return. Repeat the parameter to filter by multiple brands.")] int[]? brand)
+        [Description("The brands of items to return. Repeat the parameter to filter by multiple brands.")] int[]? brand,
+        [Description("When true, return only items with at least one unit in stock.")] bool? inStock)
     {
         var pageSize = paginationRequest.PageSize;
         var pageIndex = paginationRequest.PageIndex;
@@ -156,6 +157,10 @@ public static class CatalogApi
         if (brand is { Length: > 0 })
         {
             root = root.Where(c => brand.Contains(c.CatalogBrandId));
+        }
+        if (inStock is true)
+        {
+            root = root.Where(c => c.AvailableStock > 0);
         }
 
         var totalItems = await root
@@ -286,7 +291,7 @@ public static class CatalogApi
         [AsParameters] CatalogServices services,
         [Description("The name of the item to return")] string name)
     {
-        return await GetAllItems(paginationRequest, services, name, null, null);
+        return await GetAllItems(paginationRequest, services, name, null, null, null);
     }
 
     [ProducesResponseType<byte[]>(StatusCodes.Status200OK, "application/octet-stream",
@@ -388,7 +393,7 @@ public static class CatalogApi
         [Description("The type of items to return")] int typeId,
         [Description("The brand of items to return")] int? brandId)
     {
-        return await GetAllItems(paginationRequest, services, null, [typeId], brandId is null ? null : [brandId.Value]);
+        return await GetAllItems(paginationRequest, services, null, [typeId], brandId is null ? null : [brandId.Value], null);
     }
 
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
@@ -397,7 +402,7 @@ public static class CatalogApi
         [AsParameters] CatalogServices services,
         [Description("The brand of items to return")] int? brandId)
     {
-        return await GetAllItems(paginationRequest, services, null, null, brandId is null ? null : [brandId.Value]);
+        return await GetAllItems(paginationRequest, services, null, null, brandId is null ? null : [brandId.Value], null);
     }
 
     public static async Task<Results<Created, BadRequest<ProblemDetails>, NotFound<ProblemDetails>, ProblemHttpResult>> UpdateItemV1(

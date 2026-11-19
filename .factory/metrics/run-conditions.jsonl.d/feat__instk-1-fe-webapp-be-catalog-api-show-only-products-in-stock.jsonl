@@ -1,0 +1,13 @@
+{"ts":"2026-11-19T15:58:29.048Z","story":"INSTK-1","kind":"stack-slot","stage":"UI verifier (self)","slot":1,"waitedSec":1,"outcome":"leased","delivery":"epic"}
+{"ts":"2026-11-19T16:07:44.010Z","story":"INSTK-1","kind":"stack-slot","stage":"automation pass","slot":1,"waitedSec":1,"outcome":"leased","poolSize":null}
+{"ts":"2026-11-19T16:34:41.250Z","story":"INSTK-1","kind":"stack-slot","stage":"UI verifier (bug-fix-1)","slot":1,"waitedSec":1,"outcome":"leased","delivery":"epic"}
+{"ts":"2026-11-19T16:45:46.688Z","story":"INSTK-1","kind":"stack-slot","stage":"automation pass","slot":1,"waitedSec":1,"outcome":"leased","poolSize":null}
+{"ts":"2026-11-19T17:01:04.750Z","story":"INSTK-1","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":5}
+{"ts":"2026-11-19T17:40:29.331Z","story":"INSTK-1","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":5}
+{"ts":"2026-11-19T18:08:34.506Z","story":"INSTK-1","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":4}
+{"ts":"2026-11-19T18:38:04.135Z","story":"INSTK-1","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":4}
+{"ts":"2026-11-19T19:00:52.121Z","story":"INSTK-1","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":6}
+{"ts":"2026-11-19T19:25:01.635Z","story":"INSTK-1","kind":"stack-slot","stage":"UI verifier (pr-check-return-1-2)","slot":1,"waitedSec":1,"outcome":"leased","delivery":"epic"}
+{"ts":"2026-11-19T19:36:31.440Z","story":"INSTK-1","kind":"stack-slot","stage":"automation pass","slot":1,"waitedSec":1,"outcome":"leased","poolSize":null}
+{"ts":"2026-11-19T19:47:16.128Z","story":"INSTK-1","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":5}
+{"ts":"2026-11-19T20:07:25.796Z","story":"INSTK-1","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":4}

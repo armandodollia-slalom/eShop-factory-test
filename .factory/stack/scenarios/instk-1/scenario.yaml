@@ -1,0 +1,9 @@
+description: INSTK-1 "In stock only" filter; the demo catalog with 11 items out of stock and item 71 at the 1-unit boundary.
+extends: default
+
+# Only AvailableStock changes on existing rows (see stock.sql), so the catalog keeps 101 items, 13 brands, 8 types:
+# 90 items in stock (10 WebApp pages of 9), Ski/boarding 14 of 18 in stock, Daybird + Ski/boarding 2 of 4,
+# Daybird + Bags 0 of 1 (empty state). Used by every e2e case of e2e/teststack/instk-1.spec.ts except TC-INSTK-1-18.
+postgres:
+  catalogdb:
+    - sql: stock.sql
