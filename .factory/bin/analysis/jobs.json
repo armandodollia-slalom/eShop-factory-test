@@ -80,6 +80,8 @@
       ],
       "parse": "sarif",
       "output": "{out}",
+      "scope": "repo",
+      "secretValues": true,
       "baseline": "native",
       "block": {
         "levels": [],
@@ -89,7 +91,7 @@
       },
       "timeoutSec": 600,
       "env": {
-        "BETTERLEAKS_CONFIG_TOML": "[extend]\nuseDefault = true\n\n[[allowlists]]\ndescription = \"analysis.secrets.allow in .factory/config.json\"\nstopwords = [\"Pass123$\"]\n"
+        "BETTERLEAKS_CONFIG_TOML": "[extend]\nuseDefault = true\n\n[[allowlists]]\ndescription = \"analysis.secrets.allow in .factory/config.json and the factory placeholder marker\"\nstopwords = [\"factoryfake\", \"Pass123$\"]\n"
       },
       "install": {
         "name": "betterleaks",
@@ -160,6 +162,7 @@
       ],
       "parse": "osv-json",
       "output": "{out}",
+      "scope": "repo",
       "baseline": "merge-base",
       "block": {
         "levels": [
@@ -274,6 +277,7 @@
       "run": "dotnet restore {solution} -v q && dotnet list {solution} package --vulnerable --include-transitive --format json",
       "parse": "module:./parsers/nuget-audit.mjs",
       "output": "stdout",
+      "scope": "repo",
       "baseline": "merge-base",
       "block": {
         "levels": [
@@ -318,6 +322,7 @@
       ],
       "parse": "sarif",
       "output": "{out}",
+      "scope": "repo",
       "baseline": "native",
       "block": {
         "levels": [
@@ -445,6 +450,7 @@
       ],
       "parse": "sarif",
       "output": "stdout",
+      "scope": "repo",
       "baseline": "merge-base",
       "block": {
         "levels": [
@@ -511,6 +517,7 @@
       ],
       "parse": "actionlint-json",
       "output": "stdout",
+      "scope": "repo",
       "baseline": "merge-base",
       "block": {
         "levels": [
