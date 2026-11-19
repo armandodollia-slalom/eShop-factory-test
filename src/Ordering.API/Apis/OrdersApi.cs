@@ -113,6 +113,17 @@ public static class OrdersApi
             return TypedResults.Problem(detail: "The order draft must contain at least one item.", statusCode: StatusCodes.Status400BadRequest);
         }
 
+        // The domain rejects these lines with an exception; answer them as a bad request before the command runs.
+        if (command.Items.Any(item => item.Quantity < 1))
+        {
+            return TypedResults.Problem(detail: "The quantity of each item must be at least 1.", statusCode: StatusCodes.Status400BadRequest);
+        }
+
+        if (command.Items.Any(item => item.UnitPrice < 0))
+        {
+            return TypedResults.Problem(detail: "The unit price of an item cannot be negative.", statusCode: StatusCodes.Status400BadRequest);
+        }
+
         services.Logger.LogInformation(
             "Sending command: {CommandName} - {IdProperty}: {CommandId} ({@Command})",
             command.GetGenericTypeName(),
@@ -128,9 +139,9 @@ public static class OrdersApi
         CreateOrderRequest request,
         [AsParameters] OrderServices services)
     {
-        
+
         //mask the credit card number
-        
+
         services.Logger.LogInformation(
             "Sending command: {CommandName} - {IdProperty}: {CommandId}",
             request.GetGenericTypeName(),
