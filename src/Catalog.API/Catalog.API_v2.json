@@ -714,6 +714,14 @@
             }
           },
           {
+            "name": "inStock",
+            "in": "query",
+            "description": "When true, return only items with at least one unit in stock.",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
             "name": "api-version",
             "in": "query",
             "description": "The API version, in the format 'major.minor'.",
