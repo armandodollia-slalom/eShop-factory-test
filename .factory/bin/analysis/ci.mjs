@@ -5,14 +5,16 @@
 // into FACTORY_CACHE_DIR (download, SHA-256 verified before anything runs), fetches its pinned rule source, runs its
 // prepare step (an offline database), runs it on this commit and keeps the findings the pull request introduces
 // (native: the tool scanned only the commit range; lines: on changed lines; merge-base: not reported at the merge-base).
-// Findings already on the base are reported but do not fail the job. Exit 1 when the change introduces a finding the
+// Findings already on the base are reported but do not fail the job. Which findings a change introduces is decided by
+// decide.mjs, the same file the local slots run. Exit 1 when the change introduces a finding the
 // tool's block list names, or when a tool cannot run (a required check fails closed).
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { classify, identify, stripRulePrefix } from './baseline.mjs';
+import { identify, stripRulePrefix } from './baseline.mjs';
+import { changedMap, decide } from './decide.mjs';
 import { parserFor } from './parsers.mjs';
 import { commandValidator, installBinary, pruneData, ruleSet } from './fetch.mjs';
 import { expandSecretEnv, severityOf, triageOf } from './commercial.mjs';
@@ -120,21 +122,6 @@ async function runTool(id, t, { cwd, vars }) {
   }
 }
 
-function changedMap(mergeBase) {
-  const files = git(['diff', '--name-only', '--diff-filter=ACMR', mergeBase, 'HEAD']).stdout.split('\n').filter(Boolean);
-  const map = new Map();
-  for (const f of files) {
-    if (git(['cat-file', '-e', `${mergeBase}:${f}`]).status !== 0) {
-      map.set(f, null);
-      continue;
-    }
-    const lines = new Set();
-    for (const m of git(['diff', '-U0', '--no-ext-diff', mergeBase, 'HEAD', '--', f]).stdout.matchAll(/^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/gm)) for (let i = 0; i < (m[2] === undefined ? 1 : Number(m[2])); i++) lines.add(Number(m[1]) + i);
-    map.set(f, lines);
-  }
-  return map;
-}
-
 async function main() {
   if (!jobId || !base) fail('usage: ci.mjs --job <id> --base <ref>');
   const data = JSON.parse(fs.readFileSync(path.join(here, 'jobs.json'), 'utf8'));
@@ -143,7 +130,8 @@ async function main() {
   const mb = git(['merge-base', 'HEAD', base]);
   if (mb.status !== 0) fail(`no merge-base of HEAD and ${base} (fetch the base branch with full history)`);
   const mergeBase = mb.stdout.trim();
-  const changed = changedMap(mergeBase);
+  const changed = changedMap(root, mergeBase);
+  const decided = [];
   const tracked = git(['ls-files']).stdout.split('\n').filter(Boolean);
   let failed = false;
   const summary = [];
@@ -187,21 +175,29 @@ async function main() {
           fs.rmSync(wt, { recursive: true, force: true });
         }
       }
-      const { introduced, preexisting } = classify(head, { scope: 'repo', baseline: t.baseline, changed, base: baseFindings });
+      // The shared decision (decide.mjs, the same code the local slots run): the tool's own scope and baseline, and for
+      // a secret tool, whether the matched value itself is already on the base.
+      const { introduced, preexisting } = decide({ scope: t.scope ?? 'repo', baseline: t.baseline, secretValues: Boolean(t.secretValues) }, head, { cwd: root, changed, base: baseFindings, mergeBase });
       const blocking = (f) => !(t.commercial && triageOf(f)) && severityOf(t, f) === 'blocking';
       for (const f of t.commercial ? introduced.filter((x) => triageOf(x)) : []) console.log(`triaged  ${id} ${f.rule} ${f.file ?? '(no file)'}${f.line ? `:${f.line}` : ''}: ${triageOf(f)} in the scanner's own system (by a person; does not fail this job)`);
       const where = (f) => `${f.file ?? '(no file)'}${f.line ? `:${f.line}` : ''}`;
       const short = (m) => String(m ?? '').split('\n')[0].slice(0, 300);
       for (const f of introduced) console.log(`${blocking(f) ? 'BLOCKING' : 'finding '} ${id} ${f.rule} ${where(f)}: ${short(f.message)}`);
       for (const f of preexisting) console.log(`on base  ${id} ${f.rule} ${where(f)}: ${short(f.message)} (already on ${base}; does not fail this job)`);
+      const pick = (f, verdict) => ({ verdict, secret: Boolean(t.secretValues), tool: id, rule: f.rule, file: f.file ?? null, line: f.line ?? null, column: f.column ?? null, endColumn: f.endColumn ?? null, id: f.id, fingerprint: f.fingerprint, vendorFingerprint: f.vendorFingerprint ?? null });
+      decided.push(...introduced.map((f) => pick(f, blocking(f) ? 'blocking' : 'introduced')), ...preexisting.map((f) => pick(f, 'preexisting')));
       const nBlock = introduced.filter(blocking).length;
       if (nBlock) failed = true;
       summary.push(`${id}: ${introduced.length} introduced (${nBlock} blocking), ${preexisting.length} already on the base, ${Math.round((Date.now() - t0) / 1000)} s`);
     } catch (error) {
       failed = true;
       summary.push(`${id}: could not run: ${error.message}`);
+      decided.push({ verdict: 'error', tool: id, error: error.message });
     }
   }
+  // --json <file>: the verdict per finding (no value: the scanners run redacted), for the harness's run of this job
+  // before it pushes a branch.
+  if (opt('--json')) fs.writeFileSync(opt('--json'), `${JSON.stringify({ job: jobId, base, mergeBase, failed, findings: decided }, null, 1)}\n`);
   console.log(`\n${job.name}:\n${summary.map((s) => `- ${s}`).join('\n')}`);
   process.exitCode = failed ? 1 : 0;
 }
