@@ -1,0 +1,13 @@
+description: BUG-55 sign-in after repeated wrong passwords; four dedicated users with bob's password (Pass123$) in different lockout states, plus the seeded alice.
+extends: default
+
+# Dedicated users so the lockout these cases cause never reaches alice or bob in other specs.
+# Each user is a copy of bob's row (same password hash, so the password is bob's Pass123$) with its own
+# Id, user name, email, security stamp, LockoutEnd and AccessFailedCount; see users.sql.
+#   bug55-retry    LockoutEnd NULL                     TC-BUG-55-01 (five wrong passwords, then the correct one)
+#   bug55-typo     LockoutEnd NULL                     TC-BUG-55-02 (four wrong passwords, then the correct one)
+#   bug55-expired  LockoutEnd 2020-01-01 (in the past) TC-BUG-55-05 (lockout already over)
+#   bug55-locked   LockoutEnd 2099-01-01 (in force)    TC-BUG-55-06 (locked account tried before alice signs in)
+postgres:
+  identitydb:
+    - sql: users.sql
