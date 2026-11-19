@@ -177,7 +177,7 @@
     private string InStockUri() => Nav.GetUriWithQueryParameters(new Dictionary<string, object?>()
     {
         { "page", null },
-        { "inStock", InStock ? null : true },
+        { "inStock", InStock ? null : "true" },
     });
 
     private string ResetUri() => Nav.GetUriWithQueryParameters(new Dictionary<string, object?>()
