@@ -13,7 +13,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { identify, stripRulePrefix } from './baseline.mjs';
+import { identify, stripRulePrefix, toolGitEnv, toolSandbox } from './baseline.mjs';
 import { changedMap, decide } from './decide.mjs';
 import { parserFor } from './parsers.mjs';
 import { commandValidator, installBinary, pruneData, ruleSet } from './fetch.mjs';
@@ -24,7 +24,8 @@ import { expandSecretEnv, severityOf, triageOf } from './commercial.mjs';
 function toolEnv(id, t, v) {
   const r = expandSecretEnv(Object.fromEntries(Object.entries(t.env ?? {}).map(([k, x]) => [k, expandOne(String(x), v)])));
   if (r.missing.length) throw new Error(`${id}: ${r.missing.join(', ')} not set (add ${r.missing.length > 1 ? 'them' : 'it'} to the CI system's secret store)`);
-  return { ...process.env, ...r.env };
+  // The repository's hooks never run in a worktree a tool makes for itself (baseline.mjs toolGitEnv).
+  return toolGitEnv({ ...process.env, ...r.env });
 }
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -99,8 +100,14 @@ async function runTool(id, t, { cwd, vars }) {
   const out = path.join(os.tmpdir(), `factory-analysis-${id}-${process.pid}-${Math.random().toString(36).slice(2)}.out`);
   const v = { ...vars, out, root: cwd };
   const [cmd, args] = argvOf(expand(t.run, v));
-  const env = toolEnv(id, t, v);
-  const r = sh(cmd, args, { cwd, env, timeoutSec: t.timeoutSec ?? 600 });
+  // Its own temporary folder: a worktree the tool makes and leaves behind there is removed (baseline.mjs toolSandbox).
+  const box = toolSandbox(toolEnv(id, t, v));
+  let r;
+  try {
+    r = sh(cmd, args, { cwd, env: box.env, timeoutSec: t.timeoutSec ?? 600 });
+  } finally {
+    for (const p of box.cleanup(cwd)) console.log(`${id}: removed the git worktree it left behind (${path.basename(p)})`);
+  }
   if (t.submitOnly) {
     if (r.status !== 0) throw new Error(`${id}: the upload failed (exit ${r.status}): ${String(r.stderr).trim().slice(-500)}`);
     return [];

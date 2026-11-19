@@ -6,8 +6,10 @@
 //   merge-base  a finding counts when the merge-base does not have it. Findings are matched by fingerprint (tool,
 //               rule, file, the normalised text of the line or the tool's own key), as a multiset, so a finding moved
 //               by an edit above it is still the same finding and a second copy of one is a new one.
+import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 
 const posix = (p) => p.split(path.sep).join('/');
@@ -110,4 +112,49 @@ export function stripRulePrefix(rule, dirs = [], cwd = '') {
     }
   }
   return best ? String(rule).slice(best.length + 1) : rule;
+}
+
+// ---- Tool-owned git worktrees --------------------------------------------------------------------------------------------
+// A tool that makes its own git worktree (Opengrep's --baseline-commit checks out the baseline in one) must not run the
+// repository's hooks there: a repository that installs hooks (core.hooksPath) runs them inside the tool's worktree, and the
+// tool then cannot remove it, writes no output and the job "could not run" (held-out C21). Every tool process gets the
+// hooks turned off for each git call it makes, through git's environment configuration (appended to any it already has,
+// e.g. the extra header a CI checkout sets), and any worktree a tool leaves behind is removed afterwards.
+export function toolGitEnv(env = process.env) {
+  const n = Number(env.GIT_CONFIG_COUNT) || 0;
+  return { ...env, GIT_CONFIG_COUNT: String(n + 1), [`GIT_CONFIG_KEY_${n}`]: 'core.hooksPath', [`GIT_CONFIG_VALUE_${n}`]: '/dev/null' };
+}
+
+const gitOut = (cwd, args) => spawnSync('git', args, { cwd, encoding: 'utf8', timeout: 60_000, env: toolGitEnv(process.env) });
+
+// The worktree paths of the repository that holds `cwd` (realpaths; [] outside a repository).
+export function worktreePaths(cwd) {
+  const r = gitOut(cwd, ['worktree', 'list', '--porcelain']);
+  if (r.status !== 0) return [];
+  return String(r.stdout).split('\n').filter((l) => l.startsWith('worktree ')).map((l) => real(l.slice(9).trim()));
+}
+const real = (p) => {
+  try {
+    return fs.realpathSync(p);
+  } catch {
+    return p;
+  }
+};
+
+// A tool process's own temporary folder (TMPDIR, TMP, TEMP) and git environment: a worktree the tool makes goes there, so
+// what it leaves behind is told apart from the worktrees other runs add to the same repository meanwhile.
+// { env, dir, cleanup(cwd) -> [removed worktree paths] }.
+export function toolSandbox(env = process.env, { tmpRoot = os.tmpdir() } = {}) {
+  const dir = real(fs.mkdtempSync(path.join(tmpRoot, 'factory-tool-')));
+  return {
+    dir,
+    env: toolGitEnv({ ...env, TMPDIR: dir, TMP: dir, TEMP: dir }),
+    cleanup(cwd) {
+      const left = worktreePaths(cwd).filter((p) => p === dir || p.startsWith(`${dir}${path.sep}`));
+      for (const p of left) gitOut(cwd, ['worktree', 'remove', '--force', p]);
+      if (left.length) gitOut(cwd, ['worktree', 'prune']);
+      fs.rmSync(dir, { recursive: true, force: true });
+      return left;
+    },
+  };
 }
