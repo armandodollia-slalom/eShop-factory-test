@@ -1,0 +1,4 @@
+description: BUG-56 order draft line validation (quantity below 1, negative unit price); needs only the seeded user alice and no orders.
+extends: default
+
+# No extra rows: every case posts its own draft body as alice (Pass123$); a draft is computed in memory, so nothing is read from or written to the database.
