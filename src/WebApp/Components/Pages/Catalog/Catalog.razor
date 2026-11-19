@@ -8,7 +8,7 @@
 <SectionContent SectionName="page-header-subtitle">Start the season with the latest in clothing and equipment.</SectionContent>
 
 <div class="catalog">
-    <CatalogSearch BrandIds="@BrandIds" TypeIds="@TypeIds" />
+    <CatalogSearch BrandIds="@BrandIds" TypeIds="@TypeIds" InStock="@InStockOnly" />
 
     @if (catalogResult is null)
     {
@@ -159,6 +159,11 @@
     [SupplyParameterFromQuery(Name = "type")]
     public int[]? TypeIds { get; set; }
 
+    [SupplyParameterFromQuery(Name = "inStock")]
+    public bool? InStock { get; set; }
+
+    private bool InStockOnly => InStock is true;
+
     CatalogResult? catalogResult;
     int currentPage;
 
@@ -195,6 +200,7 @@
         { "page", null },
         { "brand", null },
         { "type", null },
+        { "inStock", null },
     });
 
     protected override async Task OnInitializedAsync()
@@ -208,7 +214,8 @@
             offsetOverflows ? 0 : currentPage - 1,
             PageSize,
             BrandIds,
-            TypeIds);
+            TypeIds,
+            InStockOnly);
 
         // A page past the last one (an old bookmark or a typed URL) shows the last page instead.
         var lastPage = PageCount(result.Count);
@@ -219,7 +226,8 @@
                 currentPage - 1,
                 PageSize,
                 BrandIds,
-                TypeIds);
+                TypeIds,
+                InStockOnly);
         }
 
         catalogResult = result;

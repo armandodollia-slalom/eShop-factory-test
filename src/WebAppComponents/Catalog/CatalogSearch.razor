@@ -71,6 +71,15 @@
                         }
                     </div>
                 </div>
+                <div class="catalog-search-group">
+                    <h3>Availability</h3>
+                    <div class="catalog-search-group-tags">
+                        <a href="@InStockUri()"
+                           class="catalog-search-tag @(InStock ? "active" : "")">
+                            <span>In stock only</span>
+                        </a>
+                    </div>
+                </div>
             </div>
         </details>
     </aside>
@@ -83,6 +92,7 @@
 
     [Parameter] public int[]? BrandIds { get; set; }
     [Parameter] public int[]? TypeIds { get; set; }
+    [Parameter] public bool InStock { get; set; }
 
     private IReadOnlyList<int> Brands => BrandIds ?? [];
     private IReadOnlyList<int> Types => TypeIds ?? [];
@@ -90,8 +100,8 @@
     private int BrandActiveCount => Brands.Count;
     private int TypeActiveCount => Types.Count;
 
-    bool HasActiveFilter => Brands.Count > 0 || Types.Count > 0;
-    int ActiveFilterCount => Brands.Count + Types.Count;
+    bool HasActiveFilter => ActiveFilterCount > 0;
+    int ActiveFilterCount => Brands.Count + Types.Count + (InStock ? 1 : 0);
 
     private bool IsBrandActive(int id) => Brands.Contains(id);
     private bool IsTypeActive(int id) => Types.Contains(id);
@@ -164,11 +174,18 @@
         { "type", ToggleValue(Types, typeId) },
     });
 
+    private string InStockUri() => Nav.GetUriWithQueryParameters(new Dictionary<string, object?>()
+    {
+        { "page", null },
+        { "inStock", InStock ? null : true },
+    });
+
     private string ResetUri() => Nav.GetUriWithQueryParameters(new Dictionary<string, object?>()
     {
         { "page", null },
         { "brand", null },
         { "type", null },
+        { "inStock", null },
     });
 
     // A null id clears the facet ("All"). Otherwise toggle the id's membership in the
