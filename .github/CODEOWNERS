@@ -4,6 +4,7 @@
 /.claude/agents/arch-review.md @armandodollia-slalom
 /.claude/agents/architecture-reviewer.md @armandodollia-slalom
 /.claude/agents/bug-triage.md @armandodollia-slalom
+/.claude/agents/demo-narrator.md @armandodollia-slalom
 /.claude/agents/escalation-questions.md @armandodollia-slalom
 /.claude/agents/implementer.md @armandodollia-slalom
 /.claude/agents/lessons-check.md @armandodollia-slalom
@@ -34,6 +35,7 @@
 /.github/agents/arch-review.agent.md @armandodollia-slalom
 /.github/agents/architecture-reviewer.agent.md @armandodollia-slalom
 /.github/agents/bug-triage.agent.md @armandodollia-slalom
+/.github/agents/demo-narrator.agent.md @armandodollia-slalom
 /.github/agents/escalation-questions.agent.md @armandodollia-slalom
 /.github/agents/implementer.agent.md @armandodollia-slalom
 /.github/agents/lessons-check.agent.md @armandodollia-slalom
