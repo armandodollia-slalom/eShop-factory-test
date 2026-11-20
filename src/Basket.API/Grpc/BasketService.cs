@@ -1,13 +1,15 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using eShop.Basket.API.Repositories;
 using eShop.Basket.API.Extensions;
 using eShop.Basket.API.Model;
+using eShop.Basket.API.Repositories;
+using Google.Protobuf.WellKnownTypes;
 
 namespace eShop.Basket.API.Grpc;
 
 public class BasketService(
     IBasketRepository repository,
-    ILogger<BasketService> logger) : Basket.BasketBase
+    ILogger<BasketService> logger,
+    TimeProvider timeProvider) : Basket.BasketBase
 {
     [AllowAnonymous]
     public override async Task<CustomerBasketResponse> GetBasket(GetBasketRequest request, ServerCallContext context)
@@ -46,7 +48,8 @@ public class BasketService(
             logger.LogDebug("Begin UpdateBasket call from method {Method} for basket id {Id}", context.Method, userId);
         }
 
-        var customerBasket = MapToCustomerBasket(userId, request);
+        var storedBasket = await repository.GetBasketAsync(userId);
+        var customerBasket = MapToCustomerBasket(userId, request, storedBasket, timeProvider.GetUtcNow().UtcDateTime);
         var response = await repository.UpdateBasketAsync(customerBasket);
         if (response is null)
         {
@@ -80,22 +83,36 @@ public class BasketService(
 
         foreach (var item in customerBasket.Items)
         {
-            response.Items.Add(new BasketItem()
+            var responseItem = new BasketItem()
             {
                 ProductId = item.ProductId,
                 Quantity = item.Quantity,
-            });
+            };
+
+            if (item.AddedAt is { } addedAt)
+            {
+                responseItem.AddedAt = Timestamp.FromDateTime(DateTime.SpecifyKind(addedAt, DateTimeKind.Utc));
+            }
+
+            response.Items.Add(responseItem);
         }
 
         return response;
     }
 
-    private static CustomerBasket MapToCustomerBasket(string userId, UpdateBasketRequest customerBasketRequest)
+    private static CustomerBasket MapToCustomerBasket(string userId, UpdateBasketRequest customerBasketRequest, CustomerBasket storedBasket, DateTime utcNow)
     {
         var response = new CustomerBasket
         {
             BuyerId = userId
         };
+
+        // The server owns when a product was first added; the client's added_at is never trusted.
+        var storedAddedAt = new Dictionary<int, DateTime?>();
+        foreach (var storedItem in storedBasket?.Items ?? [])
+        {
+            storedAddedAt.TryAdd(storedItem.ProductId, storedItem.AddedAt);
+        }
 
         foreach (var item in customerBasketRequest.Items)
         {
@@ -103,6 +120,7 @@ public class BasketService(
             {
                 ProductId = item.ProductId,
                 Quantity = item.Quantity,
+                AddedAt = storedAddedAt.TryGetValue(item.ProductId, out var addedAt) ? addedAt : utcNow,
             });
         }
 

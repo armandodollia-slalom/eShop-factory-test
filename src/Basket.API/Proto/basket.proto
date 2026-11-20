@@ -4,6 +4,8 @@ option csharp_namespace = "eShop.Basket.API.Grpc";
 
 package BasketApi;
 
+import "google/protobuf/timestamp.proto";
+
 service Basket {
     rpc GetBasket(GetBasketRequest) returns (CustomerBasketResponse) {}
     rpc UpdateBasket(UpdateBasketRequest) returns (CustomerBasketResponse) {}
@@ -20,6 +22,7 @@ message CustomerBasketResponse {
 message BasketItem {
     int32 product_id = 2;
     int32 quantity = 6;
+    google.protobuf.Timestamp added_at = 7;
 }
 
 message UpdateBasketRequest {
