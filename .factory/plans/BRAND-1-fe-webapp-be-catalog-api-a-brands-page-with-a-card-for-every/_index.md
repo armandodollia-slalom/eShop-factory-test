@@ -6,10 +6,10 @@ plan-sha: deb3502dd731
 verified-score: 10
 verified-at: "2026-11-20T09:27:28.675Z"
 verified-by: test-planner@3b45d17c/council
-automation-sha: 384399c0b209
+automation-sha: 9dcb22e9874e
 automation-plan-sha: deb3502dd731
 automation-score: 10
-automation-verified-at: "2026-11-20T09:59:12.849Z"
+automation-verified-at: "2026-11-20T12:35:58.346Z"
 ---
 # Test plan: BRAND-1 [FE - WebApp, BE - Catalog API] - A Brands page with a card for every brand
 
