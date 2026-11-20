@@ -595,9 +595,17 @@
           "Brands"
         ],
         "summary": "List catalog brand summaries",
-        "description": "Get every brand of the catalog with its number of items and the lowest price among them, ordered by brand name.",
+        "description": "Get every brand of the catalog with its number of items and the lowest price among them, ordered by brand name or by number of items.",
         "operationId": "ListBrandSummaries",
         "parameters": [
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "The order of the brands: \"name\" (the default) or \"count\" (most items first, then by name)",
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "api-version",
             "in": "query",

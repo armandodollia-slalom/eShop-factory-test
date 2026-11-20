@@ -103,7 +103,7 @@ public static class CatalogApi
         api.MapGet("/catalogbrands/summary", GetBrandSummaries)
             .WithName("ListBrandSummaries")
             .WithSummary("List catalog brand summaries")
-            .WithDescription("Get every brand of the catalog with its number of items and the lowest price among them, ordered by brand name.")
+            .WithDescription("Get every brand of the catalog with its number of items and the lowest price among them, ordered by brand name or by number of items.")
             .WithTags("Brands");
 
         // Routes for modifying catalog items.
@@ -214,24 +214,44 @@ public static class CatalogApi
             typeCounts.Sum(t => t.Count)));
     }
 
+    private const string BrandSortByName = "name";
+    private const string BrandSortByCount = "count";
+
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
-    public static async Task<Ok<CatalogBrandSummary[]>> GetBrandSummaries(
-        [AsParameters] CatalogServices services)
+    public static async Task<Results<Ok<CatalogBrandSummary[]>, ProblemHttpResult>> GetBrandSummaries(
+        [AsParameters] CatalogServices services,
+        [Description("The order of the brands: \"name\" (the default) or \"count\" (most items first, then by name)")] string? sort)
     {
+        var byCount = sort == BrandSortByCount;
+        if (!byCount && !string.IsNullOrEmpty(sort) && sort != BrandSortByName)
+        {
+            return TypedResults.Problem(
+                detail: $"Sort must be \"{BrandSortByName}\" or \"{BrandSortByCount}\".",
+                statusCode: StatusCodes.Status400BadRequest);
+        }
+
         // Left join so brands without items still appear, with a count of 0 and no lowest price.
-        var summaries = await (
+        var grouped =
             from brand in services.Context.CatalogBrands.AsNoTracking()
             join item in services.Context.CatalogItems.AsNoTracking()
                 on brand.Id equals item.CatalogBrandId into brandItems
             from item in brandItems.DefaultIfEmpty()
             group new { ItemId = (int?)item.Id, Price = (decimal?)item.Price }
                 by new { brand.Id, brand.Brand } into g
-            orderby g.Key.Brand, g.Key.Id
-            select new CatalogBrandSummary(
+            select new
+            {
                 g.Key.Id,
                 g.Key.Brand,
-                g.Count(x => x.ItemId != null),
-                g.Min(x => x.Price)))
+                ItemCount = g.Count(x => x.ItemId != null),
+                LowestPrice = g.Min(x => x.Price)
+            };
+
+        var ordered = byCount
+            ? grouped.OrderByDescending(s => s.ItemCount).ThenBy(s => s.Brand).ThenBy(s => s.Id)
+            : grouped.OrderBy(s => s.Brand).ThenBy(s => s.Id);
+
+        var summaries = await ordered
+            .Select(s => new CatalogBrandSummary(s.Id, s.Brand, s.ItemCount, s.LowestPrice))
             .ToArrayAsync();
 
         return TypedResults.Ok(summaries);
