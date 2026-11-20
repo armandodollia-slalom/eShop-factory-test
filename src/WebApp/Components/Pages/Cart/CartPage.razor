@@ -2,11 +2,22 @@
 @inject NavigationManager Nav
 @inject BasketState Basket
 @inject IProductImageUrlProvider ProductImages
+@inject ILogger<CartPage> Logger
+@using Grpc.Core
+@using Polly.CircuitBreaker
+@using Polly.Timeout
 @attribute [StreamRendering]
 @attribute [Authorize]
 
 <PageTitle>Shopping Bag | AdventureWorks</PageTitle>
 <SectionContent SectionName="page-header-title">Shopping bag</SectionContent>
+
+@if (giftMessageProductMissing)
+{
+    <div class="cart-notice">
+        <p class="gift-message-error" role="alert">Choose an item in your bag to add a gift message to.</p>
+    </div>
+}
 
 <div class='cart'>
     @if (basketItems is null)
@@ -38,12 +49,33 @@
             @foreach (var item in basketItems)
             {
                 var quantity = CurrentOrPendingQuantity(item.ProductId, item.Quantity);
+                var giftMessage = CurrentOrPendingGiftMessage(item.ProductId, item.GiftMessage);
+                var giftMessageFailed = giftMessageSaveFailed && GiftMessageProductId == item.ProductId;
                 <div class="cart-item" @key="@item.Id">
                     <div class="catalog-item-info">
                         <img alt="@item.ProductName" src="@ProductImages.GetProductImageUrl(item.ProductId)" />
                         <div class="catalog-item-content">
                             <p class="name">@item.ProductName</p>
+                            @if (giftMessage is not null)
+                            {
+                                <p class="gift-message">"@giftMessage"</p>
+                            }
                             <p class="price">$@item.UnitPrice.ToPriceDisplay()</p>
+                            <details class="gift-message-editor" open="@giftMessageFailed">
+                                <summary aria-label="@(giftMessage is null ? $"Add a gift message for {item.ProductName}" : $"Edit the gift message for {item.ProductName}")">@(giftMessage is null ? "Add a gift message" : "Edit")</summary>
+                                <form method="post" data-enhance class="gift-message-form">
+                                    <input type="hidden" name="_handler" value="gift-message" />
+                                    <AntiforgeryToken />
+                                    <input type="hidden" name="GiftMessageProductId" value="@item.ProductId" />
+                                    <input type="text" name="GiftMessageText" maxlength="@MaxGiftMessageLength" value="@(giftMessageFailed ? GiftMessageText : giftMessage)"
+                                           placeholder="Up to @MaxGiftMessageLength characters" aria-label="Gift message for @item.ProductName" />
+                                    <button type="submit" class="button button-secondary">Save</button>
+                                </form>
+                                @if (giftMessageFailed)
+                                {
+                                    <p class="gift-message-error" role="alert">We couldn't save your gift message. Please try again.</p>
+                                }
+                            </details>
                         </div>
                     </div>
                     <div class="catalog-item-quantity">
@@ -105,9 +137,20 @@
 </div>
 
 <form @formname="update-cart" @onsubmit="@UpdateQuantityAsync"></form>
+<form @formname="gift-message" @onsubmit="@SaveGiftMessageAsync"></form>
 
 @code {
+    private const int MaxGiftMessageLength = 60;
+
     private IReadOnlyCollection<BasketItem>? basketItems;
+    private bool giftMessageSaveFailed;
+    private bool giftMessageProductMissing;
+
+    [SupplyParameterFromForm]
+    public int? GiftMessageProductId { get; set; }
+
+    [SupplyParameterFromForm]
+    public string? GiftMessageText { get; set; }
 
     [SupplyParameterFromForm]
     public int? UpdateQuantityId { get; set; }
@@ -136,5 +179,52 @@
         var quantity = UpdateQuantityValue!.Value;
         await Basket.SetQuantityAsync(id, quantity);
         basketItems = await Basket.GetBasketItemsAsync();
+    }
+
+    // While a gift message post is in process, show the submitted message rather than the stored one.
+    private string? CurrentOrPendingGiftMessage(int productId, string? cartGiftMessage)
+        => !giftMessageSaveFailed && GiftMessageProductId.GetValueOrDefault(-1) == productId
+        ? NormalizeGiftMessage(GiftMessageText)
+        : cartGiftMessage;
+
+    private static string? NormalizeGiftMessage(string? message)
+        => string.IsNullOrWhiteSpace(message) ? null : message.Trim();
+
+    // Failures of the basket and catalog calls, including those the standard resilience pipeline raises
+    // when a call times out or its circuit is open.
+    private static bool IsRemoteCallFailure(Exception ex)
+        => ex is RpcException or HttpRequestException or TimeoutRejectedException or BrokenCircuitException;
+
+    private async Task SaveGiftMessageAsync()
+    {
+        // A post without a product id names no line to change: leave the bag as it is and say why nothing was saved.
+        if (GiftMessageProductId is not { } id)
+        {
+            giftMessageProductMissing = true;
+            return;
+        }
+
+        try
+        {
+            await Basket.SetGiftMessageAsync(id, GiftMessageText);
+        }
+        catch (Exception ex) when (IsRemoteCallFailure(ex))
+        {
+            // Keep the bag as it was loaded and tell the shopper, rather than failing the whole page.
+            Logger.LogError(ex, "Could not save the gift message for product {ProductId}", id);
+            giftMessageSaveFailed = true;
+            return;
+        }
+
+        try
+        {
+            basketItems = await Basket.GetBasketItemsAsync();
+        }
+        catch (Exception ex) when (IsRemoteCallFailure(ex) || ex is KeyNotFoundException)
+        {
+            // The message is stored (a KeyNotFoundException means a line's product left the catalog since the
+            // bag was loaded); the line keeps the earlier load but shows the submitted message as current.
+            Logger.LogWarning(ex, "Could not reload the bag after saving the gift message for product {ProductId}", id);
+        }
     }
 }

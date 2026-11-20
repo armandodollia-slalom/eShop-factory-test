@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using eShop.Basket.API.Repositories;
 using eShop.Basket.API.Extensions;
 using eShop.Basket.API.Model;
+using eShop.Basket.API.Repositories;
 
 namespace eShop.Basket.API.Grpc;
 
@@ -9,6 +9,8 @@ public class BasketService(
     IBasketRepository repository,
     ILogger<BasketService> logger) : Basket.BasketBase
 {
+    private const int MaxGiftMessageLength = 60;
+
     [AllowAnonymous]
     public override async Task<CustomerBasketResponse> GetBasket(GetBasketRequest request, ServerCallContext context)
     {
@@ -46,7 +48,16 @@ public class BasketService(
             logger.LogDebug("Begin UpdateBasket call from method {Method} for basket id {Id}", context.Method, userId);
         }
 
+        // Mapping validates every supplied gift message, so an invalid request never reaches the repository.
         var customerBasket = MapToCustomerBasket(userId, request);
+
+        // Callers built from an older contract (the mobile app) send items without the gift message field;
+        // their lines keep the message already stored for that product instead of losing it.
+        if (!request.Items.All(item => item.HasGiftMessage))
+        {
+            await KeepStoredGiftMessagesAsync(userId, request, customerBasket);
+        }
+
         var response = await repository.UpdateBasketAsync(customerBasket);
         if (response is null)
         {
@@ -84,10 +95,32 @@ public class BasketService(
             {
                 ProductId = item.ProductId,
                 Quantity = item.Quantity,
+                GiftMessage = item.GiftMessage ?? string.Empty,
             });
         }
 
         return response;
+    }
+
+    private async Task KeepStoredGiftMessagesAsync(string userId, UpdateBasketRequest request, CustomerBasket customerBasket)
+    {
+        var storedGiftMessages = new Dictionary<int, string>();
+        var storedBasket = await repository.GetBasketAsync(userId);
+        foreach (var item in storedBasket?.Items ?? [])
+        {
+            if (!string.IsNullOrEmpty(item.GiftMessage))
+            {
+                storedGiftMessages.TryAdd(item.ProductId, item.GiftMessage);
+            }
+        }
+
+        for (var i = 0; i < request.Items.Count; i++)
+        {
+            if (!request.Items[i].HasGiftMessage)
+            {
+                customerBasket.Items[i].GiftMessage = storedGiftMessages.GetValueOrDefault(request.Items[i].ProductId);
+            }
+        }
     }
 
     private static CustomerBasket MapToCustomerBasket(string userId, UpdateBasketRequest customerBasketRequest)
@@ -103,9 +136,26 @@ public class BasketService(
             {
                 ProductId = item.ProductId,
                 Quantity = item.Quantity,
+                GiftMessage = item.HasGiftMessage ? NormalizeGiftMessage(item.GiftMessage) : null,
             });
         }
 
         return response;
+    }
+
+    private static string NormalizeGiftMessage(string giftMessage)
+    {
+        var trimmed = giftMessage?.Trim();
+        if (string.IsNullOrEmpty(trimmed))
+        {
+            return null;
+        }
+
+        if (trimmed.Length > MaxGiftMessageLength)
+        {
+            throw new RpcException(new Status(StatusCode.InvalidArgument, $"A gift message cannot be longer than {MaxGiftMessageLength} characters."));
+        }
+
+        return trimmed;
     }
 }
