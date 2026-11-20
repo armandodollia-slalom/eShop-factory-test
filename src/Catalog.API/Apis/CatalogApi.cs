@@ -104,7 +104,8 @@ public static class CatalogApi
             .WithName("ListBrandSummaries")
             .WithSummary("List catalog brand summaries")
             .WithDescription("Get every brand of the catalog with its number of items and the lowest price among them, ordered by brand name or by number of items.")
-            .WithTags("Brands");
+            .WithTags("Brands")
+            .ProducesProblem(StatusCodes.Status400BadRequest);
 
         // Routes for modifying catalog items.
         v1.MapPut("/items", UpdateItemV1)
@@ -217,7 +218,6 @@ public static class CatalogApi
     private const string BrandSortByName = "name";
     private const string BrandSortByCount = "count";
 
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
     public static async Task<Results<Ok<CatalogBrandSummary[]>, ProblemHttpResult>> GetBrandSummaries(
         [AsParameters] CatalogServices services,
         [Description("The order of the brands: \"name\" (the default) or \"count\" (most items first, then by name)")] string? sort)
