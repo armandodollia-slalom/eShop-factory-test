@@ -1,3 +1,39 @@
+.brand-sort {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.brand-sort-label {
+    color: var(--color-ink-2);
+    font-size: var(--text-sm);
+    font-weight: 600;
+}
+
+.brand-sort-option {
+    padding: 0.4rem 0.75rem;
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--radius-pill);
+    background: var(--color-surface);
+    color: var(--color-ink-2);
+    font-size: var(--text-sm);
+    line-height: 1.2;
+    text-decoration: none;
+}
+
+.brand-sort-option:hover {
+    border-color: var(--color-ink);
+    color: var(--color-ink);
+}
+
+.brand-sort-option.active {
+    background: var(--color-ink);
+    border-color: var(--color-ink);
+    color: var(--accent-contrast);
+}
+
 .brand-card {
     display: flex;
     flex-direction: column;
