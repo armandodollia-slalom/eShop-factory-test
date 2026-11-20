@@ -1,0 +1,9 @@
+description: BUG-53 CatalogItemPriceChange webhooks; needs catalog item 99 at its default price, the seeded user alice and no webhook subscriptions.
+extends: default
+
+# No extra rows. From `default` the cases use:
+#   - catalog item 99 "Adventurer GPS Watch" with Price 199.99 (the item whose price TC-BUG-53-01 changes and TC-BUG-53-03 re-saves unchanged);
+#   - alice / Pass123$ (registers the webhooks and signs in to the webhooks client);
+#   - no webhook subscriptions, so each case registers only its own.
+# The spec loads this scenario with --hard before each case: that restarts the webhooks client too, which keeps received
+# messages in memory, so a case starts with no received message carrying its tokens.
