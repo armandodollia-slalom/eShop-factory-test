@@ -20,6 +20,24 @@ import { test as base, expect, APIRequestContext, APIResponse, Browser, BrowserC
 
 type VideoOption = { mode?: string; size?: { width: number; height: number }; show?: { actions?: object } };
 
+// Demo mode (E2E_DEMO=1, the factory's local video step): every page is recorded at E2E_VIDEO_SIZE (default 1280x720,
+// the viewport too, so nothing is scaled down), and no spec can shorten its own timeout below E2E_DEMO_TIMEOUT_MS: demo
+// pacing makes a test several times slower than at test speed, and a spec's `test.setTimeout` or
+// `test.describe.configure({ timeout })` would otherwise cut the recording short.
+const DEMO = process.env.E2E_DEMO === '1';
+const DEMO_SIZE = (() => {
+  const m = /^(\d{3,4})x(\d{3,4})$/.exec(process.env.E2E_VIDEO_SIZE ?? '');
+  return m ? { width: Number(m[1]), height: Number(m[2]) } : { width: 1280, height: 720 };
+})();
+const DEMO_TIMEOUT_MS = Number(process.env.E2E_DEMO_TIMEOUT_MS ?? 0) || 0;
+function liftTimeout(testInfo: TestInfo) {
+  if (!DEMO || !DEMO_TIMEOUT_MS) return;
+  const set = testInfo.setTimeout.bind(testInfo);
+  if (testInfo.timeout && testInfo.timeout < DEMO_TIMEOUT_MS) set(DEMO_TIMEOUT_MS);
+  // 0 (no timeout) stays; anything shorter is raised to the demo floor.
+  testInfo.setTimeout = (ms: number) => set(ms === 0 ? 0 : Math.max(ms, DEMO_TIMEOUT_MS));
+}
+
 let current:
   | { testInfo: TestInfo; contexts: BrowserContext[]; videos: (Video | null)[]; pages: Page[]; manualPages: Set<Page>; frames: number }
   | undefined;
@@ -184,6 +202,17 @@ function recordApiCalls(context: APIRequestContext, log: ApiExchange[]): APIRequ
 }
 
 export const test = withStepKeyframes(base.extend<{ _recordManualContexts: void }, { browser: Browser }>({
+  ...(DEMO
+    ? {
+        // Playwright requires the fixtures argument to be destructured, even when no fixture is used.
+        // eslint-disable-next-line no-empty-pattern
+        viewport: async ({}, use: (v: { width: number; height: number }) => Promise<void>) => use(DEMO_SIZE),
+        video: [async ({ video }: { video: any }, use: (v: any) => Promise<void>) => {
+          const mode = typeof video === 'string' ? video : video?.mode ?? 'off';
+          await use(mode === 'off' ? video : { ...(typeof video === 'object' ? video : {}), mode, size: DEMO_SIZE });
+        }, { scope: 'worker' }],
+      } as any
+    : {}),
   request: async ({ request }, use, testInfo) => {
     if (!API_LOG) return use(request);
     const log: ApiExchange[] = [];
@@ -207,7 +236,7 @@ export const test = withStepKeyframes(base.extend<{ _recordManualContexts: void 
           ...options,
           recordVideo: {
             dir: current.testInfo.outputPath('videos'),
-            size: settings.size ?? { width: 1280, height: 720 },
+            size: DEMO ? DEMO_SIZE : settings.size ?? { width: 1280, height: 720 },
             ...(settings.show?.actions ? { showActions: settings.show.actions } : {}),
           },
         });
@@ -233,6 +262,7 @@ export const test = withStepKeyframes(base.extend<{ _recordManualContexts: void 
       const contexts: BrowserContext[] = [];
       const videos: (Video | null)[] = [];
       current = { testInfo, contexts, videos, pages: [], manualPages: new Set(), frames: 0 };
+      liftTimeout(testInfo);
       await use();
       await captureKeyframe(testInfo.status === testInfo.expectedStatus ? 'final' : 'failure', [...current.manualPages]);
       current = undefined;

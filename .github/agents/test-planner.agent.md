@@ -46,7 +46,7 @@ priority: P1
 
 ## Steps
 
-1. Exact request or UI action, with method, path, body and identity.
+1. Exact request or UI action, with method, path, body and identity. For an `e2e` case, write each UI step as a user action on a named element ("click the **Summer sale** card on the Offers page", "choose **Newest** in **Sort**") and each expected result as what the screen shows: the demo video narrates the steps from those names, so a viewer can follow the case without a caption.
 
 ## Expected result
 
