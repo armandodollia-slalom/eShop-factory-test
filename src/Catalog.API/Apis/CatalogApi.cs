@@ -100,6 +100,11 @@ public static class CatalogApi
             .WithSummary("List catalog item brands")
             .WithDescription("Get a list of the brands of catalog items")
             .WithTags("Brands");
+        api.MapGet("/catalogbrands/summary", GetBrandSummaries)
+            .WithName("ListBrandSummaries")
+            .WithSummary("List catalog brand summaries")
+            .WithDescription("Get every brand of the catalog with its number of items and the lowest price among them, ordered by brand name.")
+            .WithTags("Brands");
 
         // Routes for modifying catalog items.
         v1.MapPut("/items", UpdateItemV1)
@@ -207,6 +212,29 @@ public static class CatalogApi
             typeCounts,
             brandCounts.Sum(b => b.Count),
             typeCounts.Sum(t => t.Count)));
+    }
+
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
+    public static async Task<Ok<CatalogBrandSummary[]>> GetBrandSummaries(
+        [AsParameters] CatalogServices services)
+    {
+        // Left join so brands without items still appear, with a count of 0 and no lowest price.
+        var summaries = await (
+            from brand in services.Context.CatalogBrands.AsNoTracking()
+            join item in services.Context.CatalogItems.AsNoTracking()
+                on brand.Id equals item.CatalogBrandId into brandItems
+            from item in brandItems.DefaultIfEmpty()
+            group new { ItemId = (int?)item.Id, Price = (decimal?)item.Price }
+                by new { brand.Id, brand.Brand } into g
+            orderby g.Key.Brand, g.Key.Id
+            select new CatalogBrandSummary(
+                g.Key.Id,
+                g.Key.Brand,
+                g.Count(x => x.ItemId != null),
+                g.Min(x => x.Price)))
+            .ToArrayAsync();
+
+        return TypedResults.Ok(summaries);
     }
 
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]
