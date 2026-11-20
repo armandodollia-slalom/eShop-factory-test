@@ -163,4 +163,131 @@ public sealed class BrandSummaryTests : IClassFixture<BrandSummaryCatalog>
             }
         }
     }
+
+    private static readonly (int Id, string Brand)[] NameOrder =
+    [
+        (9, "AirStrider"), (5, "B&R"), (1, "Daybird"), (2, "Gravitator"), (10, "Green Equipment"),
+        (8, "Grolltex"), (12, "Legend"), (4, "Quester"), (6, "Raptor Elite"), (7, "Solstix"),
+        (3, "WildRunner"), (13, "XE"), (11, "Zephyr"),
+    ];
+
+    private async Task<(HttpResponseMessage Response, string Body)> GetAsync(string url)
+    {
+        var client = _fixture.CreateClient();
+        var response = await client.GetAsync(url, TestContext.Current.CancellationToken);
+        var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        return (response, body);
+    }
+
+    private static JsonElement[] ParseBrands(string body)
+    {
+        using var document = JsonDocument.Parse(body);
+        Assert.Equal(JsonValueKind.Array, document.RootElement.ValueKind);
+        return document.RootElement.EnumerateArray().Select(e => e.Clone()).ToArray();
+    }
+
+    private static (int, string) IdAndBrand(JsonElement b) => (b.GetProperty("id").GetInt32(), b.GetProperty("brand").GetString());
+
+    private static void AssertSortProblem(HttpResponseMessage response, string body)
+    {
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+        using var document = JsonDocument.Parse(body);
+        Assert.Equal(JsonValueKind.Object, document.RootElement.ValueKind);
+        Assert.Equal(400, document.RootElement.GetProperty("status").GetInt32());
+        var detail = document.RootElement.GetProperty("detail").GetString();
+        Assert.Contains("name", detail);
+        Assert.Contains("count", detail);
+    }
+
+    [Fact]
+    [Trait("Story", "BRAND-3")]
+    [Trait("TestCase", "TC-BRAND-3-01")]
+    public async Task TC_BRAND_3_01_SummarySortedByCountOrdersByItemCountDescendingThenName()
+    {
+        var (response, body) = await GetAsync($"{SummaryUrl}&sort=count");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("application/json", response.Content.Headers.ContentType?.MediaType);
+        var brands = ParseBrands(body);
+        var expected = new (int Id, string Brand, int ItemCount)[]
+        {
+            (2, "Gravitator", 11), (6, "Raptor Elite", 11), (3, "WildRunner", 11), (5, "B&R", 10), (1, "Daybird", 10),
+            (7, "Solstix", 9), (12, "Legend", 8), (10, "Green Equipment", 7), (9, "AirStrider", 6), (11, "Zephyr", 6),
+            (8, "Grolltex", 5), (4, "Quester", 4), (13, "XE", 3),
+        };
+        Assert.Equal(13, brands.Length);
+        Assert.Equal(
+            expected,
+            brands.Select(b => (b.GetProperty("id").GetInt32(), b.GetProperty("brand").GetString(), b.GetProperty("itemCount").GetInt32())).ToArray());
+
+        // Sorting changes only the order: every entry's lowest price equals the one of the unsorted response.
+        var (unsortedResponse, unsortedBody) = await GetAsync(SummaryUrl);
+        Assert.Equal(HttpStatusCode.OK, unsortedResponse.StatusCode);
+        var unsortedPrices = ParseBrands(unsortedBody).ToDictionary(b => b.GetProperty("id").GetInt32(), b => b.GetProperty("lowestPrice").GetDecimal());
+        Assert.All(brands, b => Assert.Equal(unsortedPrices[b.GetProperty("id").GetInt32()], b.GetProperty("lowestPrice").GetDecimal()));
+        Assert.Equal(59.99m, brands[0].GetProperty("lowestPrice").GetDecimal());
+        Assert.Equal(199.00m, brands[^1].GetProperty("lowestPrice").GetDecimal());
+    }
+
+    [Fact]
+    [Trait("Story", "BRAND-3")]
+    [Trait("TestCase", "TC-BRAND-3-02")]
+    public async Task TC_BRAND_3_02_SummarySortedByNameOrdersBrandsAlphabetically()
+    {
+        var (response, body) = await GetAsync($"{SummaryUrl}&sort=name");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var brands = ParseBrands(body);
+        Assert.Equal(13, brands.Length);
+        Assert.Equal(NameOrder, brands.Select(IdAndBrand).ToArray());
+    }
+
+    [Fact]
+    [Trait("Story", "BRAND-3")]
+    [Trait("TestCase", "TC-BRAND-3-03")]
+    public async Task TC_BRAND_3_03_SummaryWithoutSortKeepsAlphabeticalOrder()
+    {
+        var (response, body) = await GetAsync(SummaryUrl);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var brands = ParseBrands(body);
+        Assert.Equal(13, brands.Length);
+        Assert.Equal(NameOrder, brands.Select(IdAndBrand).ToArray());
+    }
+
+    [Fact]
+    [Trait("Story", "BRAND-3")]
+    [Trait("TestCase", "TC-BRAND-3-04")]
+    public async Task TC_BRAND_3_04_SummaryWithUnknownSortAnswers400ProblemNamingNameAndCount()
+    {
+        var (response, body) = await GetAsync($"{SummaryUrl}&sort=price");
+
+        AssertSortProblem(response, body);
+        using var document = JsonDocument.Parse(body);
+        Assert.NotEqual(JsonValueKind.Array, document.RootElement.ValueKind);
+        Assert.False(document.RootElement.TryGetProperty("id", out _));
+        Assert.False(document.RootElement.TryGetProperty("brand", out _));
+        Assert.False(document.RootElement.TryGetProperty("itemCount", out _));
+    }
+
+    [Fact]
+    [Trait("Story", "BRAND-3")]
+    [Trait("TestCase", "TC-BRAND-3-05")]
+    public async Task TC_BRAND_3_05_SummaryWithEmptySortAnswers400()
+    {
+        var (response, body) = await GetAsync($"{SummaryUrl}&sort=");
+
+        AssertSortProblem(response, body);
+    }
+
+    [Fact]
+    [Trait("Story", "BRAND-3")]
+    [Trait("TestCase", "TC-BRAND-3-06")]
+    public async Task TC_BRAND_3_06_SummaryWithUppercaseCountAnswers400()
+    {
+        var (response, body) = await GetAsync($"{SummaryUrl}&sort=COUNT");
+
+        AssertSortProblem(response, body);
+    }
 }
