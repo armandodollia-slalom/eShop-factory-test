@@ -1,3 +1,5 @@
+import path from 'node:path';
+import fs from 'node:fs';
 /* eslint-disable @typescript-eslint/no-explicit-any -- wraps Playwright's generic test, step and request APIs, whose types are generic over any */
 import { test as base, expect, APIRequestContext, APIResponse, Browser, BrowserContext, BrowserContextOptions, Page, TestInfo, TestType, Video } from '@playwright/test';
 
@@ -18,6 +20,24 @@ import { test as base, expect, APIRequestContext, APIResponse, Browser, BrowserC
 
 type VideoOption = { mode?: string; size?: { width: number; height: number }; show?: { actions?: object } };
 
+// Demo mode (E2E_DEMO=1, the factory's local video step): every page is recorded at E2E_VIDEO_SIZE (default 1280x720,
+// the viewport too, so nothing is scaled down), and no spec can shorten its own timeout below E2E_DEMO_TIMEOUT_MS: demo
+// pacing makes a test several times slower than at test speed, and a spec's `test.setTimeout` or
+// `test.describe.configure({ timeout })` would otherwise cut the recording short.
+const DEMO = process.env.E2E_DEMO === '1';
+const DEMO_SIZE = (() => {
+  const m = /^(\d{3,4})x(\d{3,4})$/.exec(process.env.E2E_VIDEO_SIZE ?? '');
+  return m ? { width: Number(m[1]), height: Number(m[2]) } : { width: 1280, height: 720 };
+})();
+const DEMO_TIMEOUT_MS = Number(process.env.E2E_DEMO_TIMEOUT_MS ?? 0) || 0;
+function liftTimeout(testInfo: TestInfo) {
+  if (!DEMO || !DEMO_TIMEOUT_MS) return;
+  const set = testInfo.setTimeout.bind(testInfo);
+  if (testInfo.timeout && testInfo.timeout < DEMO_TIMEOUT_MS) set(DEMO_TIMEOUT_MS);
+  // 0 (no timeout) stays; anything shorter is raised to the demo floor.
+  testInfo.setTimeout = (ms: number) => set(ms === 0 ? 0 : Math.max(ms, DEMO_TIMEOUT_MS));
+}
+
 let current:
   | { testInfo: TestInfo; contexts: BrowserContext[]; videos: (Video | null)[]; pages: Page[]; manualPages: Set<Page>; frames: number }
   | undefined;
@@ -27,6 +47,29 @@ function keyframeSlug(value: string) {
 }
 
 /** Screenshot `pages` (default: every open page of the current test) and attach them as keyframes. Never throws. */
+// The URL caption every keyframe carries (evidence by construction: a reviewer never has to ask which page a frame
+// shows). Drawn for the screenshot only, in a closed shadow root the test's locators cannot see, then removed.
+const URL_CAPTION_ATTR = 'data-factory-url-caption';
+async function stampUrl(page: Page) {
+  await page
+    .evaluate(([attr, url]) => {
+      const host = document.createElement('div');
+      host.setAttribute(attr, '');
+      host.setAttribute('aria-hidden', 'true');
+      host.style.cssText = 'position:fixed;left:8px;bottom:8px;z-index:2147483647;pointer-events:none;max-width:70vw;';
+      const root = host.attachShadow({ mode: 'closed' });
+      const bar = document.createElement('div');
+      bar.textContent = `URL ${url}`;
+      bar.style.cssText = 'font:600 12px/1.5 ui-monospace,Menlo,monospace;background:rgba(15,23,42,.88);color:#fff;padding:2px 8px;border-radius:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+      root.appendChild(bar);
+      document.documentElement.appendChild(host);
+    }, [URL_CAPTION_ATTR, page.url()] as const)
+    .catch(() => {});
+}
+async function unstampUrl(page: Page) {
+  await page.evaluate(attr => document.querySelectorAll(`[${attr}]`).forEach(n => n.remove()), URL_CAPTION_ATTR).catch(() => {});
+}
+
 export async function captureKeyframe(label: string, pages?: Page[]) {
   const recording = current;
   if (!recording || !videoSettings(recording.testInfo)) return;
@@ -35,8 +78,15 @@ export async function captureKeyframe(label: string, pages?: Page[]) {
     const name = open.length > 1 ? `${label} [page ${i + 1}]` : label;
     const file = recording.testInfo.outputPath('keyframes', `${String(++recording.frames).padStart(2, '0')}-${keyframeSlug(name)}.png`);
     try {
-      await page.screenshot({ path: file, timeout: 5000, animations: 'disabled', caret: 'initial' });
+      await stampUrl(page);
+      try {
+        await page.screenshot({ path: file, timeout: 5000, animations: 'disabled', caret: 'initial' });
+      } finally {
+        await unstampUrl(page);
+      }
       await recording.testInfo.attach(`keyframe: ${name}`, { path: file, contentType: 'image/png' });
+      // The keyframe's URL as text too, for agents and the harness (keyframes/index.jsonl).
+      fs.appendFileSync(recording.testInfo.outputPath('keyframes', 'index.jsonl'), `${JSON.stringify({ file: path.basename(file), label: name, url: page.url() })}\n`);
     } catch {
       // A page that is navigating or crashed is not worth failing the test over.
     }
@@ -152,6 +202,17 @@ function recordApiCalls(context: APIRequestContext, log: ApiExchange[]): APIRequ
 }
 
 export const test = withStepKeyframes(base.extend<{ _recordManualContexts: void }, { browser: Browser }>({
+  ...(DEMO
+    ? {
+        // Playwright requires the fixtures argument to be destructured, even when no fixture is used.
+        // eslint-disable-next-line no-empty-pattern
+        viewport: async ({}, use: (v: { width: number; height: number }) => Promise<void>) => use(DEMO_SIZE),
+        video: [async ({ video }: { video: any }, use: (v: any) => Promise<void>) => {
+          const mode = typeof video === 'string' ? video : video?.mode ?? 'off';
+          await use(mode === 'off' ? video : { ...(typeof video === 'object' ? video : {}), mode, size: DEMO_SIZE });
+        }, { scope: 'worker' }],
+      } as any
+    : {}),
   request: async ({ request }, use, testInfo) => {
     if (!API_LOG) return use(request);
     const log: ApiExchange[] = [];
@@ -175,7 +236,7 @@ export const test = withStepKeyframes(base.extend<{ _recordManualContexts: void 
           ...options,
           recordVideo: {
             dir: current.testInfo.outputPath('videos'),
-            size: settings.size ?? { width: 1280, height: 720 },
+            size: DEMO ? DEMO_SIZE : settings.size ?? { width: 1280, height: 720 },
             ...(settings.show?.actions ? { showActions: settings.show.actions } : {}),
           },
         });
@@ -201,6 +262,7 @@ export const test = withStepKeyframes(base.extend<{ _recordManualContexts: void 
       const contexts: BrowserContext[] = [];
       const videos: (Video | null)[] = [];
       current = { testInfo, contexts, videos, pages: [], manualPages: new Set(), frames: 0 };
+      liftTimeout(testInfo);
       await use();
       await captureKeyframe(testInfo.status === testInfo.expectedStatus ? 'final' : 'failure', [...current.manualPages]);
       current = undefined;

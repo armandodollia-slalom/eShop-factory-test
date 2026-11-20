@@ -1,12 +1,8 @@
 name: eShop Pull Request Validation
 
 on:
+  # Every pull request runs it, so the ruleset can require it (a required check a paths filter skipped would hold the PR).
   pull_request:
-    paths-ignore:
-      - '**.md'
-      - 'src/ClientApp/**'
-      - 'tests/ClientApp.UnitTests/**'
-      - '.github/workflows/pr-validation-maui.yml'
   push:
     branches:
       - main
@@ -18,6 +14,7 @@ on:
 
 jobs:  
   test:
+    name: eShop tests
     runs-on: ubuntu-latest    
     steps:
       - uses: actions/checkout@v4

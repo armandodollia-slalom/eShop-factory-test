@@ -11,7 +11,43 @@ permissions:
 on:
   pull_request:
 
+  push:
+    branches:
+    - feat/**
+    - epic/**
+    - bugfix/**
 jobs:
+  reuse:
+    name: reuse
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+      contents: read
+    outputs:
+      reused: ${{ steps.check.outputs.reused }}
+    steps:
+    - id: check
+      name: The same jobs already passed on this head before the PR opened
+      env:
+        GH_TOKEN: ${{ github.token }}
+        HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        BASE_REF: ${{ github.event.pull_request.base.ref }}
+        WORKFLOW_REF: ${{ github.workflow_ref }}
+        ALLOW_SKIPPED: ""
+      run: |-
+        set -u
+        wf="${WORKFLOW_REF#*/*/}"; wf="${wf%@*}"
+        reused=false
+        behind=$(gh api "repos/$GITHUB_REPOSITORY/compare/$BASE_REF...$HEAD_SHA" --jq .behind_by 2>/dev/null || echo unknown)
+        run=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$HEAD_SHA&event=push&per_page=50" --jq "[.workflow_runs[] | select(.path == \"$wf\" and .conclusion == \"success\")][0].id // empty" 2>/dev/null || true)
+        if [ "$behind" = "0" ] && [ -n "$run" ]; then
+          open=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run/jobs?per_page=100" --jq "[.jobs[] | . as \$j | select(\$j.name != \"reuse\" and \$j.conclusion != \"success\" and ((\$j.conclusion == \"skipped\" and ((env.ALLOW_SKIPPED // \"\") | split(\",\") | index(\$j.name) != null)) | not))] | length" 2>/dev/null || echo 1)
+          if [ "$open" = "0" ]; then reused=true; echo "Every job of $wf passed on $HEAD_SHA in its story-branch push run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$run (reused, not repeated)"; fi
+        fi
+        [ "$reused" = true ] || echo "No complete green push run of $wf on $HEAD_SHA with the base not ahead (behind_by=$behind, run=${run:-none}): the jobs run in full"
+        echo "reused=$reused" >> "$GITHUB_OUTPUT"
   pipeline:
     runs-on: ubuntu-latest
     steps:
@@ -34,6 +70,9 @@ jobs:
       run: |
         factory teststack validate
         if node -e "process.exit(require('./.factory/config.json').teststack?.commands?.drift ? 0 : 1)"; then factory teststack drift; fi
+    needs:
+    - reuse
+    if: ${{ !cancelled() && needs.reuse.outputs.reused != 'true' }}
 
   policy:
     # The architecture policy's own checks, as the review stage applies them: the application's declarations
@@ -62,6 +101,9 @@ jobs:
     - name: Architecture policy selfcheck
       if: hashFiles('.factory/policy/policy.yaml') != ''
       run: factory arch selfcheck --policy-dir .factory/policy --workspace .
+    needs:
+    - reuse
+    if: ${{ !cancelled() && needs.reuse.outputs.reused != 'true' }}
 
   lint:
     # The repository's linters (precheck.lint) on the lines this pull request changes.
@@ -80,11 +122,19 @@ jobs:
       if: hashFiles('.github/actions/factory-toolchain/action.yml') != ''
       uses: ./.github/actions/factory-toolchain
     - name: Lint the changed lines
-      run: factory lint --base origin/${{ github.base_ref }}
+      env:
+        BASE_REF: ${{ github.base_ref || github.event.repository.default_branch }}
+      run: factory lint --base "origin/$BASE_REF"
+    needs:
+    - reuse
+    if: ${{ !cancelled() && needs.reuse.outputs.reused != 'true' }}
 
   feature-verification:
-    needs: pipeline
+    needs:
+    - reuse
+    - pipeline
     uses: ./.github/workflows/factory-feature-verification-check.yml
     secrets: inherit
     with:
-      base-ref: origin/${{ github.base_ref }}
+      base-ref: origin/${{ github.base_ref || github.event.repository.default_branch }}
+    if: ${{ !cancelled() && needs.reuse.outputs.reused != 'true' }}

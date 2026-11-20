@@ -42,6 +42,8 @@ interface ManifestTest {
   keyframes: { label: string; path: string }[];
   /** HTTP calls made through the `request` fixture (E2E_API_LOG=1, e2e/fixtures.ts). */
   api?: unknown[];
+  /** The demo fixture's step log of the first video (captions, timings, covered regions, redacted visible text). */
+  steps?: string;
 }
 
 export default class VideoReporter implements Reporter {
@@ -107,6 +109,14 @@ export default class VideoReporter implements Reporter {
       this.saved.push(target);
       entry.videos.push(rel(target));
     });
+
+    // The narrated steps of the main page's video (e2e/demo.ts): the factory narrates, subtitles and checks them.
+    const steps = keep ? result.attachments.find(a => a.name === 'demo-steps' && a.body) : undefined;
+    if (steps && entry.videos.length) {
+      const target = path.join(OUT_DIR, entry.videos[0].replace(/\.webm$/, '.steps.json'));
+      fs.writeFileSync(target, steps.body!);
+      entry.steps = rel(target);
+    }
 
     if (keyframes.length) {
       const dir = path.join(OUT_DIR, project, `${base}.keyframes`);

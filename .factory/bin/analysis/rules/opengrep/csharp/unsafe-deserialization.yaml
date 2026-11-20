@@ -1,0 +1,30 @@
+# The factory's own rule (MIT). Written for the AI app factory from the defect description; not derived from any rule set.
+rules:
+  - id: factory.cs.unsafe-deserialization
+    languages: [csharp]
+    severity: ERROR
+    message: >-
+      A deserializer that can build any type is used (BinaryFormatter, SoapFormatter, NetDataContractSerializer,
+      LosFormatter, ObjectStateFormatter, or Json.NET with TypeNameHandling other than None). Data from outside can run
+      code. Use System.Text.Json or DataContractSerializer with known types.
+    metadata: { cwe: "CWE-502", category: security, licence: MIT, source: ai-app-factory }
+    # Test code drives the application from outside: a test client's request and response are not the server's input
+    # (dogfood C15: Playwright specs failed CI on SQL and SSRF rules). Secrets in tests are still the secret scan's.
+    paths:
+      exclude: ["e2e/**", "**/e2e/**", "tests/**", "test/**", "**/*.spec.*", "**/*.test.*", "**/*Tests/**", "**/*.Tests/**"]
+    pattern-either:
+      - pattern: new BinaryFormatter(...)
+      - pattern: new SoapFormatter(...)
+      - pattern: new NetDataContractSerializer(...)
+      - pattern: new LosFormatter(...)
+      - pattern: new ObjectStateFormatter(...)
+      - patterns:
+          - pattern: TypeNameHandling = TypeNameHandling.$H
+          - metavariable-regex:
+              metavariable: $H
+              regex: ^(All|Objects|Arrays|Auto)$
+      - patterns:
+          - pattern: $S.TypeNameHandling = TypeNameHandling.$H
+          - metavariable-regex:
+              metavariable: $H
+              regex: ^(All|Objects|Arrays|Auto)$

@@ -158,7 +158,10 @@
         ".factory/bin/factory.mjs",
         "teststack"
       ]
-    }
+    },
+    "maxConcurrentAgents": 8,
+    "maxAgentRunsPerStory": 48,
+    "storyWallClockSec": 18000
   },
   "precheck": {
     "lint": {
@@ -343,7 +346,8 @@
     "cli": "claude",
     "allowedModels": [
       "opus",
-      "sonnet"
+      "sonnet",
+      "sol"
     ],
     "models": {
       "default": "opus",
@@ -373,6 +377,86 @@
       "enabled": true,
       "source": "https://github.com/armandodollia-slalom/ai-app-factory.git",
       "evidence": "summary"
+    }
+  },
+  "council": {
+    "passScore": 9,
+    "blockOn": "any",
+    "onUnavailable": "fail",
+    "members": [
+      {
+        "name": "opus",
+        "cli": "claude",
+        "model": "opus",
+        "effort": "high",
+        "lens": "correctness"
+      },
+      {
+        "name": "sol",
+        "cli": "codex",
+        "model": "sol",
+        "effort": "high",
+        "lens": "correctness",
+        "env": {
+          "CODEX_HOME": "~/.codex-personal"
+        }
+      }
+    ],
+    "stages": {
+      "pairVerify": {
+        "rounds": 3,
+        "lenses": {
+          "opus": "correctness",
+          "sol": "rewrite"
+        }
+      },
+      "pairUiVerify": {
+        "rounds": 3,
+        "lenses": {
+          "opus": "ui",
+          "sol": "correctness"
+        }
+      },
+      "review": {
+        "rounds": 5,
+        "lenses": {
+          "opus": "acceptance",
+          "sol": "correctness"
+        }
+      },
+      "testPlan": {
+        "rounds": 5,
+        "lenses": {
+          "opus": "acceptance",
+          "sol": "test-value"
+        }
+      },
+      "testAutomation": {
+        "rounds": 5,
+        "lenses": {
+          "opus": "acceptance",
+          "sol": "test-value"
+        }
+      },
+      "prCheck": {
+        "rounds": 6,
+        "lenses": {
+          "opus": "rewrite",
+          "sol": "test-value"
+        }
+      }
+    }
+  },
+  "analysis": {
+    "vars": {
+      "solution": "eShop.Web.slnf"
+    },
+    "secrets": {
+      "allow": {
+        "stopwords": [
+          "Pass123$"
+        ]
+      }
     }
   }
 }

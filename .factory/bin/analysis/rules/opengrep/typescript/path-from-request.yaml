@@ -1,0 +1,39 @@
+# The factory's own rule (MIT). Written for the AI app factory from the defect description; not derived from any rule set.
+rules:
+  - id: factory.ts.path-from-request
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: >-
+      A file path is built from request data (params, query, body, headers) and opened. "../" in it reaches files outside
+      the folder you meant (path traversal). Resolve the path, check it stays inside the base folder, or map ids to
+      known files.
+    metadata: { cwe: "CWE-22", category: security, licence: MIT, source: ai-app-factory }
+    # Test code drives the application from outside: a test client's request and response are not the server's input
+    # (dogfood C15: Playwright specs failed CI on SQL and SSRF rules). Secrets in tests are still the secret scan's.
+    paths:
+      exclude: ["e2e/**", "**/e2e/**", "tests/**", "test/**", "**/*.spec.*", "**/*.test.*", "**/*Tests/**", "**/*.Tests/**"]
+    mode: taint
+    pattern-sources:
+      - pattern-either:
+          - pattern: $REQ.params
+          - pattern: $REQ.query
+          - pattern: $REQ.body
+          - pattern: $REQ.headers
+    pattern-sanitizers:
+      - pattern: path.basename(...)
+      - pattern: $P.basename(...)
+    pattern-sinks:
+      - patterns:
+          - pattern-either:
+              - pattern: $FS.$FN($PATH, ...)
+              - pattern: $RES.sendFile($PATH, ...)
+              - pattern: $RES.download($PATH, ...)
+          - metavariable-regex:
+              metavariable: $FN
+              regex: ^(readFile|readFileSync|createReadStream|writeFile|writeFileSync|createWriteStream|unlink|unlinkSync|rm|rmSync|appendFile|appendFileSync|open|openSync|readdir|readdirSync)$
+          - focus-metavariable: $PATH
+      - patterns:
+          - pattern-either:
+              - pattern: $RES.sendFile($PATH, ...)
+              - pattern: $RES.download($PATH, ...)
+          - focus-metavariable: $PATH

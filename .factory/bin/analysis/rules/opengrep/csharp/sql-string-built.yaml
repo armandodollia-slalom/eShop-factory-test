@@ -1,0 +1,38 @@
+# The factory's own rule (MIT). Written for the AI app factory from the defect description; not derived from any rule set.
+rules:
+  - id: factory.cs.sql-string-built
+    languages: [csharp]
+    severity: ERROR
+    message: >-
+      A SQL statement is built with string interpolation or concatenation and then executed. A value that reaches it
+      from a request changes the statement (SQL injection). Use parameters (SqlParameter, FromSql with an interpolated
+      FormattableString, or Dapper's parameter object).
+    metadata: { cwe: "CWE-89", category: security, licence: MIT, source: ai-app-factory }
+    # Test code drives the application from outside: a test client's request and response are not the server's input
+    # (dogfood C15: Playwright specs failed CI on SQL and SSRF rules). Secrets in tests are still the secret scan's.
+    paths:
+      exclude: ["e2e/**", "**/e2e/**", "tests/**", "test/**", "**/*.spec.*", "**/*.test.*", "**/*Tests/**", "**/*.Tests/**"]
+    pattern-either:
+      # A command or adapter type only: an interpolated string passed to any other constructor (new Uri($"..."),
+      # new ArgumentException($"...")) is not SQL (dogfood C15: the unconstrained constructor matched them as injections).
+      - patterns:
+          - pattern-either:
+              - pattern: new $CMD($"...", ...)
+              - pattern: new $CMD(<... "..." + $V ...>, ...)
+          - metavariable-regex:
+              metavariable: $CMD
+              regex: ^(\w+\.)*(Sql|Npgsql|MySql|Sqlite|SQLite|Oracle|Odbc|OleDb|Db|Fb|Db2)(Command|DataAdapter)$
+      - pattern: $X.FromSqlRaw($"...", ...)
+      - pattern: $X.FromSqlRaw(<... "..." + $V ...>, ...)
+      - pattern: $X.ExecuteSqlRaw($"...", ...)
+      - pattern: $X.ExecuteSqlRaw(<... "..." + $V ...>, ...)
+      - pattern: $X.ExecuteSqlRawAsync($"...", ...)
+      - pattern: $X.ExecuteSqlRawAsync(<... "..." + $V ...>, ...)
+      - pattern: $C.CommandText = $"..."
+      - pattern: $C.CommandText = <... "..." + $V ...>
+      - patterns:
+          - pattern-either:
+              - pattern: $DB.Query<$T>($"...", ...)
+              - pattern: $DB.QueryAsync<$T>($"...", ...)
+              - pattern: $DB.Execute($"...", ...)
+              - pattern: $DB.ExecuteAsync($"...", ...)

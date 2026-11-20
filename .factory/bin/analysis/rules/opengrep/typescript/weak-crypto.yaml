@@ -1,0 +1,31 @@
+# The factory's own rule (MIT). Written for the AI app factory from the defect description; not derived from any rule set.
+rules:
+  - id: factory.ts.weak-crypto
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: >-
+      A broken hash (MD5, SHA-1) or cipher (DES, RC4, ECB mode) is used. Collisions or plain-text recovery are practical.
+      Use SHA-256 or better for hashing, AES-GCM for encryption, and a password hash (scrypt, argon2, bcrypt) for
+      passwords.
+    metadata: { cwe: "CWE-327", category: security, licence: MIT, source: ai-app-factory }
+    # Test code drives the application from outside: a test client's request and response are not the server's input
+    # (dogfood C15: Playwright specs failed CI on SQL and SSRF rules). Secrets in tests are still the secret scan's.
+    paths:
+      exclude: ["e2e/**", "**/e2e/**", "tests/**", "test/**", "**/*.spec.*", "**/*.test.*", "**/*Tests/**", "**/*.Tests/**"]
+    pattern-either:
+      - patterns:
+          - pattern-either:
+              - pattern: $C.createHash("$ALG", ...)
+              - pattern: createHash("$ALG", ...)
+              - pattern: $C.createHmac("$ALG", ...)
+          - metavariable-regex:
+              metavariable: $ALG
+              regex: (?i)^(md4|md5|sha1|sha-1|ripemd160)$
+      - patterns:
+          - pattern-either:
+              - pattern: $C.createCipheriv($ALG, ...)
+              - pattern: createCipheriv($ALG, ...)
+              - pattern: $C.createDecipheriv($ALG, ...)
+          - metavariable-regex:
+              metavariable: $ALG
+              regex: (?i)^["'`](des|rc2|rc4|bf-|blowfish|[^"'`]*ecb)

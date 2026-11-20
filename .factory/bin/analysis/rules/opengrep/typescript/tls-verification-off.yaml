@@ -1,0 +1,20 @@
+# The factory's own rule (MIT). Written for the AI app factory from the defect description; not derived from any rule set.
+rules:
+  - id: factory.ts.tls-verification-off
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: >-
+      TLS certificate checks are turned off. Anyone on the network path can impersonate the server and read or change the
+      traffic. Trust the server's certificate properly (a CA bundle with the ca option) instead.
+    metadata: { cwe: "CWE-295", category: security, licence: MIT, source: ai-app-factory }
+    # Test code drives the application from outside: a test client's request and response are not the server's input
+    # (dogfood C15: Playwright specs failed CI on SQL and SSRF rules). Secrets in tests are still the secret scan's.
+    paths:
+      exclude: ["e2e/**", "**/e2e/**", "tests/**", "test/**", "**/*.spec.*", "**/*.test.*", "**/*Tests/**", "**/*.Tests/**"]
+    pattern-either:
+      - pattern: |
+          {..., rejectUnauthorized: false, ...}
+      - pattern: process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
+      - pattern: process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = "0"
+      - pattern: |
+          {..., checkServerIdentity: () => undefined, ...}

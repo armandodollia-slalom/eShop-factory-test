@@ -1,0 +1,30 @@
+# The factory's own rule (MIT). Written for the AI app factory from the defect description; not derived from any rule set.
+rules:
+  - id: factory.cs.dynamic-code
+    languages: [csharp]
+    severity: ERROR
+    message: >-
+      Code or a type is chosen at run time from a value that is not fixed (script evaluation, Type.GetType with a variable
+      name, Assembly.Load of bytes). A value from outside runs code or builds an arbitrary type. Map the input to a fixed
+      set of types or operations.
+    metadata: { cwe: "CWE-95", category: security, licence: MIT, source: ai-app-factory }
+    # Test code drives the application from outside: a test client's request and response are not the server's input
+    # (dogfood C15: Playwright specs failed CI on SQL and SSRF rules). Secrets in tests are still the secret scan's.
+    paths:
+      exclude: ["e2e/**", "**/e2e/**", "tests/**", "test/**", "**/*.spec.*", "**/*.test.*", "**/*Tests/**", "**/*.Tests/**"]
+    pattern-either:
+      - pattern: CSharpScript.EvaluateAsync(...)
+      - pattern: CSharpScript.RunAsync(...)
+      - pattern: CSharpScript.Create(...)
+      - patterns:
+          - pattern-either:
+              - pattern: Type.GetType($N, ...)
+              - pattern: $ASM.GetType($N, ...)
+          - pattern-inside: Activator.CreateInstance(...)
+          - metavariable-pattern:
+              metavariable: $N
+              patterns:
+                - pattern-not: |
+                    "..."
+      - pattern: Assembly.Load((byte[]) $B)
+      - pattern: Assembly.Load($B)

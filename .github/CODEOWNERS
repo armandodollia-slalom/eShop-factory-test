@@ -4,6 +4,7 @@
 /.claude/agents/arch-review.md @armandodollia-slalom
 /.claude/agents/architecture-reviewer.md @armandodollia-slalom
 /.claude/agents/bug-triage.md @armandodollia-slalom
+/.claude/agents/demo-narrator.md @armandodollia-slalom
 /.claude/agents/escalation-questions.md @armandodollia-slalom
 /.claude/agents/implementer.md @armandodollia-slalom
 /.claude/agents/lessons-check.md @armandodollia-slalom
@@ -34,6 +35,7 @@
 /.github/agents/arch-review.agent.md @armandodollia-slalom
 /.github/agents/architecture-reviewer.agent.md @armandodollia-slalom
 /.github/agents/bug-triage.agent.md @armandodollia-slalom
+/.github/agents/demo-narrator.agent.md @armandodollia-slalom
 /.github/agents/escalation-questions.agent.md @armandodollia-slalom
 /.github/agents/implementer.agent.md @armandodollia-slalom
 /.github/agents/lessons-check.agent.md @armandodollia-slalom
@@ -54,13 +56,13 @@
 /.github/agents/test-automation.agent.md @armandodollia-slalom
 /.github/agents/test-plan-verifier.agent.md @armandodollia-slalom
 /.github/agents/test-planner.agent.md @armandodollia-slalom
+/.github/workflows/factory-analysis.yml @armandodollia-slalom
 /.github/workflows/factory-board-epic-assign.yml @armandodollia-slalom
 /.github/workflows/factory-board-escalation-resolve.yml @armandodollia-slalom
 /.github/workflows/factory-feature-verification-check.yml @armandodollia-slalom
 /.github/workflows/factory-gate.yml @armandodollia-slalom
 /.github/workflows/factory-graphify-cache-prune.yml @armandodollia-slalom
 /.github/workflows/factory-pr-check.yml @armandodollia-slalom
-/.github/workflows/factory-pr-demo-video.yml @armandodollia-slalom
 /.github/workflows/factory-retro.yml @armandodollia-slalom
 /.github/workflows/factory-review-quorum.yml @armandodollia-slalom
 /.mcp.json @armandodollia-slalom

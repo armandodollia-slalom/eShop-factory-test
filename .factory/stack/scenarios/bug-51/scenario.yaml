@@ -1,0 +1,9 @@
+description: BUG-51 catalog page number past the last page; needs only the demo catalog of the default scenario.
+extends: default
+
+# No extra rows. Every case browses the 101-item demo catalog seeded by `default` anonymously, 9 per page:
+# - unfiltered: 12 pages, the last (page 12) holds 2 products;
+# - brand 2 (Gravitator): 11 products, 2 pages (9 + 2);
+# - type 3 (Ski/boarding): 18 products, 2 full pages;
+# - brand 7 (Solstix): 9 products, a single page (no pager);
+# - brand 13 (XE) with type 8 (Cycling): no product, the no-products state.

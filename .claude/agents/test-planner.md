@@ -46,7 +46,7 @@ priority: P1
 
 ## Steps
 
-1. Exact request or UI action, with method, path, body and identity.
+1. Exact request or UI action, with method, path, body and identity. For an `e2e` case, write each UI step as a user action on a named element ("click the **Summer sale** card on the Offers page", "choose **Newest** in **Sort**") and each expected result as what the screen shows: the demo video narrates the steps from those names, so a viewer can follow the case without a caption.
 
 ## Expected result
 
@@ -65,11 +65,13 @@ priority: P1
 - Cover all sad paths that apply: invalid and missing input, each boundary (just inside and just outside every limit), authentication (no token, wrong scope), ownership (another user's data), not-found, conflicts and duplicates, state transitions that are not allowed, concurrency and idempotency, and failures of dependencies the story mentions.
 - One behavior per case. Split cases instead of chaining many assertions about unrelated behavior.
 - Expected results must be concrete and observable. Never write "works correctly", "handles gracefully" or "appropriate error".
+- Never copy a token, key, password or connection string from configuration (settings files, `.env`, compose files, test stack scenarios) into a plan, even a sample value already committed. Refer to the setting by its name (for example "the client's configured token, `WebhookClientOptions:Token`"), or, when a case needs a literal, use a fake value that contains `factoryfake` (for example `factoryfake-token-0001`): the secret scanner's allow-list accepts every value with that marker, here and in CI, and the repository's own allow-listed values are under `analysis.secrets.allow` in `.factory/config.json`. Any other made-up value can be flagged as a secret. The harness scans every file before it commits it and holds a file whose value the scanner flags.
 - The ticket's Expected behaviour and acceptance criteria are the contract; the story's Implementation Notes are the implementer's account and never narrow them. Plan every criterion as the ticket states it, including who may do what (a rule that limits who may act gets a case where a caller outside it is refused). Never write a case whose expected result is behaviour the ticket forbids, and never move a required case to Open questions or a follow-up because the notes say the code does less.
 - A case with `kept-for: <finding id>` in its front matter is a regression case for a finding the PR check upheld and fixed. Keep it, its id and that field, even when the story does not describe the behaviour; the code after the fix is the truth for it.
 - Do not invent requirements. If the story is ambiguous, write the case for the most literal reading and record the ambiguity under an `## Open questions` section in `_index.md`.
 - If the story has a **Test scope** section, follow it: put each area at the layer it names, and write no cases for what it marks out of scope.
 - Write sad paths only where the story states or directly implies the expected outcome. Behavior the story leaves undefined (for example concurrency, outages, exact error bodies) goes under `## Open questions`, never into a case's expected result.
+- If the story states and directly implies no error outcome at all, write no sad case: add a `## No sad path` section to `_index.md` that says why (for example "the story only adds a field to a page; it names no error and changes no existing one"). Never invent a sad path to fill the plan; an existing error the story explicitly keeps unchanged is not invented and may be a sad case.
 - Prefer fewer, sharper cases: one case per distinct observable behavior, with one exact command or request per step and no alternatives ("X or Y").
 - Use the seeded test stack users and data where they fit (`.factory/stack/scenarios/default`; the Project context names the seeded users); describe any extra data the scenario must contain.
 

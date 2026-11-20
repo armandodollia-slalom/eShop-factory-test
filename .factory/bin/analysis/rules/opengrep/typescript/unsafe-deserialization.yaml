@@ -1,0 +1,23 @@
+# The factory's own rule (MIT). Written for the AI app factory from the defect description; not derived from any rule set.
+rules:
+  - id: factory.ts.unsafe-deserialization
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: >-
+      Data is turned back into objects by a deserializer that can run code or build arbitrary types (node-serialize,
+      funcster, js-yaml's unsafe loaders). Data from outside can execute. Parse plain data (JSON.parse, yaml.load with the
+      default safe schema) and validate it.
+    metadata: { cwe: "CWE-502", category: security, licence: MIT, source: ai-app-factory }
+    # Test code drives the application from outside: a test client's request and response are not the server's input
+    # (dogfood C15: Playwright specs failed CI on SQL and SSRF rules). Secrets in tests are still the secret scan's.
+    paths:
+      exclude: ["e2e/**", "**/e2e/**", "tests/**", "test/**", "**/*.spec.*", "**/*.test.*", "**/*Tests/**", "**/*.Tests/**"]
+    pattern-either:
+      - pattern: $S.unserialize(...)
+      - pattern: unserialize(...)
+      - pattern: $F.deepDeserialize(...)
+      - pattern: |
+          $Y.loadAll($X, {..., schema: $Y.DEFAULT_FULL_SCHEMA, ...})
+      - pattern: |
+          $Y.load($X, {..., schema: $Y.DEFAULT_FULL_SCHEMA, ...})
+      - pattern: $Y.unsafeLoad(...)

@@ -1,0 +1,39 @@
+# The factory's own rule (MIT). Written for the AI app factory from the defect description; not derived from any rule set.
+rules:
+  - id: factory.cs.path-from-request
+    languages: [csharp]
+    severity: ERROR
+    message: >-
+      A file path is built from a request value (a [FromQuery], [FromRoute], [FromForm], [FromHeader] or [FromBody]
+      parameter, or Request.Query/Form/RouteValues) and opened. "../" in it reaches files outside the folder you meant
+      (path traversal). Use Path.GetFileName, then check the full path stays under the base folder.
+    metadata: { cwe: "CWE-22", category: security, licence: MIT, source: ai-app-factory }
+    # Test code drives the application from outside: a test client's request and response are not the server's input
+    # (dogfood C15: Playwright specs failed CI on SQL and SSRF rules). Secrets in tests are still the secret scan's.
+    paths:
+      exclude: ["e2e/**", "**/e2e/**", "tests/**", "test/**", "**/*.spec.*", "**/*.test.*", "**/*Tests/**", "**/*.Tests/**"]
+    mode: taint
+    pattern-sources:
+      - patterns:
+          - pattern-inside: |
+              $RT $M(..., [$A] $T $P, ...) { ... }
+          - metavariable-regex:
+              metavariable: $A
+              regex: ^From(Query|Route|Form|Header|Body)
+          - pattern: $P
+      - pattern: Request.Query[...]
+      - pattern: Request.Form[...]
+      - pattern: Request.RouteValues[...]
+    pattern-sanitizers:
+      - pattern: Path.GetFileName(...)
+    pattern-sinks:
+      - patterns:
+          - pattern-either:
+              - pattern: File.$FN($PATH, ...)
+              - pattern: System.IO.File.$FN($PATH, ...)
+              - pattern: new FileStream($PATH, ...)
+              - pattern: new StreamReader($PATH, ...)
+              - pattern: PhysicalFile($PATH, ...)
+              - pattern: Results.File($PATH, ...)
+              - pattern: Directory.$FN($PATH, ...)
+          - focus-metavariable: $PATH

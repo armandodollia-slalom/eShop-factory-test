@@ -1,0 +1,36 @@
+# The factory's own rule (MIT). Written for the AI app factory from the defect description; not derived from any rule set.
+# The spliced string must read as SQL: `get`, `all`, `run` and `query` are also HTTP client and test helper methods (dogfood
+# C15: a Playwright `request.get(`${base}/api/catalog/items/${id}`)` in an e2e spec was reported as SQL injection and
+# failed CI).
+rules:
+  - id: factory.ts.sql-string-built
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: >-
+      A SQL statement is built from a string with a value spliced into it and then executed. A value that reaches it from
+      a request can change the statement (SQL injection). Pass values as query parameters (placeholders) instead.
+    metadata: { cwe: "CWE-89", category: security, licence: MIT, source: ai-app-factory }
+    # Test code drives the application from outside: a test client's request and response are not the server's input
+    # (dogfood C15: Playwright specs failed CI on SQL and SSRF rules). Secrets in tests are still the secret scan's.
+    paths:
+      exclude: ["e2e/**", "**/e2e/**", "tests/**", "test/**", "**/*.spec.*", "**/*.test.*", "**/*Tests/**", "**/*.Tests/**"]
+    patterns:
+      - pattern-either:
+          - pattern: $DB.$EXEC($ARG, ...)
+          - patterns:
+              - pattern-inside: |
+                  $Q = $ARG;
+                  ...
+              - pattern: $DB.$EXEC($Q, ...)
+      - metavariable-pattern:
+          metavariable: $ARG
+          pattern-either:
+            - pattern: "`...${$V}...`"
+            - pattern: '"..." + $V'
+            - pattern: '$V + "..."'
+      - metavariable-regex:
+          metavariable: $ARG
+          regex: (?is).*\b(select\s.+\sfrom|insert\s+into|update\s+\w+\s+set|delete\s+from|merge\s+into|drop\s+table|truncate\s+table|alter\s+table|create\s+table)\b.*
+      - metavariable-regex:
+          metavariable: $EXEC
+          regex: ^(query|execute|exec|raw|\$queryRawUnsafe|\$executeRawUnsafe|unsafe|run|all|get|prepare)$

@@ -1,0 +1,7 @@
+description: BUG-49 catalog name search matches anywhere in the name; needs only the demo catalog of the default scenario.
+extends: default
+
+# No extra rows. Every case reads the 101-item demo catalog seeded by `default` anonymously:
+# exactly three names contain "Boots" ("Explorer Frost Boots", "SummitRider Snowboard Boots",
+# "Wanderer Black Hiking Boots"); only "Wanderer Black Hiking Boots" contains "Wanderer" or "Hiking Boots";
+# no name contains lowercase "boots" (it appears only in descriptions, e.g. "Alpine Tech Crampons").

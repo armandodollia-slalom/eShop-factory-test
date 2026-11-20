@@ -1,0 +1,34 @@
+# The factory's own rule (MIT). Written for the AI app factory from the defect description; not derived from any rule set.
+rules:
+  - id: factory.ts.dynamic-code
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: >-
+      Code is built at run time from a value that is not a fixed string (eval, new Function, a timer given a string). A
+      value from outside runs as code. Use a lookup table or a parser for the data instead.
+    metadata: { cwe: "CWE-95", category: security, licence: MIT, source: ai-app-factory }
+    # Test code drives the application from outside: a test client's request and response are not the server's input
+    # (dogfood C15: Playwright specs failed CI on SQL and SSRF rules). Secrets in tests are still the secret scan's.
+    paths:
+      exclude: ["e2e/**", "**/e2e/**", "tests/**", "test/**", "**/*.spec.*", "**/*.test.*", "**/*Tests/**", "**/*.Tests/**"]
+    pattern-either:
+      - patterns:
+          - pattern-either:
+              - pattern: eval($X)
+              - pattern: new Function(..., $X)
+              - pattern: Function(..., $X)
+              - pattern: $VM.runInNewContext($X, ...)
+              - pattern: $VM.runInThisContext($X, ...)
+          - pattern-not: eval("...")
+          - pattern-not: new Function(..., "...")
+      # A timer given a string evaluates it; given a function (or a function's name) it does not.
+      - patterns:
+          - pattern-either:
+              - pattern: setTimeout($X, ...)
+              - pattern: setInterval($X, ...)
+          - metavariable-pattern:
+              metavariable: $X
+              patterns:
+                - pattern-not: (...) => ...
+                - pattern-not: function (...) {...}
+                - pattern-not-regex: ^[A-Za-z_$][\w$.]*$

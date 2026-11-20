@@ -1,0 +1,30 @@
+# The factory's own rule (MIT). Written for the AI app factory from the defect description; not derived from any rule set.
+rules:
+  - id: factory.cs.weak-crypto
+    languages: [csharp]
+    severity: ERROR
+    message: >-
+      A broken hash (MD5, SHA-1) or cipher (DES, TripleDES, RC2, ECB mode) is used. Collisions or plain-text recovery
+      are practical. Use SHA-256 or better, AES-GCM, and a password hash (PBKDF2 with many iterations, or ASP.NET Core
+      Identity's hasher) for passwords.
+    metadata: { cwe: "CWE-327", category: security, licence: MIT, source: ai-app-factory }
+    # Test code drives the application from outside: a test client's request and response are not the server's input
+    # (dogfood C15: Playwright specs failed CI on SQL and SSRF rules). Secrets in tests are still the secret scan's.
+    paths:
+      exclude: ["e2e/**", "**/e2e/**", "tests/**", "test/**", "**/*.spec.*", "**/*.test.*", "**/*Tests/**", "**/*.Tests/**"]
+    pattern-either:
+      - pattern: MD5.Create(...)
+      - pattern: SHA1.Create(...)
+      - pattern: MD5.HashData(...)
+      - pattern: SHA1.HashData(...)
+      - pattern: new MD5CryptoServiceProvider(...)
+      - pattern: new SHA1CryptoServiceProvider(...)
+      - pattern: new SHA1Managed(...)
+      - pattern: DES.Create(...)
+      - pattern: TripleDES.Create(...)
+      - pattern: RC2.Create(...)
+      - pattern: new DESCryptoServiceProvider(...)
+      - pattern: new TripleDESCryptoServiceProvider(...)
+      - pattern: $X.Mode = CipherMode.ECB
+      - pattern: |
+          Mode = CipherMode.ECB
