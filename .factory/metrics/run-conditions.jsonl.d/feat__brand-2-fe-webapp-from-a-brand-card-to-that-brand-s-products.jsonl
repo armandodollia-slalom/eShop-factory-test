@@ -1,1 +1,5 @@
 {"ts":"2026-11-20T10:04:38.418Z","story":"BRAND-2","kind":"stack-slot","stage":"UI verifier (self)","slot":1,"waitedSec":1,"outcome":"leased","delivery":"epic"}
+{"ts":"2026-11-20T10:21:34.672Z","story":"BRAND-2","kind":"stack-slot","stage":"automation pass","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null}
+{"ts":"2026-11-20T10:36:10.201Z","story":"BRAND-2","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":3}
+{"ts":"2026-11-20T10:48:17.344Z","story":"BRAND-2","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":18}
+{"ts":"2026-11-20T11:04:40.142Z","story":"BRAND-2","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":4}
