@@ -1,0 +1,7 @@
+description: BRAND-3 Brands page Sort control (Name / Most products); needs only the demo catalog of the default scenario.
+extends: default
+
+# No extra rows. Cases TC-BRAND-3-07 to -13 browse the demo catalog seeded by `default` anonymously:
+# 13 brands (ids 1 to 13), 101 items. Count order (ties by name): Gravitator 11, Raptor Elite 11, WildRunner 11,
+# B&R 10, Daybird 10, Solstix 9, Legend 8, Green Equipment 7, AirStrider 6, Zephyr 6, Grolltex 5, Quester 4, XE 3.
+# The ties have ids out of name order (WildRunner 3 before Raptor Elite 6, Daybird 1 before B&R 5), so the tie-break is visible.
