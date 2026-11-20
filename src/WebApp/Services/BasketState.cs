@@ -11,7 +11,8 @@ public class BasketState(
     BasketService basketService,
     CatalogService catalogService,
     OrderingService orderingService,
-    AuthenticationStateProvider authenticationStateProvider) : IBasketState
+    AuthenticationStateProvider authenticationStateProvider,
+    ILogger<BasketState> logger) : IBasketState
 {
     private Task<IReadOnlyCollection<BasketItem>>? _cachedBasket;
     private HashSet<BasketStateChangedSubscription> _changeSubscriptions = new();
@@ -104,6 +105,7 @@ public class BasketState(
             }
             catch (RpcException ex) when (ex.StatusCode == StatusCode.Aborted && attempt < maxAttempts)
             {
+                logger.LogWarning(ex, "Basket update attempt {Attempt} of {MaxAttempts} was aborted by a concurrent change; retrying", attempt, maxAttempts);
             }
         }
 
