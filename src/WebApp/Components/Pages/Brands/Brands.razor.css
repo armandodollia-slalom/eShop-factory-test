@@ -6,16 +6,13 @@
 }
 
 /* A card with products links to the catalog; it reads like the plain card, and
-   keeps the global focus outline, rounded to the card's corners. */
+   keeps the global focus outline, rounded to the card's corners. As a one-cell grid
+   it stretches the card to the row height like the unlinked cards. */
 .brand-card-link {
-    display: block;
+    display: grid;
     border-radius: var(--radius-md);
     color: inherit;
     text-decoration: none;
-}
-
-.brand-card-link .brand-card {
-    height: 100%;
 }
 
 .brand-card h2 {

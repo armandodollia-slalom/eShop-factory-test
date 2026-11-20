@@ -4,19 +4,30 @@
 @attribute [StreamRendering]
 
 <PageTitle>AdventureWorks</PageTitle>
-@if (brandName is not null)
-{
-    <SectionContent SectionName="page-header-title">Brand: @brandName</SectionContent>
-    <SectionContent SectionName="page-header-subtitle"><a class="catalog-all-brands" href="/brands">All brands</a></SectionContent>
-}
-else if (!brandLookupPending)
-{
-    <SectionContent SectionName="page-header-title">Ready for a new adventure?</SectionContent>
-    <SectionContent SectionName="page-header-subtitle">Start the season with the latest in clothing and equipment.</SectionContent>
-}
+@* Both sections are rendered from the first flush on, so the header content streamed in later replaces them. *@
+<SectionContent SectionName="page-header-title">
+    @if (brandName is not null)
+    {
+        <text>Brand: @brandName</text>
+    }
+    else if (!brandLookupPending)
+    {
+        <text>Ready for a new adventure?</text>
+    }
+</SectionContent>
+<SectionContent SectionName="page-header-subtitle">
+    @if (brandName is not null)
+    {
+        <a class="catalog-all-brands" href="/brands">All brands</a>
+    }
+    else if (!brandLookupPending)
+    {
+        <text>Start the season with the latest in clothing and equipment.</text>
+    }
+</SectionContent>
 
 <div class="catalog">
-    <CatalogSearch BrandIds="@BrandIds" TypeIds="@TypeIds" />
+    <CatalogSearch BrandIds="@BrandIds" TypeIds="@TypeIds" KnownBrands="@brands" />
 
     @if (catalogResult is null)
     {
@@ -173,16 +184,18 @@ else if (!brandLookupPending)
     // Set when the catalog is filtered to exactly one known brand; the header then names it.
     string? brandName;
 
-    // While the single brand's name is loading, neither header is shown, so the usual title
+    // While the single brand's name is loading, the header stays empty, so the usual title
     // does not flash before "Brand: {name}" streams in.
     bool brandLookupPending;
 
-    async Task<string?> FindBrandName(int brandId)
+    // Fetched once per page load and shared with the filters, which list the same brands.
+    Task<IEnumerable<CatalogBrand>>? brands;
+
+    async Task<string?> FindBrandName(Task<IEnumerable<CatalogBrand>> brandsTask, int brandId)
     {
         try
         {
-            var brands = await CatalogService.GetBrands();
-            return brands.FirstOrDefault(b => b.Id == brandId)?.Brand;
+            return (await brandsTask).FirstOrDefault(b => b.Id == brandId)?.Brand;
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
         {
@@ -230,7 +243,8 @@ else if (!brandLookupPending)
     {
         currentPage = Page.GetValueOrDefault(1);
 
-        var brandNameTask = BrandIds is [var brandId] ? FindBrandName(brandId) : null;
+        brands = CatalogService.GetBrands();
+        var brandNameTask = BrandIds is [var brandId] ? FindBrandName(brands, brandId) : null;
         brandLookupPending = brandNameTask is not null;
 
         // The catalog API computes the offset as pageIndex * pageSize in an int, so a huge page
