@@ -1,8 +1,8 @@
 ﻿using System.Security.Claims;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
 using eShop.WebAppComponents.Catalog;
 using eShop.WebAppComponents.Services;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 
 namespace eShop.WebApp.Services;
 
@@ -140,6 +140,7 @@ public class BasketState(
                     ProductName = catalogItem.Name,
                     UnitPrice = catalogItem.Price,
                     Quantity = item.Quantity,
+                    AddedAt = item.AddedAt,
                 };
                 basketItems.Add(orderItem);
             }

@@ -249,7 +249,8 @@
     line-height: 1.35;
 }
 
-.catalog-item-content .price {
+.catalog-item-content .price,
+.catalog-item-content .added-on {
     margin: 0;
     color: var(--color-muted);
     font-size: var(--text-sm);

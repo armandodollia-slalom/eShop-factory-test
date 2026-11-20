@@ -1,4 +1,6 @@
-﻿namespace eShop.WebApp.Services;
+﻿using System.Text.Json.Serialization;
+
+namespace eShop.WebApp.Services;
 
 public class BasketItem
 {
@@ -8,4 +10,8 @@ public class BasketItem
     public decimal UnitPrice { get; set; }
     public decimal OldUnitPrice { get; set; }
     public int Quantity { get; set; }
+
+    // Display only: not part of the order request sent to the Ordering API.
+    [JsonIgnore]
+    public DateTime? AddedAt { get; set; }
 }
