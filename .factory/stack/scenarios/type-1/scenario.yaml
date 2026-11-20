@@ -1,0 +1,8 @@
+description: TYPE-1 product category on the product page; every case reads the unchanged demo catalog.
+extends: default
+
+# No extra rows. The cases rely on the default demo catalog (101 items):
+# - item 1 "Wanderer Black Hiking Boots", type 1 "Footwear", brand 1 "Daybird" (10 items), price 109.99
+# - item 99 "Adventurer GPS Watch", type 7 "Navigation" (11 items of type 7)
+# - items 2 and 3 for the items-by-ids request
+# alice (Pass123$) is seeded by Identity.API with an empty basket.
