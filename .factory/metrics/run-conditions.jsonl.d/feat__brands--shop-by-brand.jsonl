@@ -1,0 +1,3 @@
+{"ts":"2026-11-20T12:09:50.195Z","story":"EPIC-359","kind":"stack-slot","stage":"automation pass","slot":1,"waitedSec":1,"outcome":"leased","poolSize":null}
+{"ts":"2026-11-20T12:16:28.341Z","story":"EPIC-359","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":3}
+{"ts":"2026-11-20T12:24:59.960Z","story":"EPIC-359","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":3}
