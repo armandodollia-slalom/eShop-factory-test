@@ -223,7 +223,7 @@ public static class CatalogApi
         [Description("The order of the brands: \"name\" (the default) or \"count\" (most items first, then by name)")] string? sort)
     {
         var byCount = sort == BrandSortByCount;
-        if (!byCount && !string.IsNullOrEmpty(sort) && sort != BrandSortByName)
+        if (!byCount && sort is not null && sort != BrandSortByName)
         {
             return TypedResults.Problem(
                 detail: $"Sort must be \"{BrandSortByName}\" or \"{BrandSortByCount}\".",
