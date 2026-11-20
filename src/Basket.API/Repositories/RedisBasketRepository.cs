@@ -46,6 +46,36 @@ public class RedisBasketRepository(ILogger<RedisBasketRepository> logger, IConne
         logger.LogInformation("Basket item persisted successfully.");
         return await GetBasketAsync(basket.BuyerId);
     }
+
+    public async Task<CustomerBasket> UpdateBasketAsync(string buyerId, Func<CustomerBasket, CustomerBasket> update)
+    {
+        var key = GetBasketKey(buyerId);
+
+        for (var attempt = 0; attempt < MaxConditionalUpdateAttempts; attempt++)
+        {
+            var stored = await _database.StringGetAsync(key);
+            var storedBasket = stored.IsNullOrEmpty
+                ? null
+                : JsonSerializer.Deserialize((byte[])stored, BasketSerializationContext.Default.CustomerBasket);
+            var json = JsonSerializer.SerializeToUtf8Bytes(update(storedBasket), BasketSerializationContext.Default.CustomerBasket);
+
+            // The write only lands if nobody changed the basket since it was read; otherwise re-read and recompute.
+            var transaction = _database.CreateTransaction();
+            transaction.AddCondition(stored.IsNull ? Condition.KeyNotExists(key) : Condition.StringEqual(key, stored));
+            _ = transaction.StringSetAsync(key, json);
+
+            if (await transaction.ExecuteAsync())
+            {
+                logger.LogInformation("Basket item persisted successfully.");
+                return await GetBasketAsync(buyerId);
+            }
+        }
+
+        logger.LogWarning("Basket {BuyerId} kept changing concurrently; update abandoned after {Attempts} attempts.", buyerId, MaxConditionalUpdateAttempts);
+        return null;
+    }
+
+    private const int MaxConditionalUpdateAttempts = 10;
 }
 
 [JsonSerializable(typeof(CustomerBasket))]

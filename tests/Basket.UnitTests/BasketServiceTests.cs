@@ -69,8 +69,8 @@ public class BasketServiceTests
     public async Task UpdateBasketPersistsItemsForAuthenticatedUser()
     {
         var repository = Substitute.For<IBasketRepository>();
-        repository.UpdateBasketAsync(Arg.Any<CustomerBasket>())
-            .Returns(call => call.Arg<CustomerBasket>());
+        repository.UpdateBasketAsync(Arg.Any<string>(), Arg.Any<Func<CustomerBasket, CustomerBasket>>())
+            .Returns(call => call.Arg<Func<CustomerBasket, CustomerBasket>>()(null!));
         var service = new BasketService(repository, NullLogger<BasketService>.Instance, TimeProvider.System);
         var context = CreateContext("buyer-1");
         var request = new UpdateBasketRequest();
@@ -81,11 +81,35 @@ public class BasketServiceTests
         Assert.HasCount(1, response.Items);
         Assert.AreEqual(42, response.Items[0].ProductId);
         Assert.AreEqual(3, response.Items[0].Quantity);
-        await repository.Received(1).UpdateBasketAsync(Arg.Is<CustomerBasket>(basket =>
-            basket.BuyerId == "buyer-1" &&
-            basket.Items.Count == 1 &&
-            basket.Items[0].ProductId == 42 &&
-            basket.Items[0].Quantity == 3));
+        await repository.Received(1).UpdateBasketAsync("buyer-1", Arg.Any<Func<CustomerBasket, CustomerBasket>>());
+    }
+
+    [TestMethod]
+    public async Task UpdateBasketRecomputesAddedAtFromBasketStoredAfterConcurrentRemoveAndReAdd()
+    {
+        var originallyAdded = new DateTime(2026, 11, 1, 9, 0, 0, DateTimeKind.Utc);
+        var reAdded = new DateTime(2026, 11, 3, 15, 30, 0, DateTimeKind.Utc);
+        var staleBasket = new CustomerBasket("buyer-1") { Items = [new BasketItem { ProductId = 42, Quantity = 1, AddedAt = originallyAdded }] };
+        var currentBasket = new CustomerBasket("buyer-1") { Items = [new BasketItem { ProductId = 42, Quantity = 1, AddedAt = reAdded }] };
+        var repository = Substitute.For<IBasketRepository>();
+        // The first attempt read the basket before another request removed and re-added the product; its write
+        // conflicts, so the repository re-runs the update against the basket stored now.
+        repository.UpdateBasketAsync("buyer-1", Arg.Any<Func<CustomerBasket, CustomerBasket>>())
+            .Returns(call =>
+            {
+                var update = call.Arg<Func<CustomerBasket, CustomerBasket>>();
+                _ = update(staleBasket);
+                return update(currentBasket);
+            });
+        var service = new BasketService(repository, NullLogger<BasketService>.Instance, TimeProvider.System);
+        var request = new UpdateBasketRequest();
+        request.Items.Add(new eShop.Basket.API.Grpc.BasketItem { ProductId = 42, Quantity = 5 });
+
+        var response = await service.UpdateBasket(request, CreateContext("buyer-1"));
+
+        Assert.HasCount(1, response.Items);
+        Assert.AreEqual(5, response.Items[0].Quantity);
+        Assert.AreEqual(reAdded, response.Items[0].AddedAt.ToDateTime());
     }
 
     [TestMethod]
@@ -98,14 +122,14 @@ public class BasketServiceTests
             service.UpdateBasket(new UpdateBasketRequest(), CreateContext(null!)));
 
         Assert.AreEqual(StatusCode.Unauthenticated, exception.StatusCode);
-        await repository.DidNotReceive().UpdateBasketAsync(Arg.Any<CustomerBasket>());
+        await repository.DidNotReceive().UpdateBasketAsync(Arg.Any<string>(), Arg.Any<Func<CustomerBasket, CustomerBasket>>());
     }
 
     [TestMethod]
     public async Task UpdateBasketReturnsNotFoundWhenRepositoryCannotPersist()
     {
         var repository = Substitute.For<IBasketRepository>();
-        repository.UpdateBasketAsync(Arg.Any<CustomerBasket>())
+        repository.UpdateBasketAsync(Arg.Any<string>(), Arg.Any<Func<CustomerBasket, CustomerBasket>>())
             .Returns(Task.FromResult<CustomerBasket>(null!));
         var service = new BasketService(repository, NullLogger<BasketService>.Instance, TimeProvider.System);
 

@@ -48,9 +48,8 @@ public class BasketService(
             logger.LogDebug("Begin UpdateBasket call from method {Method} for basket id {Id}", context.Method, userId);
         }
 
-        var storedBasket = await repository.GetBasketAsync(userId);
-        var customerBasket = MapToCustomerBasket(userId, request, storedBasket, timeProvider.GetUtcNow().UtcDateTime);
-        var response = await repository.UpdateBasketAsync(customerBasket);
+        var utcNow = timeProvider.GetUtcNow().UtcDateTime;
+        var response = await repository.UpdateBasketAsync(userId, storedBasket => MapToCustomerBasket(userId, request, storedBasket, utcNow));
         if (response is null)
         {
             ThrowBasketDoesNotExist(userId);
