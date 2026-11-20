@@ -33,28 +33,30 @@ public class BasketState(
 
     public async Task AddAsync(CatalogItem item)
     {
-        await UpdateBasketWithRetryAsync(basket =>
+        await UpdateBasketWithRetryAsync(basket => AddItem(basket, item));
+    }
+
+    private static List<BasketQuantity> AddItem(IReadOnlyCollection<BasketItem> basket, CatalogItem item)
+    {
+        var items = basket.Select(i => new BasketQuantity(i.ProductId, i.Quantity)).ToList();
+        bool found = false;
+        for (var i = 0; i < items.Count; i++)
         {
-            var items = basket.Select(i => new BasketQuantity(i.ProductId, i.Quantity)).ToList();
-            bool found = false;
-            for (var i = 0; i < items.Count; i++)
+            var existing = items[i];
+            if (existing.ProductId == item.Id)
             {
-                var existing = items[i];
-                if (existing.ProductId == item.Id)
-                {
-                    items[i] = existing with { Quantity = existing.Quantity + 1 };
-                    found = true;
-                    break;
-                }
+                items[i] = existing with { Quantity = existing.Quantity + 1 };
+                found = true;
+                break;
             }
+        }
 
-            if (!found)
-            {
-                items.Add(new BasketQuantity(item.Id, 1));
-            }
+        if (!found)
+        {
+            items.Add(new BasketQuantity(item.Id, 1));
+        }
 
-            return items;
-        });
+        return items;
     }
 
     public async Task SetQuantityAsync(int productId, int quantity)
