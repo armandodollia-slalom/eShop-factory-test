@@ -385,6 +385,55 @@ button[disabled],
 }
 
 /* ==========================================================================
+   Page content and card grid (the storefront's catalog look, shared by pages)
+   ========================================================================== */
+.page-content {
+    max-width: var(--content-max);
+    margin: 0 auto;
+    padding: 0 var(--page-pad) 4rem;
+}
+
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2.5rem 2rem;
+    margin-top: 1.25rem;
+}
+
+.surface-card {
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    transition: box-shadow var(--dur-2) var(--ease), border-color var(--dur-2) var(--ease);
+}
+
+.surface-card:hover {
+    border-color: var(--color-line-strong);
+    box-shadow: var(--shadow-md);
+}
+
+.text-muted {
+    margin: 0;
+    color: var(--color-muted);
+    font-size: var(--text-sm);
+    font-weight: 600;
+}
+
+@media only screen and (min-width: 481px) and (max-width: 1024px) {
+    .card-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 2rem 1.5rem;
+    }
+}
+
+@media only screen and (max-width: 480px) {
+    .card-grid {
+        grid-template-columns: 1fr;
+        gap: 1.75rem;
+    }
+}
+
+/* ==========================================================================
    Button system  (primary / secondary / ghost)
    ========================================================================== */
 .button {
