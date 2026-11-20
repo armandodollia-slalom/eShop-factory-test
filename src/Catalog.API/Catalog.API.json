@@ -521,6 +521,55 @@
         }
       }
     },
+    "/api/catalog/catalogbrands/summary": {
+      "get": {
+        "tags": [
+          "Brands"
+        ],
+        "summary": "List catalog brand summaries",
+        "description": "Get every brand of the catalog with its number of items and the lowest price among them, ordered by brand name.",
+        "operationId": "ListBrandSummaries",
+        "parameters": [
+          {
+            "name": "api-version",
+            "in": "query",
+            "description": "The API version, in the format 'major.minor'.",
+            "required": true,
+            "schema": {
+              "enum": [
+                "1.0"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CatalogBrandSummary"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/catalog/items": {
       "post": {
         "tags": [
@@ -1076,6 +1125,45 @@
           },
           "brand": {
             "type": "string"
+          }
+        }
+      },
+      "CatalogBrandSummary": {
+        "required": [
+          "id",
+          "brand",
+          "itemCount",
+          "lowestPrice"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "brand": {
+            "type": "string"
+          },
+          "itemCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "lowestPrice": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
           }
         }
       },
