@@ -6,10 +6,10 @@ plan-sha: aaf9dcf673a0
 verified-score: 10
 verified-at: "2026-11-20T11:43:43.203Z"
 verified-by: test-planner@3b45d17c/council
-automation-sha: 7d3fa0de5fd7
+automation-sha: 149be8ba138e
 automation-plan-sha: aaf9dcf673a0
 automation-score: 10
-automation-verified-at: "2026-11-20T12:03:17.207Z"
+automation-verified-at: "2026-11-20T13:27:11.102Z"
 ---
 # Test plan: BRAND-3 [FE - WebApp, BE - Catalog API] - Sort the brands by name or by number of products
 

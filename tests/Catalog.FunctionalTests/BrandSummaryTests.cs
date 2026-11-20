@@ -239,6 +239,19 @@ public sealed class BrandSummaryTests : IClassFixture<BrandSummaryCatalog>
 
     [Fact]
     [Trait("Story", "BRAND-3")]
+    [Trait("TestCase", "TC-BRAND-3-03")]
+    public async Task TC_BRAND_3_03_SummaryWithoutSortKeepsAlphabeticalOrder()
+    {
+        var (response, body) = await GetAsync(SummaryUrl);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var brands = ParseBrands(body);
+        Assert.Equal(13, brands.Length);
+        Assert.Equal(NameOrder, brands.Select(IdAndBrand).ToArray());
+    }
+
+    [Fact]
+    [Trait("Story", "BRAND-3")]
     [Trait("TestCase", "TC-BRAND-3-04")]
     public async Task TC_BRAND_3_04_SummaryWithUnknownSortAnswers400ProblemNamingNameAndCount()
     {
