@@ -2,14 +2,14 @@
 story: BRAND-3
 story-issue: "https://github.com/armandodollia-slalom/eShop-factory-test/issues/362"
 story-sha: e584afde9809
-plan-sha: aaf9dcf673a0
-verified-score: 10
-verified-at: "2026-11-20T11:43:43.203Z"
-verified-by: test-planner@3b45d17c/council
-automation-sha: 149be8ba138e
-automation-plan-sha: aaf9dcf673a0
+plan-sha: 4f5b549798f1
+verified-score: 9
+verified-at: "2026-11-20T14:13:07.607Z"
+verified-by: as-is/council
+automation-sha: 36f6ca24b7fa
+automation-plan-sha: 4f5b549798f1
 automation-score: 10
-automation-verified-at: "2026-11-20T13:27:11.102Z"
+automation-verified-at: "2026-11-20T14:53:32.625Z"
 ---
 # Test plan: BRAND-3 [FE - WebApp, BE - Catalog API] - Sort the brands by name or by number of products
 

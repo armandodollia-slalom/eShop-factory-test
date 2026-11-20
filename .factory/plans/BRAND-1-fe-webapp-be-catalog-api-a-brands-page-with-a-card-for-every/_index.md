@@ -8,8 +8,8 @@ verified-at: "2026-11-20T09:27:28.675Z"
 verified-by: test-planner@3b45d17c/council
 automation-sha: 5311d7f33ef9
 automation-plan-sha: deb3502dd731
-automation-score: 9
-automation-verified-at: "2026-11-20T13:04:12.198Z"
+automation-score: 10
+automation-verified-at: "2026-11-20T14:05:50.912Z"
 ---
 # Test plan: BRAND-1 [FE - WebApp, BE - Catalog API] - A Brands page with a card for every brand
 

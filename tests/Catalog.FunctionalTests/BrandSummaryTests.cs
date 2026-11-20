@@ -59,6 +59,8 @@ public sealed class BrandSummaryTests : IClassFixture<BrandSummaryCatalog>
 
     [Fact]
     [Trait("TestCase", "TC-BRAND-1-01")]
+    [Trait("Story", "BRAND-3")]
+    [Trait("TestCase", "TC-BRAND-3-03")]
     public async Task TC_BRAND_1_01_SummaryReturnsEveryBrandOnceOrderedByNameWithFourFields()
     {
         var (response, brands) = await GetSummaryAsync();

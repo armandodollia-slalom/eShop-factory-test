@@ -12,3 +12,13 @@
 {"ts":"2026-11-20T13:21:20.524Z","story":"BRAND-3","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":3}
 {"ts":"2026-11-20T13:27:22.909Z","story":"EPIC-359","kind":"stack-slot","stage":"automation pass","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null}
 {"ts":"2026-11-20T13:27:53.122Z","story":"EPIC-359","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":10}
+{"ts":"2026-11-20T13:39:56.454Z","story":"BRAND-1","kind":"stack-slot","stage":"pr-check fixer","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null}
+{"ts":"2026-11-20T14:01:25.150Z","story":"BRAND-1","kind":"stack-slot","stage":"automation pass","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null}
+{"ts":"2026-11-20T14:03:04.599Z","story":"BRAND-1","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":7}
+{"ts":"2026-11-20T14:06:02.701Z","story":"BRAND-2","kind":"stack-slot","stage":"automation pass","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null}
+{"ts":"2026-11-20T14:06:33.538Z","story":"BRAND-2","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":11}
+{"ts":"2026-11-20T14:13:08.405Z","story":"BRAND-3","kind":"stack-slot","stage":"automation pass","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null}
+{"ts":"2026-11-20T14:21:40.775Z","story":"BRAND-3","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":3}
+{"ts":"2026-11-20T14:47:38.212Z","story":"BRAND-3","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":3}
+{"ts":"2026-11-20T14:53:44.310Z","story":"EPIC-359","kind":"stack-slot","stage":"automation pass","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null}
+{"ts":"2026-11-20T14:54:15.086Z","story":"EPIC-359","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":11}
