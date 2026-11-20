@@ -1,9 +1,17 @@
 import { Locator, Page, TestInfo } from '@playwright/test';
-import { captureKeyframe, test as base, expect, withStepKeyframes } from './fixtures';
+import { captureKeyframe, test as base, expect as baseExpect, withStepKeyframes } from './fixtures';
 
 /**
  * Narration for e2e tests. Every e2e test is already recorded on video (see `video` in playwright.config.ts); use this
  * fixture to make a feature's video read like a demo.
+ *
+ * In demo mode the fixture narrates by itself, in viewer language, with no work from the spec author: every navigation
+ * ("Open the Brands page"), click ("Click the Daybird card"), typing ("Type the gift message"; secret values never
+ * shown), choice and tick, and the assertions a viewer can see ("13 cards are shown", "“11 products” is shown"). The
+ * wording comes from accessible names, labels and roles, never from selectors or raw URLs. Every video opens with one
+ * line on what it demonstrates (the test title and its ticket) and ends with the outcome. A caption the spec writes
+ * itself (`demo.caption` right before an action, `demo.click(locator, 'caption')`, a highlight label) takes precedence
+ * for its step; add one only where the automatic line would not explain the step to a viewer.
  *
  *   import { test, expect } from '../demo';
  *   test('...', async ({ page, demo }) => {
@@ -110,6 +118,73 @@ function detector(): Promise<Detect> {
 }
 const SECRET_FIELD = /pass(word|wd|phrase)?|token|secret|api[-_ ]?key|apikey|private[-_ ]?key|credential|client[-_ ]?secret|otp|pin\b/i;
 
+// ---- viewer wording ---------------------------------------------------------------------------------------------
+// Ticket titles by key (E2E_DEMO_TICKETS, set by the factory's local video step from the ticket cache).
+const TICKETS: Record<string, string> = (() => { try { return JSON.parse(process.env.E2E_DEMO_TICKETS ?? '{}'); } catch { return {}; } })();
+const clean = (t: string | null | undefined) => (t ?? '').replace(/\s+/g, ' ').trim();
+const upperFirst = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+const lowerFirst = (t: string) => (/^[A-Z][a-z]/.test(t) ? t.charAt(0).toLowerCase() + t.slice(1) : t);
+const humanize = (t: string) => { let v = t; try { v = decodeURIComponent(t); } catch { /* as is */ } return clean(v.replace(/[-_+]+/g, ' ').replace(/([a-z])([A-Z])/g, '$1 $2')); };
+const plural = (noun: string, n: number) => (n === 1 ? noun : noun.endsWith('x') ? `${noun}es` : `${noun}s`);
+const norm = (t: string) => t.toLowerCase().replace(/^(now|then|next)\s+/, '').replace(/[^a-z0-9]+/g, ' ').trim();
+
+/** A page as a viewer names it: "the Brands page", "the home page, with sort count". Query values that look like keys are left out. */
+export function pageName(href: string): string {
+  let url: URL;
+  try { url = new URL(href); } catch { return 'the page'; }
+  // A value that could be a credential (a redacted one, or a long run of letters and digits) is never read out.
+  const hidden = (v: string) => /redacted/i.test(v) || (/^[\w\-+/=.~%]{20,}$/.test(v) && /\d/.test(v) && /[a-z]/i.test(v));
+  const segs = url.pathname.split('/').filter(Boolean).filter(x => !/^\d+$/.test(x) && !/^[0-9a-f-]{16,}$/i.test(x) && !hidden(x));
+  const last = segs.at(-1);
+  const base = last ? `the ${upperFirst(humanize(last))} page` : 'the home page';
+  const query = [...url.searchParams.entries()].filter(([k]) => !/token|key|secret|code|state|session|pass|auth|sig/i.test(k)).slice(0, 3).map(([k, v]) => `${humanize(k)} ${hidden(v) ? 'a hidden value' : humanize(v)}`);
+  return query.length ? `${base}, with ${query.join(' and ')}` : base;
+}
+/** Raw paths in a caption the spec wrote ("Opened /brands?sort=count") read as page names ("Opened the Brands page, with sort count"). */
+export function viewerText(text: string, origin = 'http://localhost'): string {
+  const bareRoot = /^(opened|now at|now on|at|on|back at|back on|reloaded)\b/i.test(text.trim());
+  return text.replace(/(^|[\s(])(https?:\/\/[^\s)]+|\/(?:[\w\-.~%?=&+]+\/?)+|\/(?=$|[\s),.;:]))/g, (m, pre: string, raw: string) => {
+    if (raw === '/' && !bareRoot) return m;
+    try { return `${pre}${pageName(new URL(raw.replace(/[.,;:]+$/, ''), origin).href)}`; } catch { return m; }
+  });
+}
+/** The name a selector gives an element when the element is gone (`getByRole('link', { name: 'Brands' })`). */
+function nameFromSelector(selector: string) {
+  const m = /name:\s*['"]([^'"]+)['"]|getBy(?:Text|Label|Placeholder|Title|AltText)\(['"]([^'"]+)['"]|internal:(?:text|label|attr)=\[?[^"]*"([^"]+)"/.exec(selector);
+  return m ? clean(m[1] ?? m[2] ?? m[3]) : '';
+}
+interface Subject { name: string; noun: string; selected?: string }
+/** What a viewer calls an element: its accessible name (label, aria-label, heading, text) and a noun from its role. */
+async function subjectOf(locator: Locator): Promise<Subject> {
+  const fallback = { name: nameFromSelector(String(locator)), noun: '' };
+  const s = await locator.first().evaluate((el: Element) => {
+    const c = (t: string | null | undefined) => (t ?? '').replace(/\s+/g, ' ').trim();
+    const e = el as HTMLInputElement;
+    const tag = e.tagName.toLowerCase();
+    const type = (e.getAttribute('type') ?? '').toLowerCase();
+    const explicit = e.getAttribute('role');
+    const role = explicit ?? (tag === 'a' && e.hasAttribute('href') ? 'link'
+      : tag === 'button' || (tag === 'input' && ['button', 'submit', 'reset'].includes(type)) ? 'button'
+      : tag === 'select' ? 'list'
+      : type === 'checkbox' ? 'checkbox' : type === 'radio' ? 'option'
+      : tag === 'textarea' || tag === 'input' ? 'field'
+      : /^h[1-6]$/.test(tag) ? 'heading' : tag === 'img' ? 'image' : tag === 'li' ? 'item' : '');
+    const byIds = (ids: string | null) => (ids ?? '').split(/\s+/).map(id => document.getElementById(id)?.textContent ?? '').join(' ');
+    const label = c(e.getAttribute('aria-label')) || c(byIds(e.getAttribute('aria-labelledby'))) || c(e.labels?.[0]?.textContent) || c(e.getAttribute('placeholder')) || c(e.getAttribute('alt')) || c(e.getAttribute('title'));
+    const heading = c(e.querySelector?.('h1,h2,h3,h4,h5,h6')?.textContent);
+    const cardLike = tag === 'article' || /(^|[\s_-])card($|[\s_-])/i.test(String(e.className ?? '')) || Boolean(heading && e.closest('article'));
+    const nouns: Record<string, string> = { link: 'link', button: 'button', list: 'list', combobox: 'list', listbox: 'list', checkbox: 'checkbox', option: 'option', radio: 'option', field: 'field', textbox: 'field', searchbox: 'field', heading: 'heading', image: 'image', img: 'image', item: 'item', listitem: 'item', tab: 'tab', menuitem: 'menu item', switch: 'switch' };
+    const noun = cardLike && heading ? 'card' : nouns[role] ?? '';
+    const text = c((e as HTMLElement).innerText ?? e.textContent).split(' ').slice(0, 8).join(' ');
+    const name = (noun === 'card' ? heading : '') || label || heading || (noun === 'field' || noun === 'list' ? '' : text);
+    const selected = tag === 'select' ? c((e as unknown as HTMLSelectElement).selectedOptions?.[0]?.textContent) : undefined;
+    return { name, noun, selected };
+  }, undefined, { timeout: 1500 }).catch(() => null);
+  if (!s) return fallback;
+  return { ...s, name: s.name.length > 60 ? `${s.name.slice(0, 57)}...` : s.name || fallback.name };
+}
+const the = (s: Subject) => (s.noun ? `the ${s.name ? `${s.name} ` : ''}${s.noun}` : s.name ? `“${s.name}”` : 'the highlighted element');
+
 // ---- the step log -----------------------------------------------------------------------------------------------
 interface Box { x: number; y: number; w: number; h: number }
 interface StepLog {
@@ -118,7 +193,10 @@ interface StepLog {
   startedAt: number;
   viewport: { width: number; height: number } | null;
   pacing: typeof PACING;
-  steps: { i: number; kind: string; caption: string; t0: number; t1: number }[];
+  steps: { i: number; kind: string; caption: string; t0: number; t1: number; auto?: boolean }[];
+  /** Every user action (navigation, click, typing, choice) and the step whose line narrates it. */
+  actions: { t: number; kind: string; step: number }[];
+  outcome?: string;
   masks: (Box & { t0: number; t1: number; why: string })[];
   visible: { t: number; step: number; text: string }[];
   unmasked: { t: number; step: number; where: string; rules: string[] }[];
@@ -169,10 +247,75 @@ async function visibleItems(page: Page) {
     .catch(() => ({ items: [], url: page.url(), viewport: null }));
 }
 
-export function createDemo(page: Page, testInfo?: TestInfo): Demo & { dispose(): Promise<void> } {
+const isLocator = (x: unknown): x is Locator => Boolean(x && typeof (x as Locator).boundingBox === 'function' && typeof (x as Locator).page === 'function');
+const isPage = (x: unknown): x is Page => Boolean(x && typeof (x as Page).goto === 'function' && typeof (x as Page).mainFrame === 'function');
+const quoted = (v: unknown) => (typeof v === 'string' ? `“${clean(v)}”` : v instanceof RegExp ? '' : `“${String(v)}”`);
+const STATE_WORDS = /\b(active|selected|current|disabled|open|expanded|checked|highlighted)\b/i;
+
+/** An assertion that passed, as a viewer would say what the screen shows; null when a viewer would not see it. */
+async function assertionLine(matcher: string, subject: Locator | Page, args: unknown[], negated: boolean, detect: Detect): Promise<string | null> {
+  if (isPage(subject)) {
+    if (matcher === 'toHaveURL' && !negated) return `Now on ${pageName(detect(subject.url()).text)}`;
+    if (matcher === 'toHaveTitle' && !negated && typeof args[0] === 'string') return `The page title is ${quoted(args[0])}`;
+    return null;
+  }
+  const expected = args[0];
+  const gone = negated && ['toBeVisible', 'toHaveCount', 'toBeAttached'].includes(matcher);
+  const s = matcher === 'toBeHidden' || gone || (matcher === 'toHaveCount' && expected === 0) ? { name: nameFromSelector(String(subject)), noun: '' } : await subjectOf(subject);
+  switch (matcher) {
+    case 'toHaveText':
+    case 'toContainText': {
+      if (negated) return null;
+      if (Array.isArray(expected)) {
+        const items = expected.filter(x => typeof x === 'string').map(x => clean(x as string));
+        if (!items.length) return null;
+        return `${items.length} ${plural(s.noun && s.noun !== 'card' ? s.noun : 'item', items.length)} are shown${items.length > 1 ? `, in this order: ${items.slice(0, 4).join(', ')}${items.length > 4 ? ', and more' : ''}` : `: ${items[0]}`}`;
+      }
+      const shown = typeof expected === 'string' ? clean(expected) : clean(await subject.first().innerText({ timeout: 1000 }).catch(() => '')).slice(0, 60);
+      if (!shown) return null;
+      return s.noun && s.name && norm(s.name) !== norm(shown) ? `${upperFirst(the(s))} shows “${shown}”` : `“${shown}” is shown`;
+    }
+    case 'toHaveCount': {
+      const n = Number(expected);
+      if (negated || !Number.isFinite(n)) return null;
+      const noun = s.noun || 'item';
+      return n === 0 ? `No ${s.name ? `${s.name} ` : ''}${noun} is shown` : `${n} ${plural(noun, n)} ${n === 1 ? 'is' : 'are'} shown`;
+    }
+    case 'toBeVisible':
+      return negated ? `${upperFirst(the(s))} is not shown` : `${upperFirst(the(s))} is shown`;
+    case 'toBeHidden':
+      return `${upperFirst(the(s))} is not shown`;
+    case 'toHaveValue':
+      if (negated || typeof expected !== 'string' || SECRET_FIELD.test(s.name)) return null;
+      return `${upperFirst(s.name ? `the ${s.name} ${s.noun || 'field'}` : 'the field')} holds “${clean(expected)}”`;
+    case 'toBeChecked':
+      return `${upperFirst(the(s))} is ${negated ? 'not ' : ''}ticked`;
+    case 'toBeDisabled':
+    case 'toBeEnabled':
+      return `${upperFirst(the(s))} is ${(matcher === 'toBeDisabled') !== negated ? 'disabled' : 'enabled'}`;
+    case 'toHaveClass': {
+      const word = STATE_WORDS.exec(expected instanceof RegExp ? expected.source : String(expected ?? ''))?.[1];
+      return word ? `${upperFirst(the(s))} is ${negated ? 'not ' : ''}marked ${word.toLowerCase()}` : null;
+    }
+    default:
+      return null;
+  }
+}
+
+interface DemoInternals {
+  intro(line: string): Promise<void>;
+  outcome(line: string): Promise<void>;
+  narrated(kind: string, locator: Locator, args: unknown[], run: () => Promise<unknown>): Promise<unknown>;
+  navigated(kind: string, run: () => Promise<unknown>): Promise<unknown>;
+  checked(matcher: string, subject: Locator | Page, args: unknown[], negated: boolean): Promise<void>;
+  readonly busy: boolean;
+  dispose(): Promise<void>;
+}
+
+export function createDemo(page: Page, testInfo?: TestInfo): Demo & DemoInternals {
   const t0 = Date.now();
   const now = () => Date.now() - t0;
-  const log: StepLog = { version: 1, demo: DEMO, startedAt: t0, viewport: page.viewportSize(), pacing: PACING, steps: [], masks: [], visible: [], unmasked: [] };
+  const log: StepLog = { version: 1, demo: DEMO, startedAt: t0, viewport: page.viewportSize(), pacing: PACING, steps: [], actions: [], masks: [], visible: [], unmasked: [] };
   let currentCaption: { dispose(): Promise<void> | void } | undefined;
   let currentChapter = '';
   let cursor = { x: 24, y: 24 };
@@ -183,11 +326,17 @@ export function createDemo(page: Page, testInfo?: TestInfo): Demo & { dispose():
   let open: (Box & { t0: number; why: string })[] = [];
   const secretFields = new Set<Locator>();
 
-  const step = (kind: string, caption: string) => {
+  const step = (kind: string, caption: string, auto = false) => {
     const last = log.steps.at(-1);
     if (last && last.t1 < 0) last.t1 = now();
-    log.steps.push({ i: log.steps.length, kind, caption, t0: now(), t1: -1 });
+    log.steps.push({ i: log.steps.length, kind, caption, t0: now(), t1: -1, ...(auto ? { auto: true } : {}) });
   };
+  // Automatic narration state: `busy` while the fixture itself drives the page (its own clicks are not narrated twice),
+  // `authored` while a caption the spec wrote waits for the action it introduces, and the assertion lines waiting for
+  // the next step (said together, or dropped when the spec narrates the check itself with a highlight).
+  let busy = 0;
+  let authored = false;
+  let checks: string[] = [];
 
   // Scan what is visible now; cover each match (and every secret field), and log the redacted text of the step.
   const scan = async () => {
@@ -254,12 +403,60 @@ export function createDemo(page: Page, testInfo?: TestInfo): Demo & { dispose():
           color:#fff; font:500 18px/1.4 system-ui, sans-serif; text-align:center;
           box-shadow:0 4px 18px rgba(0,0,0,.35);">${escapeHtml(text)}</div>`);
   };
-  const caption = async (text: string, kind = 'caption') => {
+  const say = async (text: string, kind = 'caption', auto = false) => {
     const safe = text ? (await detector())(text).text : '';
-    if (safe) step(kind, safe);
+    if (safe) step(kind, safe, auto);
     await drawCaption(safe);
     await page.waitForTimeout(pace(PACING.stepDelayMs));
     if (DEMO) await scan();
+  };
+  // The waiting assertion lines become one step (at most three sentences) before the next thing happens.
+  const flushChecks = async (drop = false) => {
+    const lines = checks;
+    checks = [];
+    if (drop || !lines.length) return;
+    await say(lines.slice(0, 3).map(l => (/[.!?]$/.test(l) ? l : `${l}.`)).join(' '), 'check', true);
+    authored = false;
+  };
+  // A caption the spec wrote. Raw paths read as page names. Right after an automatic line for the same thing (no other
+  // step between), it replaces that line: the spec's wording wins for its step. Otherwise it is its own step, and the
+  // next action is narrated by it instead of an automatic line.
+  const caption = async (text: string, kind = 'caption') => {
+    await flushChecks();
+    // Secrets are found on the spec's own text first (humanizing could break a token's shape), then paths read as pages.
+    const human = text ? viewerText((await detector())(text).text, page.url()) : '';
+    const lastAction = log.actions.at(-1);
+    const target = lastAction ? log.steps[lastAction.step] : undefined;
+    const authorSince = log.steps.slice((lastAction?.step ?? -1) + 1).some(x => !x.auto);
+    if (DEMO && human && target?.auto && target.kind.startsWith('auto:') && !authorSince && similarTo(target.caption, human)) {
+      target.caption = (await detector())(human).text;
+      target.auto = false;
+      await drawCaption(target.caption);
+      return;
+    }
+    await say(human, kind);
+    authored = Boolean(human);
+  };
+  const similarTo = (auto: string, mine: string) => {
+    const a = norm(auto).split(' ').filter(w => w.length > 2 && !['the', 'page', 'open', 'opened', 'click', 'with'].includes(w));
+    const b = ` ${norm(mine)} `;
+    return a.length > 0 && a.every(w => b.includes(` ${w}`));
+  };
+  // An automatic line for an action, unless the spec captioned it: a caption right before it, or a highlight that
+  // already says to do this to the same element ("Click the Daybird card").
+  const autoLine = async (line: string, kind: string, name = '') => {
+    await flushChecks();
+    const last = log.steps.at(-1);
+    const words = norm(name).split(' ').filter(w => w.length > 1);
+    const said = last && last.kind === 'highlight' && /\b(click|select|choose|tap|tick|type|open|press)\b/.test(norm(last.caption)) && words.length > 0 && words.every(w => ` ${norm(last.caption)} `.includes(` ${w} `));
+    if (authored || (last && norm(last.caption) === norm(line)) || said) {
+      authored = false;
+      return;
+    }
+    await say(line, `auto:${kind}`, true);
+  };
+  const action = (kind: string) => {
+    log.actions.push({ t: now(), kind, step: log.steps.length - 1 });
   };
 
   // The drawn cursor: an arrow that glides to the target's centre, and a ripple where it clicks (video-only overlays).
@@ -301,13 +498,108 @@ export function createDemo(page: Page, testInfo?: TestInfo): Demo & { dispose():
       // Cover the field before the first character appears.
       if (DEMO || covers.length === 0) await scan();
     }
-    await locator.click();
-    await locator.pressSequentially(text, { delay: DEMO ? PACING.typeDelayMs : 20 });
+    busy++;
+    try {
+      await locator.click();
+      await locator.pressSequentially(text, { delay: DEMO ? PACING.typeDelayMs : 20 });
+    } finally {
+      busy--;
+    }
     return masked;
+  };
+  const clickVisibly = async (locator: Locator, run: () => Promise<unknown>) => {
+    await moveTo(locator);
+    await drawCursor(cursor.x, cursor.y, true);
+    const r = await run();
+    await page.waitForTimeout(pace(250));
+    await drawCursor(cursor.x, cursor.y);
+    await page.waitForTimeout(pace(PACING.holdMs));
+    if (DEMO) await scan();
+    return r;
+  };
+  // One user action the spec called on a locator (raw Playwright or the fixture's own): narrated, paced, drawn, masked.
+  const narrated = async (kind: string, locator: Locator, args: unknown[], run: () => Promise<unknown>) => {
+    busy++;
+    try {
+      const s = await subjectOf(locator);
+      if (['click', 'dblclick', 'tap'].includes(kind)) {
+        await autoLine(`${kind === 'dblclick' ? 'Double-click' : kind === 'tap' ? 'Tap' : 'Click'} ${the(s)}`, kind, s.name);
+        action(kind);
+        return await clickVisibly(locator, run);
+      }
+      if (['fill', 'type', 'pressSequentially'].includes(kind)) {
+        const value = String(args[0] ?? '');
+        const masked = await isSecretField(locator);
+        if (masked) {
+          secretFields.add(locator);
+          await scan();
+        }
+        const field = s.name ? `the ${s.name} ${s.noun || 'field'}` : 'the field';
+        const line = !value ? `Clear ${field}` : masked ? `Type the ${s.name || 'secret value'} (hidden)` : value.length <= 30 && !/\n/.test(value) ? `Type “${value}” into ${field}` : `Type the ${s.name || 'text'}`;
+        await autoLine(line, 'type', s.name);
+        action(kind);
+        await moveTo(locator);
+        const r = await run();
+        await page.waitForTimeout(pace(PACING.holdMs));
+        if (DEMO) await scan();
+        return r;
+      }
+      if (kind === 'selectOption') {
+        await moveTo(locator);
+        const r = await run();
+        const after = await subjectOf(locator);
+        await autoLine(`Choose ${after.selected ? `“${after.selected}”` : 'an option'} in ${the(after)}`, 'select', after.name);
+        action(kind);
+        await page.waitForTimeout(pace(PACING.holdMs));
+        if (DEMO) await scan();
+        return r;
+      }
+      if (['check', 'uncheck', 'setChecked'].includes(kind)) {
+        const on = kind === 'check' || (kind === 'setChecked' && Boolean(args[0]));
+        await autoLine(`${on ? 'Tick' : 'Untick'} ${the(s)}`, 'check', s.name);
+        action(kind);
+        return await clickVisibly(locator, run);
+      }
+      if (kind === 'press') {
+        await autoLine(`Press ${String(args[0] ?? 'a key')}${s.name ? ` in ${the(s)}` : ''}`, 'press');
+        action(kind);
+        const r = await run();
+        await page.waitForTimeout(pace(PACING.holdMs));
+        if (DEMO) await scan();
+        return r;
+      }
+      return await run();
+    } finally {
+      busy--;
+    }
+  };
+  // Navigation the spec called on the page: narrated once the page is there ("Open the Brands page").
+  const navigated = async (kind: string, run: () => Promise<unknown>) => {
+    busy++;
+    try {
+      const r = await run();
+      const where = pageName((await detector())(page.url()).text);
+      const line = kind === 'reload' ? `Reload ${where}` : kind === 'goBack' ? `Go back to ${where}` : kind === 'goForward' ? `Go forward to ${where}` : `Open ${where}`;
+      await autoLine(upperFirst(line), kind);
+      action(kind);
+      await page.waitForTimeout(pace(PACING.holdMs));
+      return r;
+    } finally {
+      busy--;
+    }
+  };
+  // An assertion that passed, in viewer words; said with the next step.
+  const checked = async (matcher: string, subject: Locator | Page, args: unknown[], negated: boolean) => {
+    const detect = await detector();
+    const line = await assertionLine(matcher, subject, args, negated, detect);
+    if (!line) return;
+    const safe = detect(viewerText(detect(line).text, page.url())).text;
+    if (!checks.some(c => norm(c) === norm(safe)) && norm(log.steps.at(-1)?.caption ?? '') !== norm(safe)) checks.push(safe);
   };
 
   return {
     chapter: async (title, description, durationMs = 2500) => {
+      await flushChecks();
       // Keyframe for agents: how the previous chapter ended, before the title card covers it.
       if (currentChapter) await captureKeyframe(`end of: ${currentChapter}`, [page]);
       currentChapter = title;
@@ -321,6 +613,12 @@ export function createDemo(page: Page, testInfo?: TestInfo): Demo & { dispose():
       await bringIntoView(locator);
       const box = await locator.boundingBox();
       if (!box) throw new Error(`demo.highlight: ${locator} is not visible`);
+      // The label narrates the check the spec shows: it takes the place of the automatic lines waiting for this step.
+      if (label) {
+        await flushChecks(true);
+        step('highlight', (await detector())(viewerText((await detector())(label).text, page.url())).text);
+        authored = false;
+      }
       if (DEMO) await scan();
       // Keyframe for agents: the element this step proves, before the overlay is drawn.
       await captureKeyframe(`${currentChapter ? `${currentChapter} - ` : ''}highlight: ${label ?? String(locator)}`, [page]);
@@ -341,6 +639,9 @@ export function createDemo(page: Page, testInfo?: TestInfo): Demo & { dispose():
       await bringIntoView(anchor);
       const box = await anchor.boundingBox();
       if (!box) throw new Error(`demo.absent: the anchor ${anchor} is not visible`);
+      await flushChecks(true);
+      step('highlight', (await detector())(viewerText((await detector())(label).text, page.url())).text);
+      authored = false;
       if (DEMO) await scan();
       await captureKeyframe(`${currentChapter ? `${currentChapter} - ` : ''}absent: ${label}`, [page]);
       const safe = (await detector())(label).text;
@@ -354,28 +655,48 @@ export function createDemo(page: Page, testInfo?: TestInfo): Demo & { dispose():
     },
     click: async (locator, text) => {
       if (text) await caption(text, 'click');
-      await moveTo(locator);
-      await drawCursor(cursor.x, cursor.y, true);
-      await locator.click();
-      await page.waitForTimeout(pace(250));
-      await drawCursor(cursor.x, cursor.y);
-      await page.waitForTimeout(pace(PACING.holdMs));
-      if (DEMO) await scan();
+      await narrated('click', locator, [], () => locator.click());
     },
     fill: async (locator, value, options = {}) => {
       const masked = await isSecretField(locator, options.secret);
       if (options.caption) await caption(masked ? options.caption.split(value).join('••••••') : options.caption, 'fill');
+      const s = await subjectOf(locator);
+      const field = s.name ? `the ${s.name} field` : 'the field';
+      await autoLine(masked ? `Type the ${s.name || 'secret value'} (hidden)` : value.length <= 30 && !/\n/.test(value) ? `Type “${value}” into ${field}` : `Type the ${s.name || 'text'}`, 'type');
+      action('fill');
       await moveTo(locator);
       await typeInto(locator, value, masked);
       await page.waitForTimeout(pace(PACING.holdMs));
       if (DEMO) await scan();
     },
     type: async (locator, text, options = {}) => {
-      await typeInto(locator, text, options.secret);
+      const masked = await isSecretField(locator, options.secret);
+      const s = await subjectOf(locator);
+      await autoLine(masked ? `Type the ${s.name || 'secret value'} (hidden)` : `Type into the ${s.name ? `${s.name} ` : ''}field`, 'type');
+      action('type');
+      await typeInto(locator, text, masked);
       if (DEMO) await scan();
     },
     pause: ms => page.waitForTimeout(ms ?? 1000),
+    intro: async (line: string) => {
+      const safe = (await detector())(line).text;
+      step('intro', safe);
+      await page.screencast.showChapter(safe, { duration: DEMO ? 1500 : 1 }).catch(() => drawCaption(safe));
+    },
+    outcome: async (line: string) => {
+      await flushChecks();
+      log.outcome = line;
+      await say(line, 'outcome');
+      await page.waitForTimeout(pace(PACING.holdMs));
+    },
+    narrated,
+    navigated,
+    checked,
+    get busy() {
+      return busy > 0;
+    },
     dispose: async () => {
+      await flushChecks().catch(() => {});
       if (DEMO) await scan().catch(() => {});
       const end = now();
       for (const o of open) log.masks.push({ x: o.x, y: o.y, w: o.w, h: o.h, why: o.why, t0: o.t0, t1: end + 1000 });
@@ -391,15 +712,93 @@ export function createDemo(page: Page, testInfo?: TestInfo): Demo & { dispose():
   };
 }
 
+// ---- automatic narration hooks ----------------------------------------------------------------------------------
+// The demo of each page; the locator and page methods below narrate through it while it is active (demo mode only).
+const ACTIVE = new WeakMap<Page, Demo & DemoInternals>();
+const LOCATOR_ACTIONS = ['click', 'dblclick', 'tap', 'fill', 'type', 'pressSequentially', 'selectOption', 'check', 'uncheck', 'setChecked', 'press'];
+const PAGE_ACTIONS = ['goto', 'reload', 'goBack', 'goForward'];
+const NARRATED_MATCHERS = new Set(['toHaveText', 'toContainText', 'toHaveCount', 'toBeVisible', 'toBeHidden', 'toHaveURL', 'toHaveTitle', 'toHaveValue', 'toBeChecked', 'toBeDisabled', 'toBeEnabled', 'toHaveClass']);
+
+// Once per worker: every Locator's user actions go through the active demo of its page (Locators share one prototype).
+function hookLocators(page: Page) {
+  const proto = Object.getPrototypeOf(page.locator('body')) as Record<string, unknown> & { __demoHooked?: boolean };
+  if (proto.__demoHooked) return;
+  Object.defineProperty(proto, '__demoHooked', { value: true });
+  for (const name of LOCATOR_ACTIONS) {
+    const original = proto[name];
+    if (typeof original !== 'function') continue;
+    proto[name] = function (this: Locator, ...args: unknown[]) {
+      const demo = ACTIVE.get(this.page());
+      if (!demo || demo.busy) return (original as (...a: unknown[]) => unknown).apply(this, args);
+      return demo.narrated(name, this, args, () => (original as (...a: unknown[]) => Promise<unknown>).apply(this, args));
+    };
+  }
+}
+function hookPage(page: Page, demo: Demo & DemoInternals) {
+  const p = page as unknown as Record<string, (...a: unknown[]) => Promise<unknown>>;
+  for (const name of PAGE_ACTIONS) {
+    const original = p[name].bind(page);
+    p[name] = (...args: unknown[]) => (ACTIVE.get(page) === demo && !demo.busy ? demo.navigated(name, () => original(...args)) : original(...args));
+  }
+}
+
+/** `expect` that narrates, in demo mode, the assertions a viewer can see; otherwise Playwright's own. */
+function narratedMatchers(matchers: Record<string, unknown>, subject: unknown, negated: boolean): unknown {
+  return new Proxy(matchers, {
+    get(target, prop, receiver) {
+      const value = Reflect.get(target, prop, receiver);
+      if (prop === 'not' && value && typeof value === 'object') return narratedMatchers(value as Record<string, unknown>, subject, !negated);
+      if (typeof prop !== 'string' || typeof value !== 'function' || !NARRATED_MATCHERS.has(prop)) return value;
+      return async (...args: unknown[]) => {
+        const result = await (value as (...a: unknown[]) => Promise<unknown>).apply(target, args);
+        const page = isLocator(subject) ? subject.page() : isPage(subject) ? subject : null;
+        const demo = page ? ACTIVE.get(page) : undefined;
+        if (demo && !demo.busy) await demo.checked(prop, subject as Locator | Page, args, negated).catch(() => {});
+        return result;
+      };
+    },
+  });
+}
+export const expect = (DEMO
+  ? new Proxy(baseExpect, {
+    apply(target, thisArg, args: unknown[]) {
+      const matchers = Reflect.apply(target as unknown as (...a: unknown[]) => unknown, thisArg, args) as Record<string, unknown>;
+      return isLocator(args[0]) || isPage(args[0]) ? narratedMatchers(matchers, args[0], false) : matchers;
+    },
+  })
+  : baseExpect) as typeof baseExpect;
+
+/** The opening line: what the video demonstrates, from the test title and its ticket. */
+export function openingLine(title: string, tickets: Record<string, string> = TICKETS): string {
+  const what = clean(title.replace(/^TC-[A-Z0-9]+(?:-[A-Z0-9]+)*\s+/i, '')) || clean(title);
+  const keys = Object.keys(tickets).filter(k => title.toUpperCase().startsWith(`TC-${k.toUpperCase()}-`)).sort((x, y) => y.length - x.length);
+  const key = keys[0] ?? /^TC-(.+)-\d+\b/i.exec(title)?.[1]?.toUpperCase() ?? '';
+  const ticket = clean((tickets[key] ?? '').replace(/^(\[[^\]]*\]\s*-?\s*)+/, ''));
+  return `This video shows ${lowerFirst(viewerText(what))}.${key ? ` Ticket ${key}${ticket ? `: ${ticket}` : ''}.` : ''}`;
+}
+/** The closing line: the outcome. */
+export function outcomeLine(title: string, passed: boolean): string {
+  const what = clean(title.replace(/^TC-[A-Z0-9]+(?:-[A-Z0-9]+)*\s+/i, '')) || clean(title);
+  return passed ? `Result: ${lowerFirst(viewerText(what))}, as expected.` : 'Result: the test failed; this recording is evidence, not a demo.';
+}
+
 /** `test` with a `demo` fixture that narrates the test's video. */
 export const test = withStepKeyframes(base.extend<{ demo: Demo }>({
   demo: async ({ page }, use, testInfo) => {
     const demo = createDemo(page, testInfo);
+    if (DEMO) {
+      hookLocators(page);
+      hookPage(page, demo);
+      ACTIVE.set(page, demo);
+      await demo.intro(openingLine(testInfo.title)).catch(() => {});
+    }
     await use(demo);
+    if (DEMO) {
+      await demo.outcome(outcomeLine(testInfo.title, testInfo.status === testInfo.expectedStatus)).catch(() => {});
+      ACTIVE.delete(page);
+    }
     // Hold the last frame so the end state is visible in the video.
     await page.waitForTimeout(500 + pace(PACING.holdMs)).catch(() => {});
     await demo.dispose().catch(() => {});
   },
 }));
-
-export { expect };
