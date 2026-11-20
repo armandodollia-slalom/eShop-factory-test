@@ -51,6 +51,20 @@ async function bringIntoView(locator: Locator) {
 export function createDemo(page: Page): Demo & { dispose(): Promise<void> } {
   let currentCaption: { dispose(): Promise<void> | void } | undefined;
   let currentChapter = '';
+  // The URL caption the fixture draws itself (top left of the video, updated on every navigation), so the video shows
+  // which page each step is on without a test having to caption it. Keyframes get it from captureKeyframe.
+  let urlCaption: { dispose(): Promise<void> | void } | undefined;
+  const showUrl = async () => {
+    await urlCaption?.dispose();
+    urlCaption = await page.screencast
+      .showOverlay(`<div style="position:absolute; left:8px; top:8px; max-width:70%; padding:2px 8px; border-radius:6px;
+        background:rgba(15,23,42,.88); color:#fff; font:600 12px/1.5 ui-monospace, Menlo, monospace; white-space:nowrap;
+        overflow:hidden; text-overflow:ellipsis;">URL ${escapeHtml(page.url())}</div>`)
+      .catch(() => undefined);
+  };
+  page.on('framenavigated', frame => {
+    if (frame === page.mainFrame()) void showUrl();
+  });
   const clearCaption = async () => {
     await currentCaption?.dispose();
     currentCaption = undefined;
@@ -108,7 +122,10 @@ export function createDemo(page: Page): Demo & { dispose(): Promise<void> } {
       await locator.pressSequentially(text, { delay: 60 });
     },
     pause: ms => page.waitForTimeout(ms ?? 1000),
-    dispose: clearCaption,
+    dispose: async () => {
+      await clearCaption();
+      await urlCaption?.dispose();
+    },
   };
 }
 

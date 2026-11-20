@@ -1,3 +1,5 @@
+import path from 'node:path';
+import fs from 'node:fs';
 /* eslint-disable @typescript-eslint/no-explicit-any -- wraps Playwright's generic test, step and request APIs, whose types are generic over any */
 import { test as base, expect, APIRequestContext, APIResponse, Browser, BrowserContext, BrowserContextOptions, Page, TestInfo, TestType, Video } from '@playwright/test';
 
@@ -27,6 +29,29 @@ function keyframeSlug(value: string) {
 }
 
 /** Screenshot `pages` (default: every open page of the current test) and attach them as keyframes. Never throws. */
+// The URL caption every keyframe carries (evidence by construction: a reviewer never has to ask which page a frame
+// shows). Drawn for the screenshot only, in a closed shadow root the test's locators cannot see, then removed.
+const URL_CAPTION_ATTR = 'data-factory-url-caption';
+async function stampUrl(page: Page) {
+  await page
+    .evaluate(([attr, url]) => {
+      const host = document.createElement('div');
+      host.setAttribute(attr, '');
+      host.setAttribute('aria-hidden', 'true');
+      host.style.cssText = 'position:fixed;left:8px;bottom:8px;z-index:2147483647;pointer-events:none;max-width:70vw;';
+      const root = host.attachShadow({ mode: 'closed' });
+      const bar = document.createElement('div');
+      bar.textContent = `URL ${url}`;
+      bar.style.cssText = 'font:600 12px/1.5 ui-monospace,Menlo,monospace;background:rgba(15,23,42,.88);color:#fff;padding:2px 8px;border-radius:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+      root.appendChild(bar);
+      document.documentElement.appendChild(host);
+    }, [URL_CAPTION_ATTR, page.url()] as const)
+    .catch(() => {});
+}
+async function unstampUrl(page: Page) {
+  await page.evaluate(attr => document.querySelectorAll(`[${attr}]`).forEach(n => n.remove()), URL_CAPTION_ATTR).catch(() => {});
+}
+
 export async function captureKeyframe(label: string, pages?: Page[]) {
   const recording = current;
   if (!recording || !videoSettings(recording.testInfo)) return;
@@ -35,8 +60,15 @@ export async function captureKeyframe(label: string, pages?: Page[]) {
     const name = open.length > 1 ? `${label} [page ${i + 1}]` : label;
     const file = recording.testInfo.outputPath('keyframes', `${String(++recording.frames).padStart(2, '0')}-${keyframeSlug(name)}.png`);
     try {
-      await page.screenshot({ path: file, timeout: 5000, animations: 'disabled', caret: 'initial' });
+      await stampUrl(page);
+      try {
+        await page.screenshot({ path: file, timeout: 5000, animations: 'disabled', caret: 'initial' });
+      } finally {
+        await unstampUrl(page);
+      }
       await recording.testInfo.attach(`keyframe: ${name}`, { path: file, contentType: 'image/png' });
+      // The keyframe's URL as text too, for agents and the harness (keyframes/index.jsonl).
+      fs.appendFileSync(recording.testInfo.outputPath('keyframes', 'index.jsonl'), `${JSON.stringify({ file: path.basename(file), label: name, url: page.url() })}\n`);
     } catch {
       // A page that is navigating or crashed is not worth failing the test over.
     }

@@ -35,7 +35,9 @@ Your `summary` and each gap's `detail` go into the pipeline's decision log, whic
 
 Think it through, then end your final message with one line (valid JSON, no code fence):
 
-`AGENT_RESULT: {"score": <0-10>, "summary": "<one or two sentences: why this score>", "gaps": [{"case": "<case id>", "category": "<category>", "subtype": "<optional>", "detail": "<what the test does, what the case requires>", "location": "<file:line>", "root_stage": "plan (only when the case is at fault)"}], "evidence": [{"case": "<UI case id>", "keyframe": "<path you opened>", "shows": "<what the frame shows>", "ok": true}]}`
+The fixture draws the page's URL on every keyframe (bottom left) and in the video (top left), and lists it in `keyframes/index.jsonl`. Do not raise a gap that a keyframe or the video does not show the URL or a caption when the test navigates to the page or asserts its URL: the recorded steps prove the navigation. Raise it only when the case's own expectation is about what the page displays and no keyframe shows that.
+
+`AGENT_RESULT: {"score": <0-10>, "summary": "<one or two sentences: why this score>", "gaps": [{"case": "<case id>", "category": "<category>", "subtype": "<optional>", "detail": "<what the test does, what the case requires>", "location": "<file:line>", "root_stage": "plan (only when the case is at fault)", "resolves": "code (only when the test is right and the production code is wrong: no test change can close the gap)"}], "evidence": [{"case": "<UI case id>", "keyframe": "<path you opened>", "shows": "<what the frame shows>", "ok": true}]}`
 
 ## Project context
 

@@ -4,6 +4,7 @@
 // `key` is a tool's own stable identity for a finding that has no line (a vulnerable package) or must not be stored
 // (a secret: only a hash of it). A pack's own parser is a module (`parse: "module:<path>"`) exporting
 // `parse(text, { root })` and, for `factory doctor`, `sample`.
+import { rememberSecret } from '../redact.mjs';
 import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { cweOf, normalizeVendorSeverity, sarifTriage } from './commercial.mjs';
@@ -148,12 +149,18 @@ export function parseLines(text) {
   return out;
 }
 
+const rememberValue = (v, rule) => {
+  rememberSecret(v, rule ?? 'secret');
+  return false;
+};
+
 // gitleaks' JSON report. The secret itself is never kept: only a hash of it, so a finding is recognised again
 // across rounds and against the merge-base without the value ever reaching a report, a log or an agent.
 export function parseGitleaksJson(text) {
   const doc = json(text);
   if (doc === null) return [];
   if (!Array.isArray(doc)) throw new Error('not a gitleaks JSON report (an array of findings)');
+  for (const f of doc) rememberValue(f.Secret ?? f.Match, f.RuleID);
   return doc.map((f) => ({
     rule: f.RuleID ?? 'secret',
     level: 'error',
@@ -161,7 +168,9 @@ export function parseGitleaksJson(text) {
     line: Number.isInteger(f.StartLine) ? f.StartLine : null,
     message: `${f.Description ?? 'possible secret'}${f.Commit ? ` (commit ${String(f.Commit).slice(0, 12)})` : ''}`,
     snippet: null,
-    key: `secret:${hash(`${f.RuleID}|${f.Secret ?? f.Match ?? ''}`)}`,
+    // `leak-<hash>`: not `secret:<hash>`, a credential word before a hex string (redact.mjs). The value is remembered as a
+    // hash so the redaction boundary removes it wherever it turns up later in the run.
+    key: `leak-${hash(`${f.RuleID}|${f.Secret ?? f.Match ?? ''}`)}`,
     redacted: true,
   }));
 }
