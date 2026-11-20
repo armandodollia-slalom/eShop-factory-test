@@ -72,7 +72,7 @@ public class RedisBasketRepository(ILogger<RedisBasketRepository> logger, IConne
         }
 
         logger.LogWarning("Basket {BuyerId} kept changing concurrently; update abandoned after {Attempts} attempts.", buyerId, MaxConditionalUpdateAttempts);
-        return null;
+        throw new BasketConcurrencyException(buyerId, MaxConditionalUpdateAttempts);
     }
 
     private const int MaxConditionalUpdateAttempts = 10;

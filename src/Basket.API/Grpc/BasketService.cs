@@ -49,7 +49,16 @@ public class BasketService(
         }
 
         var utcNow = timeProvider.GetUtcNow().UtcDateTime;
-        var response = await repository.UpdateBasketAsync(userId, storedBasket => MapToCustomerBasket(userId, request, storedBasket, utcNow));
+        CustomerBasket response;
+        try
+        {
+            response = await repository.UpdateBasketAsync(userId, storedBasket => MapToCustomerBasket(userId, request, storedBasket, utcNow));
+        }
+        catch (BasketConcurrencyException)
+        {
+            throw new RpcException(new Status(StatusCode.Aborted, "The basket was changed concurrently; retry the update."));
+        }
+
         if (response is null)
         {
             ThrowBasketDoesNotExist(userId);

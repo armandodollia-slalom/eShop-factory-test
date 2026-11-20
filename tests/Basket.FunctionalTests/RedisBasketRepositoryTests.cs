@@ -79,6 +79,41 @@ public sealed class RedisBasketRepositoryTests(RedisFixture fixture) : IClassFix
     }
 
     [Fact]
+    public async Task ConditionalUpdateThrowsConcurrencyExceptionWhenEveryAttemptConflicts()
+    {
+        var repository = new RedisBasketRepository(
+            NullLogger<RedisBasketRepository>.Instance,
+            fixture.Connection);
+        var buyerId = $"buyer-{Guid.NewGuid():N}";
+        await repository.UpdateBasketAsync(new CustomerBasket(buyerId)
+        {
+            Items = [new BasketItem { ProductId = 42, Quantity = 1 }]
+        });
+        var attempts = 0;
+
+        await Assert.ThrowsAsync<BasketConcurrencyException>(() => repository.UpdateBasketAsync(buyerId, stored =>
+        {
+            attempts++;
+            // Another request changes the basket between every read and write.
+            repository.UpdateBasketAsync(new CustomerBasket(buyerId)
+            {
+                Items = [new BasketItem { ProductId = 42, Quantity = attempts + 1 }]
+            }).GetAwaiter().GetResult();
+
+            return new CustomerBasket(buyerId)
+            {
+                Items = [new BasketItem { ProductId = 42, Quantity = 100 }]
+            };
+        }));
+        var loaded = await repository.GetBasketAsync(buyerId);
+
+        Assert.Equal(10, attempts);
+        Assert.NotNull(loaded);
+        Assert.Equal(11, loaded.Items.Single().Quantity);
+        await repository.DeleteBasketAsync(buyerId);
+    }
+
+    [Fact]
     public async Task MissingBasketReturnsNullAndDeleteReturnsFalse()
     {
         var repository = new RedisBasketRepository(

@@ -140,6 +140,20 @@ public class BasketServiceTests
     }
 
     [TestMethod]
+    public async Task UpdateBasketReturnsAbortedWhenBasketKeepsChangingConcurrently()
+    {
+        var repository = Substitute.For<IBasketRepository>();
+        repository.UpdateBasketAsync(Arg.Any<string>(), Arg.Any<Func<CustomerBasket, CustomerBasket>>())
+            .Returns(Task.FromException<CustomerBasket>(new BasketConcurrencyException("buyer-1", 10)));
+        var service = new BasketService(repository, NullLogger<BasketService>.Instance, TimeProvider.System);
+
+        var exception = await Assert.ThrowsAsync<RpcException>(() =>
+            service.UpdateBasket(new UpdateBasketRequest(), CreateContext("buyer-1")));
+
+        Assert.AreEqual(StatusCode.Aborted, exception.StatusCode);
+    }
+
+    [TestMethod]
     public async Task DeleteBasketRemovesAuthenticatedUsersBasket()
     {
         var repository = Substitute.For<IBasketRepository>();
