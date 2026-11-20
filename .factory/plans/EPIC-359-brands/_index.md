@@ -8,7 +8,7 @@ verified-by: test-planner@3b45d17c/council
 automation-sha: ea3bfac5bae1
 automation-plan-sha: ab0dffd840bb
 automation-score: 10
-automation-verified-at: "2026-11-20T14:58:14.932Z"
+automation-verified-at: "2026-11-20T15:24:44.784Z"
 ---
 # Test plan: EPIC-359 Epic: Shop by brand (cross-story journeys)
 

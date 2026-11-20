@@ -9,7 +9,7 @@ verified-by: test-planner@3b45d17c/council
 automation-sha: 55f0ef522eb7
 automation-plan-sha: 3cb892757b17
 automation-score: 10
-automation-verified-at: "2026-11-20T14:12:04.571Z"
+automation-verified-at: "2026-11-20T15:14:40.242Z"
 ---
 # Test plan: BRAND-2 [FE - WebApp] - From a brand card to that brand's products
 

@@ -22,3 +22,11 @@
 {"ts":"2026-11-20T14:47:38.212Z","story":"BRAND-3","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":3}
 {"ts":"2026-11-20T14:53:44.310Z","story":"EPIC-359","kind":"stack-slot","stage":"automation pass","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null}
 {"ts":"2026-11-20T14:54:15.086Z","story":"EPIC-359","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":11}
+{"ts":"2026-11-20T15:04:23.943Z","story":"BRAND-1","kind":"stack-slot","stage":"automation pass","slot":1,"waitedSec":1,"outcome":"leased","poolSize":null}
+{"ts":"2026-11-20T15:05:31.257Z","story":"BRAND-1","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":7}
+{"ts":"2026-11-20T15:08:36.021Z","story":"BRAND-2","kind":"stack-slot","stage":"automation pass","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null}
+{"ts":"2026-11-20T15:09:10.196Z","story":"BRAND-2","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":11}
+{"ts":"2026-11-20T15:14:52.052Z","story":"BRAND-3","kind":"stack-slot","stage":"automation pass","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null}
+{"ts":"2026-11-20T15:15:56.823Z","story":"BRAND-3","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":8}
+{"ts":"2026-11-20T15:20:25.712Z","story":"EPIC-359","kind":"stack-slot","stage":"automation pass","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null}
+{"ts":"2026-11-20T15:20:57.060Z","story":"EPIC-359","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":11}

@@ -9,7 +9,7 @@ verified-by: as-is/council
 automation-sha: 36f6ca24b7fa
 automation-plan-sha: 4f5b549798f1
 automation-score: 10
-automation-verified-at: "2026-11-20T14:53:32.625Z"
+automation-verified-at: "2026-11-20T15:20:13.824Z"
 ---
 # Test plan: BRAND-3 [FE - WebApp, BE - Catalog API] - Sort the brands by name or by number of products
 
