@@ -1,5 +1,6 @@
 ﻿@page "/cart"
 @using System.Globalization
+@using Grpc.Core
 @inject NavigationManager Nav
 @inject BasketState Basket
 @inject IProductImageUrlProvider ProductImages
@@ -10,6 +11,11 @@
 <SectionContent SectionName="page-header-title">Shopping bag</SectionContent>
 
 <div class='cart'>
+    @if (basketUpdateFailed)
+    {
+        <BasketUpdateFailedMessage />
+    }
+
     @if (basketItems is null)
     {
         <p class="cart-empty">Loading...</p>
@@ -113,6 +119,7 @@
 
 @code {
     private IReadOnlyCollection<BasketItem>? basketItems;
+    private bool basketUpdateFailed;
 
     [SupplyParameterFromForm]
     public int? UpdateQuantityId { get; set; }
@@ -139,7 +146,16 @@
     {
         var id = UpdateQuantityId!.Value;
         var quantity = UpdateQuantityValue!.Value;
-        await Basket.SetQuantityAsync(id, quantity);
+        try
+        {
+            await Basket.SetQuantityAsync(id, quantity);
+        }
+        catch (RpcException ex) when (ex.StatusCode == StatusCode.Aborted)
+        {
+            basketUpdateFailed = true;
+            UpdateQuantityId = null;
+        }
+
         basketItems = await Basket.GetBasketItemsAsync();
     }
 }

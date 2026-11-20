@@ -1,6 +1,7 @@
 ﻿using System.Security.Claims;
 using eShop.WebAppComponents.Catalog;
 using eShop.WebAppComponents.Services;
+using Grpc.Core;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 
@@ -32,34 +33,40 @@ public class BasketState(
 
     public async Task AddAsync(CatalogItem item)
     {
-        var items = (await FetchBasketItemsAsync()).Select(i => new BasketQuantity(i.ProductId, i.Quantity)).ToList();
-        bool found = false;
-        for (var i = 0; i < items.Count; i++)
+        await UpdateBasketWithRetryAsync(basket =>
         {
-            var existing = items[i];
-            if (existing.ProductId == item.Id)
+            var items = basket.Select(i => new BasketQuantity(i.ProductId, i.Quantity)).ToList();
+            bool found = false;
+            for (var i = 0; i < items.Count; i++)
             {
-                items[i] = existing with { Quantity = existing.Quantity + 1 };
-                found = true;
-                break;
+                var existing = items[i];
+                if (existing.ProductId == item.Id)
+                {
+                    items[i] = existing with { Quantity = existing.Quantity + 1 };
+                    found = true;
+                    break;
+                }
             }
-        }
 
-        if (!found)
-        {
-            items.Add(new BasketQuantity(item.Id, 1));
-        }
+            if (!found)
+            {
+                items.Add(new BasketQuantity(item.Id, 1));
+            }
 
-        _cachedBasket = null;
-        await basketService.UpdateBasketAsync(items);
-        await NotifyChangeSubscribersAsync();
+            return items;
+        });
     }
 
     public async Task SetQuantityAsync(int productId, int quantity)
     {
-        var existingItems = (await FetchBasketItemsAsync()).ToList();
-        if (existingItems.FirstOrDefault(row => row.ProductId == productId) is { } row)
+        await UpdateBasketWithRetryAsync(basket =>
         {
+            var existingItems = basket.ToList();
+            if (existingItems.FirstOrDefault(row => row.ProductId == productId) is not { } row)
+            {
+                return null;
+            }
+
             if (quantity > 0)
             {
                 row.Quantity = quantity;
@@ -69,10 +76,36 @@ public class BasketState(
                 existingItems.Remove(row);
             }
 
+            return existingItems.Select(i => new BasketQuantity(i.ProductId, i.Quantity)).ToList();
+        });
+    }
+
+    // The basket service reports a concurrent change to the same basket as Aborted.
+    // Re-read the basket and apply the change once more; if it is still contended,
+    // the Aborted RpcException reaches the caller, which asks the shopper to try again.
+    private async Task UpdateBasketWithRetryAsync(Func<IReadOnlyCollection<BasketItem>, List<BasketQuantity>?> applyChange)
+    {
+        const int maxAttempts = 2;
+        for (var attempt = 1; ; attempt++)
+        {
+            var items = applyChange(await FetchBasketItemsAsync());
+            if (items is null)
+            {
+                return;
+            }
+
             _cachedBasket = null;
-            await basketService.UpdateBasketAsync(existingItems.Select(i => new BasketQuantity(i.ProductId, i.Quantity)).ToList());
-            await NotifyChangeSubscribersAsync();
+            try
+            {
+                await basketService.UpdateBasketAsync(items);
+                break;
+            }
+            catch (RpcException ex) when (ex.StatusCode == StatusCode.Aborted && attempt < maxAttempts)
+            {
+            }
         }
+
+        await NotifyChangeSubscribersAsync();
     }
 
     public async Task CheckoutAsync(BasketCheckoutInfo checkoutInfo)
