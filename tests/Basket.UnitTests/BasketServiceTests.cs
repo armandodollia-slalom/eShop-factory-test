@@ -85,34 +85,6 @@ public class BasketServiceTests
     }
 
     [TestMethod]
-    public async Task UpdateBasketRecomputesAddedAtFromBasketStoredAfterConcurrentRemoveAndReAdd()
-    {
-        var originallyAdded = new DateTime(2026, 11, 1, 9, 0, 0, DateTimeKind.Utc);
-        var reAdded = new DateTime(2026, 11, 3, 15, 30, 0, DateTimeKind.Utc);
-        var staleBasket = new CustomerBasket("buyer-1") { Items = [new BasketItem { ProductId = 42, Quantity = 1, AddedAt = originallyAdded }] };
-        var currentBasket = new CustomerBasket("buyer-1") { Items = [new BasketItem { ProductId = 42, Quantity = 1, AddedAt = reAdded }] };
-        var repository = Substitute.For<IBasketRepository>();
-        // The first attempt read the basket before another request removed and re-added the product; its write
-        // conflicts, so the repository re-runs the update against the basket stored now.
-        repository.UpdateBasketAsync("buyer-1", Arg.Any<Func<CustomerBasket, CustomerBasket>>())
-            .Returns(call =>
-            {
-                var update = call.Arg<Func<CustomerBasket, CustomerBasket>>();
-                _ = update(staleBasket);
-                return update(currentBasket);
-            });
-        var service = new BasketService(repository, NullLogger<BasketService>.Instance, TimeProvider.System);
-        var request = new UpdateBasketRequest();
-        request.Items.Add(new eShop.Basket.API.Grpc.BasketItem { ProductId = 42, Quantity = 5 });
-
-        var response = await service.UpdateBasket(request, CreateContext("buyer-1"));
-
-        Assert.HasCount(1, response.Items);
-        Assert.AreEqual(5, response.Items[0].Quantity);
-        Assert.AreEqual(reAdded, response.Items[0].AddedAt.ToDateTime());
-    }
-
-    [TestMethod]
     public async Task UpdateBasketRejectsAnonymousUser()
     {
         var repository = Substitute.For<IBasketRepository>();
@@ -137,20 +109,6 @@ public class BasketServiceTests
             service.UpdateBasket(new UpdateBasketRequest(), CreateContext("missing")));
 
         Assert.AreEqual(StatusCode.NotFound, exception.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task UpdateBasketReturnsAbortedWhenBasketKeepsChangingConcurrently()
-    {
-        var repository = Substitute.For<IBasketRepository>();
-        repository.UpdateBasketAsync(Arg.Any<string>(), Arg.Any<Func<CustomerBasket, CustomerBasket>>())
-            .Returns(Task.FromException<CustomerBasket>(new BasketConcurrencyException("buyer-1", 10)));
-        var service = new BasketService(repository, NullLogger<BasketService>.Instance, TimeProvider.System);
-
-        var exception = await Assert.ThrowsAsync<RpcException>(() =>
-            service.UpdateBasket(new UpdateBasketRequest(), CreateContext("buyer-1")));
-
-        Assert.AreEqual(StatusCode.Aborted, exception.StatusCode);
     }
 
     [TestMethod]

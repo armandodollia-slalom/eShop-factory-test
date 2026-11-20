@@ -1,0 +1,17 @@
+# ADDED-1: the shopping bag shows "Added on {d MMM yyyy}" for each line the Basket API stored with a first-added
+# time, and nothing for a line stored before that time existed.
+#
+# Users and catalog come from `default` (alice / Pass123$, Id 50ddac7e-9b69-4d68-a91b-25100ef2e403; item 99
+# "Adventurer GPS Watch"). The cases that add products themselves (TC-ADDED-1-01..04) load `default`, so alice's
+# basket is empty; TC-ADDED-1-19 loads this scenario for the row below.
+description: ADDED-1 alice's basket as the Basket API stored it before added_at existed (one line, item 99, no AddedAt).
+extends: default
+
+redis:
+  # TC-ADDED-1-19: alice's basket in the JSON the repository wrote before this change: item 99 "Adventurer GPS
+  # Watch", quantity 1, and no AddedAt property, so the bag must load it and show no "Added on" text.
+  - key: /basket/50ddac7e-9b69-4d68-a91b-25100ef2e403
+    json:
+      BuyerId: 50ddac7e-9b69-4d68-a91b-25100ef2e403
+      Items:
+        - { Id: "1", ProductId: 99, ProductName: Adventurer GPS Watch, UnitPrice: 0, OldUnitPrice: 0, Quantity: 1, PictureUrl: "" }

@@ -55,7 +55,8 @@ export function createDemo(page: Page): Demo & { dispose(): Promise<void> } {
   // which page each step is on without a test having to caption it. Keyframes get it from captureKeyframe.
   let urlCaption: { dispose(): Promise<void> | void } | undefined;
   const showUrl = async () => {
-    await urlCaption?.dispose();
+    // A redirect navigates twice in quick succession; the previous overlay's page context may already be gone.
+    await Promise.resolve(urlCaption?.dispose()).catch(() => {});
     urlCaption = await page.screencast
       .showOverlay(`<div style="position:absolute; left:8px; top:8px; max-width:70%; padding:2px 8px; border-radius:6px;
         background:rgba(15,23,42,.88); color:#fff; font:600 12px/1.5 ui-monospace, Menlo, monospace; white-space:nowrap;
