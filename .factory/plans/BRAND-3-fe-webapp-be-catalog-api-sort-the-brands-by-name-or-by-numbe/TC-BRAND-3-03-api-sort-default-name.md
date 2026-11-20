@@ -1,9 +1,11 @@
 ---
+kept-for: OPUS-1-3, video-coverage-1, video-coverage-2, VID-2-2
 id: TC-BRAND-3-03
 type: happy
 layer: functional
 covers: ["AC4: name is the default when sort is absent"]
 priority: P1
+automated-by: "TC_BRAND_1_01_SummaryReturnsEveryBrandOnceOrderedByNameWithFourFields"
 ---
 
 # TC-BRAND-3-03: Summary without sort keeps the alphabetical order
@@ -24,3 +26,7 @@ priority: P1
 
 - Status `200` (not 400).
 - The body is an array of 13 entries, and the `(id, brand)` pairs in order are: (9, "AirStrider"), (5, "B&R"), (1, "Daybird"), (2, "Gravitator"), (10, "Green Equipment"), (8, "Grolltex"), (12, "Legend"), (4, "Quester"), (6, "Raptor Elite"), (7, "Solstix"), (3, "WildRunner"), (13, "XE"), (11, "Zephyr").
+
+## Automation
+
+- Automated by `TC_BRAND_1_01_SummaryReturnsEveryBrandOnceOrderedByNameWithFourFields` in `tests/Catalog.FunctionalTests/BrandSummaryTests.cs`, which sends this exact request (no `sort`) and asserts status 200 and this exact name order. Do not generate a separate `TC_BRAND_3_03` test: the PR check (finding OPUS-1-3) ruled it a duplicate of that test.

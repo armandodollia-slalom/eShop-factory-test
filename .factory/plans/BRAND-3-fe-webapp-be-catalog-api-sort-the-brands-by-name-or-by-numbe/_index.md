@@ -21,7 +21,7 @@ Demo catalog in count order (count descending, ties by name), from `.factory/sta
 | --- | --- | --- | --- | --- |
 | TC-BRAND-3-01 | Summary with sort=count orders brands by item count descending, ties by name | happy | functional | AC4 (count), AC2 (ties) |
 | TC-BRAND-3-02 | Summary with sort=name orders brands alphabetically | happy | functional | AC4 (name) |
-| TC-BRAND-3-03 | Summary without sort keeps the alphabetical order | happy | functional | AC4 (default) |
+| TC-BRAND-3-03 | Summary without sort keeps the alphabetical order | happy | functional (automated by TC_BRAND_1_01) | AC4 (default) |
 | TC-BRAND-3-04 | Summary with an unknown sort value answers 400 with a problem naming name and count | sad | functional | AC4 (400, allowed values) |
 | TC-BRAND-3-05 | Summary with an empty sort value answers 400 | sad | functional | AC4 (any other value: empty) |
 | TC-BRAND-3-06 | Summary with sort=COUNT (different case) answers 400 | sad | functional | AC4 (any other value: case) |
