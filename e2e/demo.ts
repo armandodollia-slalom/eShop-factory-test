@@ -187,6 +187,7 @@ const the = (s: Subject) => (s.noun ? `the ${s.name ? `${s.name} ` : ''}${s.noun
 
 // ---- the step log -----------------------------------------------------------------------------------------------
 interface Box { x: number; y: number; w: number; h: number }
+interface PageState { page: string; heading: string }
 interface StepLog {
   version: 1;
   demo: boolean;
@@ -194,8 +195,20 @@ interface StepLog {
   viewport: { width: number; height: number } | null;
   pacing: typeof PACING;
   steps: { i: number; kind: string; caption: string; t0: number; t1: number; auto?: boolean }[];
-  /** Every user action (navigation, click, typing, choice) and the step whose line narrates it. */
-  actions: { t: number; kind: string; step: number }[];
+  /**
+   * Every user action (navigation, click, typing, choice) and the step whose line narrates it: when the cursor set off
+   * (`t`), when the action happened (`at`), when its result had settled (`end`), its target in viewer words, and the
+   * page and heading before and after. The factory's narrator reads these, and the renderer times the video by them.
+   */
+  actions: { t: number; kind: string; step: number; at?: number; end?: number; target?: { name: string; role: string }; value?: string; before?: PageState; after?: PageState }[];
+  /** Every visible assertion that passed, in viewer words, and the step whose line says it. */
+  checks: { t: number; step: number; line: string; matcher: string }[];
+  /**
+   * Where the test failed, when it did: an assertion (`check`, with the line it expected, what the screen showed instead
+   * and the page), or an action or navigation. A bug's "before the fix" recording is used only when it failed at the
+   * check its "after" recording passes, after the same actions (the factory verifies this).
+   */
+  failed?: { t: number; kind: 'check' | 'action' | 'navigation'; matcher?: string; line?: string; observed?: string; actionsBefore: number; page?: PageState; what?: string };
   outcome?: string;
   masks: (Box & { t0: number; t1: number; why: string })[];
   visible: { t: number; step: number; text: string }[];
@@ -308,6 +321,7 @@ interface DemoInternals {
   narrated(kind: string, locator: Locator, args: unknown[], run: () => Promise<unknown>): Promise<unknown>;
   navigated(kind: string, run: () => Promise<unknown>): Promise<unknown>;
   checked(matcher: string, subject: Locator | Page, args: unknown[], negated: boolean): Promise<void>;
+  failedCheck(matcher: string, subject: Locator | Page, args: unknown[], negated: boolean, error: unknown): Promise<void>;
   readonly busy: boolean;
   dispose(): Promise<void>;
 }
@@ -315,7 +329,7 @@ interface DemoInternals {
 export function createDemo(page: Page, testInfo?: TestInfo): Demo & DemoInternals {
   const t0 = Date.now();
   const now = () => Date.now() - t0;
-  const log: StepLog = { version: 1, demo: DEMO, startedAt: t0, viewport: page.viewportSize(), pacing: PACING, steps: [], actions: [], masks: [], visible: [], unmasked: [] };
+  const log: StepLog = { version: 1, demo: DEMO, startedAt: t0, viewport: page.viewportSize(), pacing: PACING, steps: [], actions: [], checks: [], masks: [], visible: [], unmasked: [] };
   let currentCaption: { dispose(): Promise<void> | void } | undefined;
   let currentChapter = '';
   let cursor = { x: 24, y: 24 };
@@ -336,7 +350,7 @@ export function createDemo(page: Page, testInfo?: TestInfo): Demo & DemoInternal
   // the next step (said together, or dropped when the spec narrates the check itself with a highlight).
   let busy = 0;
   let authored = false;
-  let checks: string[] = [];
+  let checks: { line: string; t: number; matcher: string }[] = [];
 
   // Scan what is visible now; cover each match (and every secret field), and log the redacted text of the step.
   const scan = async () => {
@@ -394,9 +408,11 @@ export function createDemo(page: Page, testInfo?: TestInfo): Demo & DemoInternal
     await currentCaption?.dispose();
     currentCaption = undefined;
   };
+  // In demo mode the factory's renderer draws the subtitles itself, timed to the spoken line (a caption drawn into the
+  // recording would follow the recording's timing, not the narration's). At test speed the caption is drawn here.
   const drawCaption = async (text: string) => {
     await clearCaption();
-    if (!text) return;
+    if (!text || DEMO) return;
     currentCaption = await page.screencast.showOverlay(`
         <div style="position:absolute; left:50%; bottom:28px; transform:translateX(-50%);
           max-width:80%; padding:10px 18px; border-radius:10px; background:rgba(15,23,42,.85);
@@ -414,17 +430,27 @@ export function createDemo(page: Page, testInfo?: TestInfo): Demo & DemoInternal
   const flushChecks = async (drop = false) => {
     const lines = checks;
     checks = [];
-    if (drop || !lines.length) return;
-    await say(lines.slice(0, 3).map(l => (/[.!?]$/.test(l) ? l : `${l}.`)).join(' '), 'check', true);
+    if (!lines.length) return;
+    // A dropped line still belongs to the step that shows it (a highlight), for the renderer and the narrator.
+    const at = log.steps.length;
+    for (const c of lines) log.checks.push({ t: c.t, step: at, line: c.line, matcher: c.matcher });
+    if (drop) return;
+    await say(lines.slice(0, 3).map(c => (/[.!?]$/.test(c.line) ? c.line : `${c.line}.`)).join(' '), 'check', true);
     authored = false;
   };
   // A caption the spec wrote. Raw paths read as page names. Right after an automatic line for the same thing (no other
   // step between), it replaces that line: the spec's wording wins for its step. Otherwise it is its own step, and the
   // next action is narrated by it instead of an automatic line.
   const caption = async (text: string, kind = 'caption') => {
-    await flushChecks();
     // Secrets are found on the spec's own text first (humanizing could break a token's shape), then paths read as pages.
     const human = text ? viewerText((await detector())(text).text, page.url()) : '';
+    // One step, one line: an assertion line waiting to be said that says what this caption says is replaced by it.
+    if (human) {
+      const same = checks.filter(c => similarTo(c.line, human) || similarTo(human, c.line));
+      checks = checks.filter(c => !same.includes(c));
+      for (const c of same) log.checks.push({ t: c.t, step: log.steps.length, line: c.line, matcher: c.matcher });
+    }
+    await flushChecks();
     const lastAction = log.actions.at(-1);
     const target = lastAction ? log.steps[lastAction.step] : undefined;
     const authorSince = log.steps.slice((lastAction?.step ?? -1) + 1).some(x => !x.auto);
@@ -455,9 +481,25 @@ export function createDemo(page: Page, testInfo?: TestInfo): Demo & DemoInternal
     }
     await say(line, `auto:${kind}`, true);
   };
-  const action = (kind: string) => {
-    log.actions.push({ t: now(), kind, step: log.steps.length - 1 });
+  // The page as a viewer names it, and its main heading (both through the detector).
+  const pageState = async (): Promise<PageState> => {
+    const detect = await detector();
+    const heading = await page.evaluate(() => (document.querySelector('h1')?.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 80)).catch(() => '');
+    return { page: pageName(detect(page.url()).text), heading: detect(heading).text };
   };
+  type Action = StepLog['actions'][number];
+  const action = async (kind: string, extra: Partial<Action> = {}): Promise<Action> => {
+    const entry: Action = { t: now(), kind, step: log.steps.length - 1, ...extra };
+    if (DEMO && !entry.before) entry.before = await pageState();
+    log.actions.push(entry);
+    return entry;
+  };
+  // The action happened (`at`) and its result has settled (`end`), with the page it left the viewer on.
+  const settled = async (entry: Action) => {
+    entry.end = now();
+    if (DEMO) entry.after = await pageState();
+  };
+  const targetOf = (s: Subject) => ({ name: s.name, role: s.noun });
 
   // The drawn cursor: an arrow that glides to the target's centre, and a ripple where it clicks (video-only overlays).
   const drawCursor = async (x: number, y: number, ripple = false) => {
@@ -507,25 +549,46 @@ export function createDemo(page: Page, testInfo?: TestInfo): Demo & DemoInternal
     }
     return masked;
   };
-  const clickVisibly = async (locator: Locator, run: () => Promise<unknown>) => {
+  const clickVisibly = async (locator: Locator, run: () => Promise<unknown>, entry?: Action) => {
     await moveTo(locator);
     await drawCursor(cursor.x, cursor.y, true);
+    if (entry) entry.at = now();
     const r = await run();
     await page.waitForTimeout(pace(250));
     await drawCursor(cursor.x, cursor.y);
     await page.waitForTimeout(pace(PACING.holdMs));
     if (DEMO) await scan();
+    if (entry) await settled(entry);
     return r;
   };
   // One user action the spec called on a locator (raw Playwright or the fixture's own): narrated, paced, drawn, masked.
+  // The actions that completed (their result settled) before something failed.
+  const doneActions = () => log.actions.filter(a => a.end != null).length;
+  // The action under way: a test that times out in it is torn down before the action itself fails, so the step log
+  // (written at teardown) names it then.
+  let pending: { kind: 'action' | 'navigation'; what: string } | undefined;
+  const failedStep = (kind: 'action' | 'navigation', what: string) => {
+    if (!log.failed) log.failed = { t: now(), kind, actionsBefore: doneActions(), what };
+  };
   const narrated = async (kind: string, locator: Locator, args: unknown[], run: () => Promise<unknown>) => {
     busy++;
+    pending = { kind: 'action', what: kind };
     try {
+      return await narratedInner(kind, locator, args, run);
+    } catch (error) {
+      failedStep('action', kind);
+      throw error;
+    } finally {
+      pending = undefined;
+      busy--;
+    }
+  };
+  const narratedInner = async (kind: string, locator: Locator, args: unknown[], run: () => Promise<unknown>) => {
       const s = await subjectOf(locator);
       if (['click', 'dblclick', 'tap'].includes(kind)) {
         await autoLine(`${kind === 'dblclick' ? 'Double-click' : kind === 'tap' ? 'Tap' : 'Click'} ${the(s)}`, kind, s.name);
-        action(kind);
-        return await clickVisibly(locator, run);
+        const entry = await action(kind, { target: targetOf(s) });
+        return await clickVisibly(locator, run, entry);
       }
       if (['fill', 'type', 'pressSequentially'].includes(kind)) {
         const value = String(args[0] ?? '');
@@ -537,54 +600,67 @@ export function createDemo(page: Page, testInfo?: TestInfo): Demo & DemoInternal
         const field = s.name ? `the ${s.name} ${s.noun || 'field'}` : 'the field';
         const line = !value ? `Clear ${field}` : masked ? `Type the ${s.name || 'secret value'} (hidden)` : value.length <= 30 && !/\n/.test(value) ? `Type “${value}” into ${field}` : `Type the ${s.name || 'text'}`;
         await autoLine(line, 'type', s.name);
-        action(kind);
+        const entry = await action(kind, { target: targetOf(s), ...(!masked && value.length <= 30 && !/\n/.test(value) ? { value: (await detector())(value).text } : {}) });
         await moveTo(locator);
+        entry.at = now();
         const r = await run();
         await page.waitForTimeout(pace(PACING.holdMs));
         if (DEMO) await scan();
+        await settled(entry);
         return r;
       }
       if (kind === 'selectOption') {
+        const start = now();
+        const before = DEMO ? await pageState() : undefined;
         await moveTo(locator);
+        const at = now();
         const r = await run();
         const after = await subjectOf(locator);
         await autoLine(`Choose ${after.selected ? `“${after.selected}”` : 'an option'} in ${the(after)}`, 'select', after.name);
-        action(kind);
+        const entry = await action(kind, { t: start, at, before, target: targetOf(after), ...(after.selected ? { value: (await detector())(after.selected).text } : {}) });
         await page.waitForTimeout(pace(PACING.holdMs));
         if (DEMO) await scan();
+        await settled(entry);
         return r;
       }
       if (['check', 'uncheck', 'setChecked'].includes(kind)) {
         const on = kind === 'check' || (kind === 'setChecked' && Boolean(args[0]));
         await autoLine(`${on ? 'Tick' : 'Untick'} ${the(s)}`, 'check', s.name);
-        action(kind);
-        return await clickVisibly(locator, run);
+        const entry = await action(kind, { target: targetOf(s) });
+        return await clickVisibly(locator, run, entry);
       }
       if (kind === 'press') {
         await autoLine(`Press ${String(args[0] ?? 'a key')}${s.name ? ` in ${the(s)}` : ''}`, 'press');
-        action(kind);
+        const entry = await action(kind, { target: targetOf(s), value: String(args[0] ?? '') });
+        entry.at = now();
         const r = await run();
         await page.waitForTimeout(pace(PACING.holdMs));
         if (DEMO) await scan();
+        await settled(entry);
         return r;
       }
       return await run();
-    } finally {
-      busy--;
-    }
   };
   // Navigation the spec called on the page: narrated once the page is there ("Open the Brands page").
   const navigated = async (kind: string, run: () => Promise<unknown>) => {
     busy++;
+    pending = { kind: 'navigation', what: kind };
     try {
+      const start = now();
+      const before = DEMO ? await pageState() : undefined;
       const r = await run();
       const where = pageName((await detector())(page.url()).text);
       const line = kind === 'reload' ? `Reload ${where}` : kind === 'goBack' ? `Go back to ${where}` : kind === 'goForward' ? `Go forward to ${where}` : `Open ${where}`;
       await autoLine(upperFirst(line), kind);
-      action(kind);
+      const entry = await action(kind, { t: start, at: start, before });
       await page.waitForTimeout(pace(PACING.holdMs));
+      await settled(entry);
       return r;
+    } catch (error) {
+      failedStep('navigation', kind);
+      throw error;
     } finally {
+      pending = undefined;
       busy--;
     }
   };
@@ -594,7 +670,22 @@ export function createDemo(page: Page, testInfo?: TestInfo): Demo & DemoInternal
     const line = await assertionLine(matcher, subject, args, negated, detect);
     if (!line) return;
     const safe = detect(viewerText(detect(line).text, page.url())).text;
-    if (!checks.some(c => norm(c) === norm(safe)) && norm(log.steps.at(-1)?.caption ?? '') !== norm(safe)) checks.push(safe);
+    if (!checks.some(c => norm(c.line) === norm(safe)) && norm(log.steps.at(-1)?.caption ?? '') !== norm(safe)) checks.push({ line: safe, t: now(), matcher });
+  };
+  // An assertion that failed: the line it expected (as the passing run says it), what the screen showed instead (from
+  // Playwright's "Received" line, redacted), and the page. Said as the step where things go wrong.
+  const failedCheck = async (matcher: string, subject: Locator | Page, args: unknown[], negated: boolean, error: unknown) => {
+    if (log.failed) return;
+    const detect = await detector();
+    const expected = await assertionLine(matcher, subject, args, negated, detect).catch(() => null);
+    const line = expected ? detect(viewerText(detect(expected).text, page.url())).text : '';
+    // eslint-disable-next-line no-control-regex
+    const message = String((error as Error)?.message ?? error).replace(/\u001b\[[0-9;]*m/g, '');
+    const received = /Received(?: string| value| array)?:\s*(.+)/.exec(message)?.[1]?.trim() ?? '';
+    const observed = detect(clean(received.replace(/^"(.*)"$/, '$1')).slice(0, 120)).text;
+    await flushChecks();
+    log.failed = { t: now(), kind: 'check', matcher, line, observed, actionsBefore: doneActions(), page: await pageState() };
+    step('failure', observed && !/not found|<element/.test(observed) ? `Instead, the screen shows “${observed}”.` : 'This is where it goes wrong.');
   };
 
   return {
@@ -663,25 +754,30 @@ export function createDemo(page: Page, testInfo?: TestInfo): Demo & DemoInternal
       const s = await subjectOf(locator);
       const field = s.name ? `the ${s.name} field` : 'the field';
       await autoLine(masked ? `Type the ${s.name || 'secret value'} (hidden)` : value.length <= 30 && !/\n/.test(value) ? `Type “${value}” into ${field}` : `Type the ${s.name || 'text'}`, 'type');
-      action('fill');
+      const entry = await action('fill', { target: targetOf(s), ...(!masked && value.length <= 30 && !/\n/.test(value) ? { value: (await detector())(value).text } : {}) });
       await moveTo(locator);
+      entry.at = now();
       await typeInto(locator, value, masked);
       await page.waitForTimeout(pace(PACING.holdMs));
       if (DEMO) await scan();
+      await settled(entry);
     },
     type: async (locator, text, options = {}) => {
       const masked = await isSecretField(locator, options.secret);
       const s = await subjectOf(locator);
       await autoLine(masked ? `Type the ${s.name || 'secret value'} (hidden)` : `Type into the ${s.name ? `${s.name} ` : ''}field`, 'type');
-      action('type');
+      const entry = await action('type', { target: targetOf(s) });
+      entry.at = now();
       await typeInto(locator, text, masked);
       if (DEMO) await scan();
+      await settled(entry);
     },
     pause: ms => page.waitForTimeout(ms ?? 1000),
     intro: async (line: string) => {
       const safe = (await detector())(line).text;
       step('intro', safe);
-      await page.screencast.showChapter(safe, { duration: DEMO ? 1500 : 1 }).catch(() => drawCaption(safe));
+      // In demo mode the renderer shows and speaks the opening over the first page; nothing is drawn into the recording.
+      if (!DEMO) await page.screencast.showChapter(safe, { duration: 1 }).catch(() => drawCaption(safe));
     },
     outcome: async (line: string) => {
       await flushChecks();
@@ -692,10 +788,12 @@ export function createDemo(page: Page, testInfo?: TestInfo): Demo & DemoInternal
     narrated,
     navigated,
     checked,
+    failedCheck,
     get busy() {
       return busy > 0;
     },
     dispose: async () => {
+      if (pending) failedStep(pending.kind, pending.what);
       await flushChecks().catch(() => {});
       if (DEMO) await scan().catch(() => {});
       const end = now();
@@ -750,9 +848,15 @@ function narratedMatchers(matchers: Record<string, unknown>, subject: unknown, n
       if (prop === 'not' && value && typeof value === 'object') return narratedMatchers(value as Record<string, unknown>, subject, !negated);
       if (typeof prop !== 'string' || typeof value !== 'function' || !NARRATED_MATCHERS.has(prop)) return value;
       return async (...args: unknown[]) => {
-        const result = await (value as (...a: unknown[]) => Promise<unknown>).apply(target, args);
         const page = isLocator(subject) ? subject.page() : isPage(subject) ? subject : null;
         const demo = page ? ACTIVE.get(page) : undefined;
+        let result: unknown;
+        try {
+          result = await (value as (...a: unknown[]) => Promise<unknown>).apply(target, args);
+        } catch (error) {
+          if (demo && !demo.busy) await demo.failedCheck(prop, subject as Locator | Page, args, negated, error).catch(() => {});
+          throw error;
+        }
         if (demo && !demo.busy) await demo.checked(prop, subject as Locator | Page, args, negated).catch(() => {});
         return result;
       };
