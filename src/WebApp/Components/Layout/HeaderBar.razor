@@ -39,7 +39,7 @@
     private Type? PageComponentType => HttpContext?.GetEndpoint()?.Metadata.OfType<ComponentTypeMetadata>().FirstOrDefault()?.Type;
     private bool IsCatalog => PageComponentType == typeof(Pages.Catalog.Catalog);
     private bool IsBrands => PageComponentType == typeof(Pages.Brands.Brands);
-    private bool IsItemPage =>PageComponentType == typeof(Pages.Item.ItemPage);
+    private bool IsItemPage => PageComponentType == typeof(Pages.Item.ItemPage);
 
     // Pages whose content should sit near the top under a shorter hero band.
     private bool IsCompactHero =>
