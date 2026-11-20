@@ -1,0 +1,6 @@
+description: BUG-54 cancel ownership on the Ordering API; needs only the seeded users alice and bob and no orders.
+extends: default
+
+# No extra rows: every case starts with no orders, so bob has no buyer record until a case places an order for him.
+# Each case creates the orders it needs through POST /api/orders as alice (Id 50ddac7e-9b69-4d68-a91b-25100ef2e403)
+# or bob (Id bc8b0071-21af-41ab-b1d2-15c4efc368df), both Pass123$, with card type 2 (Visa, seeded by Ordering.API at startup).

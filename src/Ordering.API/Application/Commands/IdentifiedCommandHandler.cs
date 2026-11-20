@@ -96,6 +96,11 @@ public abstract class IdentifiedCommandHandler<T, R> : IRequestHandler<Identifie
 
                 return result;
             }
+            catch (OrderNotFoundException)
+            {
+                // Propagate so the transaction is not committed and the endpoint can answer 404.
+                throw;
+            }
             catch
             {
                 return default;

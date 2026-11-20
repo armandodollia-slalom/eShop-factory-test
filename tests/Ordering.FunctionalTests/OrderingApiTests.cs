@@ -63,7 +63,8 @@ public sealed class OrderingApiTests
         var s = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         // Assert
-        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal(string.Empty, s);
     }
 
     [Fact]
