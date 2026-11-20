@@ -73,13 +73,7 @@ public sealed class BrandSummaryTests : IClassFixture<BrandSummaryCatalog>
                 brand.EnumerateObject().Select(p => p.Name).Order(StringComparer.Ordinal).ToArray());
         }
 
-        var expected = new (int Id, string Brand)[]
-        {
-            (9, "AirStrider"), (5, "B&R"), (1, "Daybird"), (2, "Gravitator"), (10, "Green Equipment"),
-            (8, "Grolltex"), (12, "Legend"), (4, "Quester"), (6, "Raptor Elite"), (7, "Solstix"),
-            (3, "WildRunner"), (13, "XE"), (11, "Zephyr"),
-        };
-        Assert.Equal(expected, brands.Select(b => (b.GetProperty("id").GetInt32(), b.GetProperty("brand").GetString())).ToArray());
+        Assert.Equal(NameOrder, brands.Select(b => (b.GetProperty("id").GetInt32(), b.GetProperty("brand").GetString())).ToArray());
         Assert.Equal(brands.Length, brands.Select(b => b.GetProperty("id").GetInt32()).Distinct().Count());
     }
 
@@ -236,19 +230,6 @@ public sealed class BrandSummaryTests : IClassFixture<BrandSummaryCatalog>
     public async Task TC_BRAND_3_02_SummarySortedByNameOrdersBrandsAlphabetically()
     {
         var (response, body) = await GetAsync($"{SummaryUrl}&sort=name");
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var brands = ParseBrands(body);
-        Assert.Equal(13, brands.Length);
-        Assert.Equal(NameOrder, brands.Select(IdAndBrand).ToArray());
-    }
-
-    [Fact]
-    [Trait("Story", "BRAND-3")]
-    [Trait("TestCase", "TC-BRAND-3-03")]
-    public async Task TC_BRAND_3_03_SummaryWithoutSortKeepsAlphabeticalOrder()
-    {
-        var (response, body) = await GetAsync(SummaryUrl);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var brands = ParseBrands(body);

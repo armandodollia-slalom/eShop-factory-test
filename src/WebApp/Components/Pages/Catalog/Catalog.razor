@@ -191,19 +191,6 @@
     // Fetched once per page load and shared with the filters, which list the same brands.
     Task<IEnumerable<CatalogBrand>>? brands;
 
-    async Task<string?> FindBrandName(Task<IEnumerable<CatalogBrand>> brandsTask, int brandId)
-    {
-        try
-        {
-            return (await brandsTask).FirstOrDefault(b => b.Id == brandId)?.Brand;
-        }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
-        {
-            // The brand name only decorates the header; the catalog still renders with the usual title.
-            return null;
-        }
-    }
-
     static IEnumerable<int> GetPageTokens(int totalPages, int current)
     {
         var pages = new SortedSet<int> { 1, totalPages };
@@ -244,8 +231,7 @@
         currentPage = Page.GetValueOrDefault(1);
 
         brands = CatalogService.GetBrands();
-        var brandNameTask = BrandIds is [var brandId] ? FindBrandName(brands, brandId) : null;
-        brandLookupPending = brandNameTask is not null;
+        brandLookupPending = BrandIds is [_];
 
         // The catalog API computes the offset as pageIndex * pageSize in an int, so a huge page
         // number would overflow there; ask for the first page just to learn the count instead.
@@ -270,9 +256,9 @@
 
         catalogResult = result;
 
-        if (brandNameTask is not null)
+        if (BrandIds is [var brandId])
         {
-            brandName = await brandNameTask;
+            brandName = (await brands).FirstOrDefault(b => b.Id == brandId)?.Brand;
             brandLookupPending = false;
         }
     }

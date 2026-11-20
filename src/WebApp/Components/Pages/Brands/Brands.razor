@@ -6,7 +6,7 @@
 <PageTitle>Brands | AdventureWorks</PageTitle>
 <SectionContent SectionName="page-header-title">Brands</SectionContent>
 
-<div class="page-content">
+<div class="brands">
     <nav class="brand-sort" aria-label="Sort brands">
         <span class="brand-sort-label">Sort</span>
         @foreach (var option in SortOptions)
@@ -18,12 +18,12 @@
         }
     </nav>
 
-    <div class="card-grid">
+    <div class="brands-grid">
         @foreach (var brand in brands)
         {
-            RenderFragment card = @<article class="brand-card surface-card" data-brand-id="@brand.Id">
+            RenderFragment card = @<article class="brand-card" data-brand-id="@brand.Id">
                 <h2>@brand.Brand</h2>
-                <p class="text-muted">@Summary(brand)</p>
+                <p>@Summary(brand)</p>
             </article>;
 
             @if (brand.ItemCount > 0)
