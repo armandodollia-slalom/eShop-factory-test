@@ -1,0 +1,73 @@
+@page "/brands"
+@using System.Globalization
+@inject CatalogService CatalogService
+@inject NavigationManager Nav
+
+<PageTitle>Brands | AdventureWorks</PageTitle>
+<SectionContent SectionName="page-header-title">Brands</SectionContent>
+
+<div class="brands">
+    <nav class="brand-sort" aria-label="Sort brands">
+        <span class="brand-sort-label">Sort</span>
+        @foreach (var option in SortOptions)
+        {
+            var isActive = option.Value == ActiveSort;
+            <a href="@Nav.GetUriWithQueryParameter("sort", option.Value)"
+               class="brand-sort-option @(isActive ? "active" : "")"
+               aria-current="@(isActive ? "true" : null)">@option.Label</a>
+        }
+    </nav>
+
+    <div class="brands-grid">
+        @foreach (var brand in brands)
+        {
+            RenderFragment card = @<article class="brand-card" data-brand-id="@brand.Id">
+                <h2>@brand.Brand</h2>
+                <p>@Summary(brand)</p>
+            </article>;
+
+            @if (brand.ItemCount > 0)
+            {
+                <a class="brand-card-link" href="@($"/?brand={brand.Id.ToString(CultureInfo.InvariantCulture)}")">@card</a>
+            }
+            else
+            {
+                @card
+            }
+        }
+    </div>
+</div>
+
+@code {
+    // The name order is the default, so its link leaves "sort" out of the address.
+    static readonly (string? Value, string Label)[] SortOptions = [(null, "Name"), ("count", "Most products")];
+
+    [SupplyParameterFromQuery(Name = "sort")]
+    public string? Sort { get; set; }
+
+    // An unknown value falls back to the name order instead of reaching the API.
+    string? ActiveSort => SortOptions.Any(o => o.Value == Sort) ? Sort : null;
+
+    IEnumerable<CatalogBrandSummary> brands = [];
+
+    static string Summary(CatalogBrandSummary brand)
+    {
+        if (brand.ItemCount == 0)
+        {
+            return "No products yet";
+        }
+
+        var count = brand.ItemCount == 1
+            ? "1 product"
+            : $"{brand.ItemCount.ToString(CultureInfo.InvariantCulture)} products";
+
+        return brand.LowestPrice is { } price
+            ? $"{count} · from ${price.ToPriceDisplay()}"
+            : count;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        brands = await CatalogService.GetBrandSummaries(ActiveSort);
+    }
+}

@@ -1,0 +1,7 @@
+description: EPIC-359 cross-story brand journeys (header Brands link, brand card to catalog and back, sort by count); needs only the demo catalog of the default scenario.
+extends: default
+
+# No extra rows. Cases TC-EPIC-359-01 and -03 browse the demo catalog seeded by `default` anonymously:
+# 13 brands (ids 1 to 13), 101 items. Brand 1 "Daybird" has 10 items (two catalog pages of 9 and 1), lowest price 49.99.
+# Brand 2 "Gravitator" has 11 items, lowest price 59.99, and is first under "Most products"
+# (tied at 11 with Raptor Elite and WildRunner, ahead of them by name).

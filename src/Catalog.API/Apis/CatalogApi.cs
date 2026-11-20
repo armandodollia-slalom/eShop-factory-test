@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -100,6 +100,12 @@ public static class CatalogApi
             .WithSummary("List catalog item brands")
             .WithDescription("Get a list of the brands of catalog items")
             .WithTags("Brands");
+        api.MapGet("/catalogbrands/summary", GetBrandSummaries)
+            .WithName("ListBrandSummaries")
+            .WithSummary("List catalog brand summaries")
+            .WithDescription("Get every brand of the catalog with its number of items and the lowest price among them, ordered by brand name or by number of items.")
+            .WithTags("Brands")
+            .ProducesProblem(StatusCodes.Status400BadRequest);
 
         // Routes for modifying catalog items.
         v1.MapPut("/items", UpdateItemV1)
@@ -207,6 +213,48 @@ public static class CatalogApi
             typeCounts,
             brandCounts.Sum(b => b.Count),
             typeCounts.Sum(t => t.Count)));
+    }
+
+    private const string BrandSortByName = "name";
+    private const string BrandSortByCount = "count";
+
+    public static async Task<Results<Ok<CatalogBrandSummary[]>, ProblemHttpResult>> GetBrandSummaries(
+        [AsParameters] CatalogServices services,
+        [Description("The order of the brands: \"name\" (the default) or \"count\" (most items first, then by name)")] string? sort)
+    {
+        var byCount = sort == BrandSortByCount;
+        if (!byCount && sort is not null && sort != BrandSortByName)
+        {
+            return TypedResults.Problem(
+                detail: $"Sort must be \"{BrandSortByName}\" or \"{BrandSortByCount}\".",
+                statusCode: StatusCodes.Status400BadRequest);
+        }
+
+        // Left join so brands without items still appear, with a count of 0 and no lowest price.
+        var grouped =
+            from brand in services.Context.CatalogBrands.AsNoTracking()
+            join item in services.Context.CatalogItems.AsNoTracking()
+                on brand.Id equals item.CatalogBrandId into brandItems
+            from item in brandItems.DefaultIfEmpty()
+            group new { ItemId = (int?)item.Id, Price = (decimal?)item.Price }
+                by new { brand.Id, brand.Brand } into g
+            select new
+            {
+                g.Key.Id,
+                g.Key.Brand,
+                ItemCount = g.Count(x => x.ItemId != null),
+                LowestPrice = g.Min(x => x.Price)
+            };
+
+        var ordered = byCount
+            ? grouped.OrderByDescending(s => s.ItemCount).ThenBy(s => s.Brand).ThenBy(s => s.Id)
+            : grouped.OrderBy(s => s.Brand).ThenBy(s => s.Id);
+
+        var summaries = await ordered
+            .Select(s => new CatalogBrandSummary(s.Id, s.Brand, s.ItemCount, s.LowestPrice))
+            .ToArrayAsync();
+
+        return TypedResults.Ok(summaries);
     }
 
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, "application/problem+json")]

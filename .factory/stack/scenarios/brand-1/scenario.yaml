@@ -1,0 +1,16 @@
+description: Brands with no products and with exactly one product for BRAND-1 (Brands page) on top of the demo catalog.
+extends: default
+
+# Every demo brand has between 3 and 11 products; these rows add the two card states the demo catalog lacks.
+postgres:
+  catalogdb:
+    - table: public.CatalogBrand
+      rows:
+        # no items: card shows "No products yet" and the API returns itemCount 0, lowestPrice null; sorts first
+        - { Id: 14, Brand: Acme Empty }
+        # exactly one item: card shows "1 product" and "from $8.50"; sorts between Legend and Quester
+        - { Id: 15, Brand: Mono Gear }
+    - table: public.Catalog
+      rows:
+        # the only item of Mono Gear, priced 8.50 so the trailing zero of the price is visible
+        - { Id: 1001, Name: Mono Compass, Description: Mono Compass description, Price: 8.50, PictureFileName: 1.webp, CatalogTypeId: 1, CatalogBrandId: 15, AvailableStock: 10, RestockThreshold: 5, MaxStockThreshold: 200, OnReorder: false }
