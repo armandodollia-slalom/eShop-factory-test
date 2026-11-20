@@ -61,7 +61,6 @@
 /.github/workflows/factory-gate.yml @armandodollia-slalom
 /.github/workflows/factory-graphify-cache-prune.yml @armandodollia-slalom
 /.github/workflows/factory-pr-check.yml @armandodollia-slalom
-/.github/workflows/factory-pr-demo-video.yml @armandodollia-slalom
 /.github/workflows/factory-retro.yml @armandodollia-slalom
 /.github/workflows/factory-review-quorum.yml @armandodollia-slalom
 /.mcp.json @armandodollia-slalom
