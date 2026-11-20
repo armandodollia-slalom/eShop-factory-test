@@ -13,4 +13,5 @@ public record CatalogItem(
 
 public record CatalogResult(int PageIndex, int PageSize, int Count, List<CatalogItem> Data);
 public record CatalogBrand(int Id, string Brand);
+public record CatalogBrandSummary(int Id, string Brand, int ItemCount, decimal? LowestPrice);
 public record CatalogItemType(int Id, string Type);

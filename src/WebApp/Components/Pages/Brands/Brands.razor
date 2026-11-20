@@ -1,0 +1,51 @@
+@page "/brands"
+@using System.Globalization
+@inject CatalogService CatalogService
+@attribute [StreamRendering]
+
+<PageTitle>Brands | AdventureWorks</PageTitle>
+<SectionContent SectionName="page-header-title">Brands</SectionContent>
+
+<div class="page-content">
+    @if (brands is null)
+    {
+        <p class="brands-loading" role="status">Loading brands...</p>
+    }
+    else
+    {
+        <div class="card-grid">
+            @foreach (var brand in brands)
+            {
+                <article class="brand-card surface-card" data-brand-id="@brand.Id">
+                    <h2>@brand.Brand</h2>
+                    <p class="brand-card-meta">@Summary(brand)</p>
+                </article>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    IEnumerable<CatalogBrandSummary>? brands;
+
+    static string Summary(CatalogBrandSummary brand)
+    {
+        if (brand.ItemCount == 0)
+        {
+            return "No products yet";
+        }
+
+        var count = brand.ItemCount == 1
+            ? "1 product"
+            : $"{brand.ItemCount.ToString(CultureInfo.InvariantCulture)} products";
+
+        return brand.LowestPrice is { } price
+            ? $"{count} · from ${price.ToPriceDisplay()}"
+            : count;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        brands = await CatalogService.GetBrandSummaries();
+    }
+}
