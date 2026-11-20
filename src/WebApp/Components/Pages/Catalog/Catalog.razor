@@ -4,8 +4,16 @@
 @attribute [StreamRendering]
 
 <PageTitle>AdventureWorks</PageTitle>
-<SectionContent SectionName="page-header-title">Ready for a new adventure?</SectionContent>
-<SectionContent SectionName="page-header-subtitle">Start the season with the latest in clothing and equipment.</SectionContent>
+@if (brandName is not null)
+{
+    <SectionContent SectionName="page-header-title">Brand: @brandName</SectionContent>
+    <SectionContent SectionName="page-header-subtitle"><a class="catalog-all-brands" href="/brands">All brands</a></SectionContent>
+}
+else if (!brandLookupPending)
+{
+    <SectionContent SectionName="page-header-title">Ready for a new adventure?</SectionContent>
+    <SectionContent SectionName="page-header-subtitle">Start the season with the latest in clothing and equipment.</SectionContent>
+}
 
 <div class="catalog">
     <CatalogSearch BrandIds="@BrandIds" TypeIds="@TypeIds" />
@@ -162,6 +170,27 @@
     CatalogResult? catalogResult;
     int currentPage;
 
+    // Set when the catalog is filtered to exactly one known brand; the header then names it.
+    string? brandName;
+
+    // While the single brand's name is loading, neither header is shown, so the usual title
+    // does not flash before "Brand: {name}" streams in.
+    bool brandLookupPending;
+
+    async Task<string?> FindBrandName(int brandId)
+    {
+        try
+        {
+            var brands = await CatalogService.GetBrands();
+            return brands.FirstOrDefault(b => b.Id == brandId)?.Brand;
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+        {
+            // The brand name only decorates the header; the catalog still renders with the usual title.
+            return null;
+        }
+    }
+
     static IEnumerable<int> GetPageTokens(int totalPages, int current)
     {
         var pages = new SortedSet<int> { 1, totalPages };
@@ -201,6 +230,9 @@
     {
         currentPage = Page.GetValueOrDefault(1);
 
+        var brandNameTask = BrandIds is [var brandId] ? FindBrandName(brandId) : null;
+        brandLookupPending = brandNameTask is not null;
+
         // The catalog API computes the offset as pageIndex * pageSize in an int, so a huge page
         // number would overflow there; ask for the first page just to learn the count instead.
         var offsetOverflows = (long)(currentPage - 1) * PageSize > int.MaxValue;
@@ -223,5 +255,11 @@
         }
 
         catalogResult = result;
+
+        if (brandNameTask is not null)
+        {
+            brandName = await brandNameTask;
+            brandLookupPending = false;
+        }
     }
 }

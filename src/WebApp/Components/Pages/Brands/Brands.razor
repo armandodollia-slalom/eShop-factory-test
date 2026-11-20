@@ -9,10 +9,19 @@
     <div class="card-grid">
         @foreach (var brand in brands)
         {
-            <article class="brand-card surface-card" data-brand-id="@brand.Id">
+            RenderFragment card = @<article class="brand-card surface-card" data-brand-id="@brand.Id">
                 <h2>@brand.Brand</h2>
                 <p class="text-muted">@Summary(brand)</p>
-            </article>
+            </article>;
+
+            @if (brand.ItemCount > 0)
+            {
+                <a class="brand-card-link" href="@($"/?brand={brand.Id.ToString(CultureInfo.InvariantCulture)}")">@card</a>
+            }
+            else
+            {
+                @card
+            }
         }
     </div>
 </div>
