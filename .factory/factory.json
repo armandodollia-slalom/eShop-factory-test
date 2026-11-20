@@ -1,5 +1,5 @@
 {
-  "version": "0.2.88",
+  "version": "0.2.89",
   "source": "https://github.com/armandodollia-slalom/ai-app-factory.git",
   "tools": [
     "claude",
