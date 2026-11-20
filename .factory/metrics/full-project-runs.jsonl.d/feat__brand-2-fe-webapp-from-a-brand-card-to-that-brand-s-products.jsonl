@@ -1,0 +1,1 @@
+{"ts":"2026-11-20T11:10:46.916Z","story":"BRAND-2","unit":"tests/Application.UnitTests","why":"covers webappcomponents","argv":"dotnet test --project tests/Application.UnitTests --no-build","status":0,"timedOut":false,"head":"942cecbbefd82d6dc27e2c1df97e161d3ccb27ba","dirty":true,"tests":{"total":14,"failed":0},"failedTests":[]}

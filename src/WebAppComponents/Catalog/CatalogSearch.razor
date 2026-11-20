@@ -84,6 +84,9 @@
     [Parameter] public int[]? BrandIds { get; set; }
     [Parameter] public int[]? TypeIds { get; set; }
 
+    // The brands the page already requested; the filters fetch their own when it gives none.
+    [Parameter] public Task<IEnumerable<CatalogBrand>>? KnownBrands { get; set; }
+
     private IReadOnlyList<int> Brands => BrandIds ?? [];
     private IReadOnlyList<int> Types => TypeIds ?? [];
 
@@ -98,7 +101,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var brandsTask = CatalogService.GetBrands();
+        var brandsTask = KnownBrands ?? CatalogService.GetBrands();
         var itemTypesTask = CatalogService.GetTypes();
         var facetsTask = CatalogService.GetCatalogFacets(BrandIds, TypeIds);
         await Task.WhenAll(brandsTask, itemTypesTask, facetsTask);

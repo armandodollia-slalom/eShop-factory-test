@@ -1,0 +1,7 @@
+description: BRAND-2 brand card to filtered catalog and brand header; needs only the demo catalog of the default scenario.
+extends: default
+
+# No extra rows. Cases TC-BRAND-2-01 to -09 browse the demo catalog seeded by `default` anonymously:
+# 13 brands (ids 1 to 13), 101 items; brand 1 "Daybird" has 10 items (item 1 "Wanderer Black Hiking Boots" is type 1),
+# brand 2 "Gravitator" has 11 items, brand 13 is "XE".
+# TC-BRAND-2-10 loads scenario `brand-1` instead, which adds brand 14 "Acme Empty" (no items) and brand 15 "Mono Gear" (one item).

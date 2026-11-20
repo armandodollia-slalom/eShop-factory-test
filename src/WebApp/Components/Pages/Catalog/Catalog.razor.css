@@ -7,6 +7,13 @@
     padding: 0 var(--page-pad) 4rem;
 }
 
+/* "All brands" sits in the hero subtitle; it keeps the subtitle's colour and reads as a link by its underline. */
+.catalog-all-brands {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+}
+
 .catalog-results {
     flex-grow: 1;
     min-width: 0;
