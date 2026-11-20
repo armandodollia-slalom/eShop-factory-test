@@ -1,12 +1,12 @@
 ﻿using System.Security.Claims;
-using eShop.Basket.API.Repositories;
 using eShop.Basket.API.Grpc;
 using eShop.Basket.API.IntegrationEvents.EventHandling;
 using eShop.Basket.API.IntegrationEvents.EventHandling.Events;
 using eShop.Basket.API.Model;
+using eShop.Basket.API.Repositories;
 using eShop.Basket.UnitTests.Helpers;
-using Microsoft.Extensions.Logging.Abstractions;
 using Grpc.Core;
+using Microsoft.Extensions.Logging.Abstractions;
 using BasketItem = eShop.Basket.API.Model.BasketItem;
 
 namespace eShop.Basket.UnitTests;
@@ -20,7 +20,7 @@ public class BasketServiceTests
     public async Task GetBasketReturnsEmptyForNoUser()
     {
         var mockRepository = Substitute.For<IBasketRepository>();
-        var service = new BasketService(mockRepository, NullLogger<BasketService>.Instance);
+        var service = new BasketService(mockRepository, NullLogger<BasketService>.Instance, TimeProvider.System);
         var serverCallContext = TestServerCallContext.Create(cancellationToken: TestContext.CancellationToken);
         serverCallContext.SetUserState("__HttpContext", new DefaultHttpContext());
 
@@ -36,7 +36,7 @@ public class BasketServiceTests
         var mockRepository = Substitute.For<IBasketRepository>();
         List<BasketItem> items = [new BasketItem { Id = "some-id" }];
         mockRepository.GetBasketAsync("1").Returns(Task.FromResult(new CustomerBasket { BuyerId = "1", Items = items }));
-        var service = new BasketService(mockRepository, NullLogger<BasketService>.Instance);
+        var service = new BasketService(mockRepository, NullLogger<BasketService>.Instance, TimeProvider.System);
         var serverCallContext = TestServerCallContext.Create(cancellationToken: TestContext.CancellationToken);
         var httpContext = new DefaultHttpContext();
         httpContext.User = new ClaimsPrincipal(new ClaimsIdentity([new Claim("sub", "1")]));
@@ -54,7 +54,7 @@ public class BasketServiceTests
         var mockRepository = Substitute.For<IBasketRepository>();
         List<BasketItem> items = [new BasketItem { Id = "some-id" }];
         mockRepository.GetBasketAsync("1").Returns(Task.FromResult(new CustomerBasket { BuyerId = "1", Items = items }));
-        var service = new BasketService(mockRepository, NullLogger<BasketService>.Instance);
+        var service = new BasketService(mockRepository, NullLogger<BasketService>.Instance, TimeProvider.System);
         var serverCallContext = TestServerCallContext.Create(cancellationToken: TestContext.CancellationToken);
         var httpContext = new DefaultHttpContext();
         serverCallContext.SetUserState("__HttpContext", httpContext);
@@ -71,7 +71,7 @@ public class BasketServiceTests
         var repository = Substitute.For<IBasketRepository>();
         repository.UpdateBasketAsync(Arg.Any<CustomerBasket>())
             .Returns(call => call.Arg<CustomerBasket>());
-        var service = new BasketService(repository, NullLogger<BasketService>.Instance);
+        var service = new BasketService(repository, NullLogger<BasketService>.Instance, TimeProvider.System);
         var context = CreateContext("buyer-1");
         var request = new UpdateBasketRequest();
         request.Items.Add(new eShop.Basket.API.Grpc.BasketItem { ProductId = 42, Quantity = 3 });
@@ -92,7 +92,7 @@ public class BasketServiceTests
     public async Task UpdateBasketRejectsAnonymousUser()
     {
         var repository = Substitute.For<IBasketRepository>();
-        var service = new BasketService(repository, NullLogger<BasketService>.Instance);
+        var service = new BasketService(repository, NullLogger<BasketService>.Instance, TimeProvider.System);
 
         var exception = await Assert.ThrowsAsync<RpcException>(() =>
             service.UpdateBasket(new UpdateBasketRequest(), CreateContext(null!)));
@@ -107,7 +107,7 @@ public class BasketServiceTests
         var repository = Substitute.For<IBasketRepository>();
         repository.UpdateBasketAsync(Arg.Any<CustomerBasket>())
             .Returns(Task.FromResult<CustomerBasket>(null!));
-        var service = new BasketService(repository, NullLogger<BasketService>.Instance);
+        var service = new BasketService(repository, NullLogger<BasketService>.Instance, TimeProvider.System);
 
         var exception = await Assert.ThrowsAsync<RpcException>(() =>
             service.UpdateBasket(new UpdateBasketRequest(), CreateContext("missing")));
@@ -119,7 +119,7 @@ public class BasketServiceTests
     public async Task DeleteBasketRemovesAuthenticatedUsersBasket()
     {
         var repository = Substitute.For<IBasketRepository>();
-        var service = new BasketService(repository, NullLogger<BasketService>.Instance);
+        var service = new BasketService(repository, NullLogger<BasketService>.Instance, TimeProvider.System);
 
         await service.DeleteBasket(new DeleteBasketRequest(), CreateContext("buyer-1"));
 
