@@ -4,3 +4,7 @@
 {"ts":"2026-11-20T04:54:54.144Z","story":"ADDED-1","kind":"stack-slot","stage":"automation pass","slot":1,"waitedSec":1,"outcome":"leased","poolSize":null}
 {"ts":"2026-11-20T05:23:47.986Z","story":"ADDED-1","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":4}
 {"ts":"2026-11-20T05:32:14.906Z","story":"ADDED-1","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":4}
+{"ts":"2026-11-20T05:58:26.924Z","story":"ADDED-1","kind":"stack-slot","stage":"UI verifier (pr-check-return-1-7)","slot":1,"waitedSec":1,"outcome":"leased","delivery":"epic"}
+{"ts":"2026-11-20T06:10:06.758Z","story":"ADDED-1","kind":"stack-slot","stage":"automation pass","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null}
+{"ts":"2026-11-20T06:26:22.672Z","story":"ADDED-1","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":4}
+{"ts":"2026-11-20T06:36:39.583Z","story":"ADDED-1","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null,"held":true,"upSec":72}

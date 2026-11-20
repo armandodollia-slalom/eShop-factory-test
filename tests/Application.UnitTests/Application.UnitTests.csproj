@@ -16,6 +16,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.AspNetCore.TestHost" />
+    <PackageReference Include="bunit" />
   </ItemGroup>
 
   <ItemGroup>
@@ -23,6 +24,7 @@
     <ProjectReference Include="..\..\src\Identity.API\Identity.API.csproj" />
     <ProjectReference Include="..\..\src\OrderProcessor\OrderProcessor.csproj" />
     <ProjectReference Include="..\..\src\PaymentProcessor\PaymentProcessor.csproj" />
+    <ProjectReference Include="..\..\src\WebApp\WebApp.csproj" />
     <ProjectReference Include="..\..\src\WebAppComponents\WebAppComponents.csproj" />
     <ProjectReference Include="..\..\src\WebhookClient\WebhookClient.csproj" />
     <ProjectReference Include="..\..\src\Webhooks.API\Webhooks.API.csproj" />

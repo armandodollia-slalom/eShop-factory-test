@@ -37,6 +37,7 @@
     <PackageVersion Include="Microsoft.Extensions.Identity.Stores" Version="10.0.12" />
     <PackageVersion Include="Microsoft.OpenApi" Version="2.12.2" />
     <PackageVersion Include="MSTest" Version="4.0.2" />
+    <PackageVersion Include="bunit" Version="2.11.3" />
     <!-- Version together with EF -->
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.12" />

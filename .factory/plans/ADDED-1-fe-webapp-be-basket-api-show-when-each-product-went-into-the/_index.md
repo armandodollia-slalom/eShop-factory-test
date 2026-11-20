@@ -2,18 +2,18 @@
 story: ADDED-1
 story-issue: "https://github.com/armandodollia-slalom/eShop-factory-test/issues/353"
 story-sha: 49bb63b32caf
-plan-sha: 0a79d43a6f8d
-verified-score: 9
-verified-at: "2026-11-20T05:04:45.121Z"
-verified-by: test-planner@3b45d17c/council
-automation-sha: 85a250f8e741
-automation-plan-sha: 0a79d43a6f8d
+automation-sha: c69ef08c4963
+automation-plan-sha: d04408caee09
 automation-score: 10
-automation-verified-at: "2026-11-20T05:36:41.606Z"
+automation-verified-at: "2026-11-20T06:41:02.156Z"
+plan-sha: d04408caee09
+verified-score: 10
+verified-at: "2026-11-20T06:16:07.451Z"
+verified-by: test-planner@3b45d17c/council
 ---
 # Test plan: ADDED-1 Show when each product went into the shopping bag
 
-Scope: the Basket API stores the UTC time each product was first added to a basket line (`BasketItem.added_at`, field 7 in `basket.proto`), keeps it across quantity changes and re-sends of the whole basket, gives a new time to a product that was removed and added again, returns it from `GetBasket`, and still loads baskets stored before the change (no date for their lines). The WebApp shopping bag shows "Added on {d MMM yyyy}" under the product name. Server-side timing rules are checked at the `unit` layer with a fake `TimeProvider` (dates on different days are only distinguishable there); Redis persistence and legacy JSON at the `functional` layer through the Basket gRPC service; the visible line, the user journeys and an undated legacy line (seeded straight into Redis) at the `e2e` layer on the test stack as `alice`. Regression cases for the upheld review findings sol-1 (a concurrent remove + re-add or competing first add must not be overwritten with a stale time) and sol-3 (exhausted retries are reported as `Aborted`, not `NotFound`) are interleaved deterministically at the `unit` layer and checked against real Redis at the `functional` layer through the hosted gRPC service, with conflicts injected by a test wrapper around the host's repository.
+Scope: the Basket API stores the UTC time each product was first added to a basket line (`BasketItem.added_at`, field 7 in `basket.proto`), keeps it across quantity changes and re-sends of the whole basket, gives a new time to a product that was removed and added again, returns it from `GetBasket`, and still loads baskets stored before the change (no date for their lines). The WebApp shopping bag shows "Added on {d MMM yyyy}" under the product name. Server-side timing rules are checked at the `unit` layer with a fake `TimeProvider` (dates on different days are only distinguishable there); Redis persistence and legacy JSON at the `functional` layer through the Basket gRPC service; the visible line, the user journeys and an undated legacy line (seeded straight into Redis) at the `e2e` layer on the test stack as `alice`. Regression cases for the upheld review findings sol-1 (a concurrent remove + re-add or competing first add must not be overwritten with a stale time) and sol-3 (exhausted retries are reported as `Aborted`, not `NotFound`) are interleaved deterministically at the `unit` layer and checked against real Redis at the `functional` layer through the hosted gRPC service, with conflicts injected by a test wrapper around the host's repository. The WebApp's handling of that `Aborted` status on the add and quantity-change paths (upheld gap FLOW-1-2: re-read the basket and retry once, then show a "Please try again" message instead of the error page) is checked at the `unit` layer: `BasketState` over a substitute gRPC client, and `CartPage`/`ItemPage` rendered with bUnit, because the test stack cannot be made to abort on demand.
 
 | ID | Title | Type | Layer | Covers |
 | --- | --- | --- | --- | --- |
@@ -35,6 +35,10 @@ Scope: the Basket API stores the UTC time each product was first added to a bask
 | TC-ADDED-1-17 | UpdateBasket reports repeated concurrent-write conflicts as Aborted, not NotFound | sad (concurrency) | unit | AC3; kept-for sol-3 |
 | TC-ADDED-1-18 | UpdateBasket over gRPC returns Aborted after 10 conflicting attempts and leaves the concurrent basket in place | sad (concurrency) | functional | AC3; kept-for sol-3 |
 | TC-ADDED-1-19 | A shopping bag line stored before the change shows no "Added on" text | happy | e2e | AC4 (lines show no date) |
+| TC-ADDED-1-20 | Changing a quantity in the WebApp re-reads the basket and retries once when the Basket API answers Aborted | sad (concurrency) | unit | FLOW-1-2; AC2 |
+| TC-ADDED-1-21 | Adding a product in the WebApp re-reads the basket and retries once when the Basket API answers Aborted | sad (concurrency) | unit | FLOW-1-2; AC2 |
+| TC-ADDED-1-22 | When the retried basket update is aborted again, BasketState stops after two attempts and reports Aborted to the page | sad (concurrency) | unit | FLOW-1-2 |
+| TC-ADDED-1-23 | The shopping bag and product pages show a "Please try again" message instead of the error page when the basket update is still aborted | sad (concurrency) | unit | FLOW-1-2; AC1 |
 
 ## Out of scope
 
@@ -44,4 +48,5 @@ Scope: the Basket API stores the UTC time each product was first added to a bask
 ## Open questions
 
 - Time zone of the shown date: AC1 says "the date" without a zone; the implementation shows the UTC date. Cases use the UTC date, so a run near midnight in a non-UTC browser zone is not covered.
+- FLOW-1-2 on the test stack: no e2e case shows the "Please try again" message, because two consecutive `Aborted` answers cannot be provoked deterministically through the running stack; TC-ADDED-1-23 renders the pages with bUnit instead.
 - Same-day limitation: e2e cases run within one day, so they cannot show that a date did not move to a later day; the unit cases with a fake clock cover that.
