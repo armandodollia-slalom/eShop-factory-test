@@ -1,4 +1,5 @@
 ﻿@page "/cart"
+@using System.Globalization
 @inject NavigationManager Nav
 @inject BasketState Basket
 @inject IProductImageUrlProvider ProductImages
@@ -43,6 +44,10 @@
                         <img alt="@item.ProductName" src="@ProductImages.GetProductImageUrl(item.ProductId)" />
                         <div class="catalog-item-content">
                             <p class="name">@item.ProductName</p>
+                            @if (item.AddedAt is { } addedAt)
+                            {
+                                <p class="added-on">Added on @addedAt.ToString("d MMM yyyy", CultureInfo.InvariantCulture)</p>
+                            }
                             <p class="price">$@item.UnitPrice.ToPriceDisplay()</p>
                         </div>
                     </div>

@@ -1,6 +1,6 @@
 ﻿using eShop.Basket.API.Grpc;
-using GrpcBasketItem = eShop.Basket.API.Grpc.BasketItem;
 using GrpcBasketClient = eShop.Basket.API.Grpc.Basket.BasketClient;
+using GrpcBasketItem = eShop.Basket.API.Grpc.BasketItem;
 
 namespace eShop.WebApp.Services;
 
@@ -8,7 +8,7 @@ public class BasketService(GrpcBasketClient basketClient)
 {
     public async Task<IReadOnlyCollection<BasketQuantity>> GetBasketAsync()
     {
-        var result = await basketClient.GetBasketAsync(new ());
+        var result = await basketClient.GetBasketAsync(new());
         return MapToBasket(result);
     }
 
@@ -39,11 +39,12 @@ public class BasketService(GrpcBasketClient basketClient)
         var result = new List<BasketQuantity>();
         foreach (var item in response.Items)
         {
-            result.Add(new BasketQuantity(item.ProductId, item.Quantity));
+            result.Add(new BasketQuantity(item.ProductId, item.Quantity, item.AddedAt?.ToDateTime()));
         }
 
         return result;
     }
 }
 
-public record BasketQuantity(int ProductId, int Quantity);
+// AddedAt is read from the Basket API only; update requests never send it, because the API owns it.
+public record BasketQuantity(int ProductId, int Quantity, DateTime? AddedAt = null);
