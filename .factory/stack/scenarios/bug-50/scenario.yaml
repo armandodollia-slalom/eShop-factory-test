@@ -1,0 +1,6 @@
+description: BUG-50 webhook client hides received webhook messages from visitors who are not signed in; needs only the seeded user alice of the default scenario.
+extends: default
+
+# No extra rows. Received webhook messages live in the webhook client's in-memory repository, which no
+# scenario can seed, so each case delivers its own run-unique message with POST /webhook-received and
+# asserts on that payload and token. TC-BUG-50-02 signs in as the seeded user alice / Pass123$.
