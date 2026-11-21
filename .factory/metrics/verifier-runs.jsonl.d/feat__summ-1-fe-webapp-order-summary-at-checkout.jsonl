@@ -1,0 +1,2 @@
+{"ts":"2026-11-15T15:17:35.832Z","stage":"plan","story":"SUMM-1","round":2,"agent_prompt_ver":"1edb523e","verifier_ver":"67b01306","cli":"claude","score":10,"passed":true,"gaps":0}
+{"ts":"2026-11-15T15:28:26.366Z","stage":"automation","story":"SUMM-1","round":1,"agent_prompt_ver":"1c92a147","verifier_ver":"3dd540d1","cli":"claude","score":10,"passed":true,"gaps":0}

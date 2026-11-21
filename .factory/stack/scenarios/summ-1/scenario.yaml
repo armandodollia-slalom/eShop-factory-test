@@ -1,0 +1,8 @@
+description: SUMM-1 order summary at checkout; needs the demo catalog, the seeded users alice and bob, empty baskets and no orders.
+extends: default
+
+# No extra rows. The cases rely only on what `default` seeds:
+#   catalog item 1 "Wanderer Black Hiking Boots" $109.99 and item 2 "Summit Pro Harness" $89.99 (catalogdb.sql);
+#   alice and bob (Pass123$) with empty baskets and no orders.
+# Every test fills its own bag through the UI (/item/<id>, Add to shopping bag), and the spec reloads this
+# scenario before each test so every case starts from empty baskets and no orders.

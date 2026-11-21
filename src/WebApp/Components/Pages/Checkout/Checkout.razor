@@ -9,6 +9,37 @@
 <SectionContent SectionName="page-header-title">Checkout</SectionContent>
 
 <div class='checkout'>
+    <section class="order-summary" aria-labelledby="order-summary-heading">
+        <h2 id="order-summary-heading">Order summary</h2>
+        @if (basketItems.Count == 0)
+        {
+            <p class="order-summary-empty">Your shopping bag is empty</p>
+        }
+        else
+        {
+            <ul class="order-summary-items">
+                @foreach (var item in basketItems)
+                {
+                    <li class="order-summary-item" @key="@item.Id">
+                        <span class="order-summary-item-name">@item.ProductName</span>
+                        <span class="order-summary-item-quantity">Qty @item.Quantity</span>
+                        <span class="order-summary-item-total">$@((item.UnitPrice * item.Quantity).ToPriceDisplay())</span>
+                    </li>
+                }
+            </ul>
+            <div class="order-summary-totals">
+                <div class="order-summary-count">
+                    <span>Items</span>
+                    <span>@TotalQuantity</span>
+                </div>
+                <div class="order-summary-total">
+                    <span>Total</span>
+                    <span>$@TotalPrice.ToPriceDisplay()</span>
+                </div>
+            </div>
+        }
+    </section>
+
     <EditForm EditContext="@editContext" FormName="checkout" OnSubmit="@HandleSubmitAsync" Enhance>
         <DataAnnotationsValidator />
         <div class="form">
@@ -64,6 +95,7 @@
 @code {
     private EditContext editContext = default!;
     private ValidationMessageStore extraMessages = default!;
+    private IReadOnlyCollection<BasketItem> basketItems = [];
 
     [SupplyParameterFromForm]
     public BasketCheckoutInfo Info { get; set; } = default!;
@@ -71,7 +103,7 @@
     [CascadingParameter]
     public HttpContext HttpContext { get; set; } = default!;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         if (Info is null)
         {
@@ -80,7 +112,12 @@
 
         editContext = new EditContext(Info!);
         extraMessages = new ValidationMessageStore(editContext);
+
+        basketItems = await Basket.GetBasketItemsAsync();
     }
+
+    private int TotalQuantity => basketItems.Sum(i => i.Quantity);
+    private decimal TotalPrice => basketItems.Sum(i => i.Quantity * i.UnitPrice);
 
     private void PopulateFormWithDefaultInfo()
     {
