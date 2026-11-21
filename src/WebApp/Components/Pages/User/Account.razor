@@ -1,0 +1,50 @@
+@page "/user/account"
+@attribute [Authorize]
+@using System.Security.Claims
+
+<PageTitle>My account | AdventureWorks</PageTitle>
+<SectionContent SectionName="page-header-title">My account</SectionContent>
+
+<div class="container account">
+    <dl class="account-details">
+        <div class="account-field">
+            <dt>Name</dt>
+            <dd class="account-name">@name</dd>
+        </div>
+        <div class="account-field">
+            <dt>Email</dt>
+            <dd class="account-email">@email</dd>
+        </div>
+        <div class="account-field">
+            <dt>Shipping address</dt>
+            <dd class="account-address">@address</dd>
+        </div>
+    </dl>
+</div>
+
+@code {
+    private string name = "";
+    private string email = "";
+    private string address = "";
+
+    [CascadingParameter]
+    public HttpContext HttpContext { get; set; } = default!;
+
+    protected override void OnInitialized()
+    {
+        name = JoinNonEmpty(" ", ReadClaim("name"), ReadClaim("last_name"));
+        // The OIDC handler's inbound claim map renames "email" to ClaimTypes.Email.
+        email = ReadClaim(ClaimTypes.Email) ?? ReadClaim("email") ?? "";
+        address = JoinNonEmpty(", ",
+            ReadClaim("address_street"),
+            ReadClaim("address_city"),
+            JoinNonEmpty(" ", ReadClaim("address_state"), ReadClaim("address_zip_code")),
+            ReadClaim("address_country"));
+    }
+
+    private string? ReadClaim(string type)
+        => HttpContext.User.Claims.FirstOrDefault(x => x.Type == type)?.Value;
+
+    private static string JoinNonEmpty(string separator, params string?[] parts)
+        => string.Join(separator, parts.Where(p => !string.IsNullOrWhiteSpace(p)));
+}

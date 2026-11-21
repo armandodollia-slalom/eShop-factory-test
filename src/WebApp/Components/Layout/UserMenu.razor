@@ -13,6 +13,7 @@
             </button>
             <div class="user-menu-panel">
                 <p class="user-menu-name">@context.User.Identity?.Name</p>
+                <a class="user-menu-item" href="user/account">My account</a>
                 <a class="user-menu-item" href="user/orders">My orders</a>
                 <form class="user-menu-item" method="post" action="user/logout" @formname="logout" @onsubmit="LogOutAsync">
                     <AntiforgeryToken />
