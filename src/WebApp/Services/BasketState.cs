@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using Grpc.Core;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using eShop.WebAppComponents.Catalog;
@@ -12,7 +13,7 @@ public class BasketState(
     OrderingService orderingService,
     AuthenticationStateProvider authenticationStateProvider) : IBasketState
 {
-    private Task<IReadOnlyCollection<BasketItem>>? _cachedBasket;
+    private Task<(IReadOnlyCollection<BasketItem> Items, IReadOnlyCollection<BasketItem> SavedItems)>? _cachedBasket;
     private HashSet<BasketStateChangedSubscription> _changeSubscriptions = new();
 
     public Task DeleteBasketAsync()
@@ -21,6 +22,11 @@ public class BasketState(
     public async Task<IReadOnlyCollection<BasketItem>> GetBasketItemsAsync()
         => (await GetUserAsync()).Identity?.IsAuthenticated == true
         ? await FetchBasketItemsAsync()
+        : [];
+
+    public async Task<IReadOnlyCollection<BasketItem>> GetSavedItemsAsync()
+        => (await GetUserAsync()).Identity?.IsAuthenticated == true
+        ? (await FetchBasketAsync()).SavedItems
         : [];
 
     public IDisposable NotifyOnChange(EventCallback callback)
@@ -75,6 +81,15 @@ public class BasketState(
         }
     }
 
+    public Task SaveForLaterAsync(int productId)
+        => ChangeSavedItemsAsync(() => basketService.SaveForLaterAsync(productId));
+
+    public Task MoveToCartAsync(int productId)
+        => ChangeSavedItemsAsync(() => basketService.MoveToCartAsync(productId));
+
+    public Task RemoveSavedItemAsync(int productId)
+        => ChangeSavedItemsAsync(() => basketService.RemoveSavedItemAsync(productId));
+
     public async Task CheckoutAsync(BasketCheckoutInfo checkoutInfo)
     {
         if (checkoutInfo.RequestId == default)
@@ -108,44 +123,81 @@ public class BasketState(
         await DeleteBasketAsync();
     }
 
+    private async Task ChangeSavedItemsAsync(Func<Task> change)
+    {
+        try
+        {
+            await change();
+        }
+        catch (RpcException ex) when (ex.StatusCode == StatusCode.NotFound)
+        {
+            // The page was stale (another tab or a double submit already changed this product):
+            // ignore it, like SetQuantityAsync ignores a missing row, and show the current basket.
+        }
+
+        _cachedBasket = null;
+        await NotifyChangeSubscribersAsync();
+    }
+
     private Task NotifyChangeSubscribersAsync()
         => Task.WhenAll(_changeSubscriptions.Select(s => s.NotifyAsync()));
 
     private async Task<ClaimsPrincipal> GetUserAsync()
         => (await authenticationStateProvider.GetAuthenticationStateAsync()).User;
 
-    private Task<IReadOnlyCollection<BasketItem>> FetchBasketItemsAsync()
+    private async Task<IReadOnlyCollection<BasketItem>> FetchBasketItemsAsync()
+        => (await FetchBasketAsync()).Items;
+
+    private Task<(IReadOnlyCollection<BasketItem> Items, IReadOnlyCollection<BasketItem> SavedItems)> FetchBasketAsync()
     {
         return _cachedBasket ??= FetchCoreAsync();
 
-        async Task<IReadOnlyCollection<BasketItem>> FetchCoreAsync()
+        async Task<(IReadOnlyCollection<BasketItem> Items, IReadOnlyCollection<BasketItem> SavedItems)> FetchCoreAsync()
         {
-            var quantities = await basketService.GetBasketAsync();
+            var contents = await basketService.GetBasketAsync();
+            var quantities = contents.Items.Concat(contents.SavedItems).ToList();
             if (quantities.Count == 0)
             {
-                return [];
+                return ([], []);
             }
 
-            // Get details for the items in the basket
-            var basketItems = new List<BasketItem>();
-            var productIds = quantities.Select(row => row.ProductId);
+            // Get details for the items in the basket and the saved products
+            var productIds = quantities.Select(row => row.ProductId).Distinct();
             var catalogItems = (await catalogService.GetCatalogItems(productIds)).ToDictionary(k => k.Id, v => v);
-            foreach (var item in quantities)
+            // Saved products are long-lived and may have left the catalog; skip those instead of breaking the cart
+            return (
+                ToBasketItems(contents.Items, catalogItems, skipMissing: false),
+                ToBasketItems(contents.SavedItems, catalogItems, skipMissing: true));
+        }
+    }
+
+    private static List<BasketItem> ToBasketItems(IEnumerable<BasketQuantity> quantities, Dictionary<int, CatalogItem> catalogItems, bool skipMissing)
+    {
+        var basketItems = new List<BasketItem>();
+        foreach (var item in quantities)
+        {
+            if (!catalogItems.TryGetValue(item.ProductId, out var catalogItem))
             {
-                var catalogItem = catalogItems[item.ProductId];
-                var orderItem = new BasketItem
+                if (skipMissing)
                 {
-                    Id = Guid.NewGuid().ToString(), // TODO: this value is meaningless, use ProductId instead.
-                    ProductId = catalogItem.Id,
-                    ProductName = catalogItem.Name,
-                    UnitPrice = catalogItem.Price,
-                    Quantity = item.Quantity,
-                };
-                basketItems.Add(orderItem);
+                    continue;
+                }
+
+                throw new KeyNotFoundException($"Product {item.ProductId} is not in the catalog.");
             }
 
-            return basketItems;
+            var orderItem = new BasketItem
+            {
+                Id = Guid.NewGuid().ToString(), // TODO: this value is meaningless, use ProductId instead.
+                ProductId = catalogItem.Id,
+                ProductName = catalogItem.Name,
+                UnitPrice = catalogItem.Price,
+                Quantity = item.Quantity,
+            };
+            basketItems.Add(orderItem);
         }
+
+        return basketItems;
     }
 
     private class BasketStateChangedSubscription(BasketState Owner, EventCallback Callback) : IDisposable
