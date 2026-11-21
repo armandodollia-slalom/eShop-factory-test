@@ -3,6 +3,12 @@ using Aspire.Hosting.ApplicationModel;
 
 namespace eShop.Basket.FunctionalTests;
 
+[CollectionDefinition(RedisCollection.Name)]
+public sealed class RedisCollection : ICollectionFixture<RedisFixture>
+{
+    public const string Name = "Redis";
+}
+
 public sealed class RedisFixture : IAsyncLifetime
 {
     private readonly IHost _app;

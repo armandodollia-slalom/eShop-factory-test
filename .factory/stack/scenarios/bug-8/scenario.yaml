@@ -1,0 +1,4 @@
+description: BUG-8 basket quantity validation; needs only the seeded users alice and bob and no basket contents.
+extends: default
+
+# No extra rows: the cases build their own baskets as alice and expect none to exist at the start.
