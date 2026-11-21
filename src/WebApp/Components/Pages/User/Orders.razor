@@ -42,7 +42,7 @@ else
                     @order.OrderNumber
                 </div>
                 <div class="order-date">
-                    @order.Date
+                    <time datetime="@ToUtcRoundTrip(order.Date)" data-local-time>@order.Date</time>
                 </div>
                 <div class="order-total">
                    $@order.Total.ToPriceDisplay()
@@ -65,4 +65,9 @@ else
     {
         orders = await OrderingService.GetOrders();
     }
+
+    // Order dates are UTC instants; the JSON may carry no offset, so an Unspecified value is treated as UTC.
+    // js/order-local-time.js reads this attribute to show the date in the browser's own time zone.
+    private static string ToUtcRoundTrip(DateTime date) =>
+        (date.Kind == DateTimeKind.Local ? date.ToUniversalTime() : DateTime.SpecifyKind(date, DateTimeKind.Utc)).ToString("O");
 }
