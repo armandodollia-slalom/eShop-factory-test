@@ -1,14 +1,21 @@
 ﻿using System.Reflection;
+using System.Security.Claims;
 
 using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
+using eShop.Catalog.API;
 
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace eShop.Catalog.FunctionalTests;
 
 public sealed class CatalogApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
 {
+    /// <summary>A request with this header is sent as an anonymous caller: no test identity is attached.</summary>
+    public const string AnonymousHeader = "X-Test-Anonymous";
+
     private readonly IHost _app;
 
     public IResourceBuilder<PostgresServerResource> Postgres { get; private set; }
@@ -33,6 +40,11 @@ public sealed class CatalogApiFixture : WebApplicationFactory<Program>, IAsyncLi
                 { $"ConnectionStrings:{Postgres.Resource.Name}", _postgresConnectionString },
                 });
         });
+        // Catalog writes require a catalog admin; the existing tests exercise them as one.
+        builder.ConfigureServices(services =>
+        {
+            services.AddSingleton<IStartupFilter>(new AutoAuthorizeStartupFilter());
+        });
         return base.CreateHost(builder);
     }
 
@@ -54,5 +66,31 @@ public sealed class CatalogApiFixture : WebApplicationFactory<Program>, IAsyncLi
     {
         await _app.StartAsync();
         _postgresConnectionString = await Postgres.Resource.GetConnectionStringAsync();
+    }
+
+    private class AutoAuthorizeStartupFilter : IStartupFilter
+    {
+        public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next)
+        {
+            return builder =>
+            {
+                builder.Use((context, nextMiddleware) =>
+                {
+                    if (!context.Request.Headers.ContainsKey(AnonymousHeader))
+                    {
+                        List<Claim> claims =
+                        [
+                            new Claim("sub", "catalog-functional-tests"),
+                            new Claim("scope", CatalogApi.Scope),
+                            new Claim(ClaimTypes.Role, CatalogApi.AdminRole),
+                        ];
+                        // Replace (not append to) the anonymous principal: a failed policy then answers 403, not 401.
+                        context.User = new ClaimsPrincipal(new ClaimsIdentity(claims, "tests"));
+                    }
+                    return nextMiddleware(context);
+                });
+                next(builder);
+            };
+        }
     }
 }

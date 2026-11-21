@@ -1,0 +1,20 @@
+description: BUG-4 catalog write authorization; the seeded catalog (items 1-101), the demo user alice and the catalog admin.
+extends: default
+
+# The anonymous cases use item 1 (Wanderer Black Hiking Boots, 109.99) and the absent ids 10101, 10102 and 999999.
+# The non-admin cases (alice with a catalog token, no admin role) try item 10104 and item 1.
+# The admin cases (admin / Pass123$, catalog token) create item 10103, update item 99 (Adventurer GPS Watch, 199.99)
+# and delete item 101.
+# The rows below are what Identity.API/UsersSeed.cs adds: the Admin role and the admin user in it (PasswordHash is the
+# stored ASP.NET Identity hash of Pass123$ from the default scenario).
+postgres:
+  identitydb:
+    - table: public.AspNetRoles
+      rows:
+        - { Id: 7d0f3c1e-5b8a-4c2e-9f6d-1a2b3c4d5e6f, Name: Admin, NormalizedName: ADMIN, ConcurrencyStamp: 0b1c2d3e-4f50-6172-8394-a5b6c7d8e9f0 }
+    - table: public.AspNetUsers
+      rows:
+        - { Id: 3f2e1d0c-9b8a-4765-8432-10fedcba9876, CardNumber: XXXXXXXXXXXX1881, SecurityNumber: '789', Expiration: 12/24, CardHolderName: Catalog Admin, CardType: 1, Street: 15703 NE 61st Ct, City: Redmond, State: WA, Country: U.S., ZipCode: '98052', Name: Catalog, LastName: Admin, UserName: admin, NormalizedUserName: ADMIN, Email: admin@email.com, NormalizedEmail: ADMIN@EMAIL.COM, EmailConfirmed: true, PasswordHash: AQAAAAIAAYagAAAAEM3Mqp7GRq4YQC/g0hxC3PWVlEipb0FU/1ogXv8XTYGPXvMmkyq3ApV4/bhZJHZEPQ==, SecurityStamp: 7QH3XK2M4PZ6R8T5V9W2Y4A6C8E0G2J4, ConcurrencyStamp: 1c2d3e4f-5061-7283-94a5-b6c7d8e9f0a1, PhoneNumber: '1234567890', PhoneNumberConfirmed: false, TwoFactorEnabled: false, LockoutEnd: null, LockoutEnabled: true, AccessFailedCount: 0 }
+    - table: public.AspNetUserRoles
+      rows:
+        - { UserId: 3f2e1d0c-9b8a-4765-8432-10fedcba9876, RoleId: 7d0f3c1e-5b8a-4c2e-9f6d-1a2b3c4d5e6f }

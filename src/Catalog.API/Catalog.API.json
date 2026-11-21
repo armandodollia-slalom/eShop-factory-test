@@ -169,8 +169,21 @@
           },
           "404": {
             "description": "Not Found"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
           }
-        }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "catalog"
+            ]
+          }
+        ]
       }
     },
     "/api/catalog/items/{id}/pic": {
@@ -566,8 +579,21 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
           }
-        }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "catalog"
+            ]
+          }
+        ]
       },
       "get": {
         "tags": [
@@ -695,8 +721,21 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
           }
-        }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "catalog"
+            ]
+          }
+        ]
       }
     },
     "/api/catalog/items/by/{name}": {
@@ -1340,6 +1379,20 @@
               "null",
               "string"
             ]
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "oauth2": {
+        "type": "oauth2",
+        "flows": {
+          "implicit": {
+            "authorizationUrl": "http://localhost:5223/connect/authorize",
+            "tokenUrl": "http://localhost:5223/connect/token",
+            "scopes": {
+              "catalog": "Catalog API"
+            }
           }
         }
       }

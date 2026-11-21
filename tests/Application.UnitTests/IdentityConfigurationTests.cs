@@ -8,13 +8,15 @@ namespace eShop.Application.UnitTests;
 public class IdentityConfigurationTests
 {
     [TestMethod]
+    [TestCategory("BUG-4")]
+    [TestProperty("TestCase", "TC-BUG-4-11")]
     public void ApiResourcesAndScopesStayAligned()
     {
         var resources = Config.GetApis().Select(resource => resource.Name).Order().ToArray();
         var scopes = Config.GetApiScopes().Select(scope => scope.Name).Order().ToArray();
 
         CollectionAssert.AreEqual(resources, scopes);
-        CollectionAssert.AreEquivalent(new[] { "basket", "orders", "webhooks" }, scopes);
+        CollectionAssert.AreEquivalent(new[] { "basket", "catalog", "orders", "webhooks" }, scopes);
     }
 
     [TestMethod]
@@ -37,6 +39,19 @@ public class IdentityConfigurationTests
         CollectionAssert.Contains(clients["webhooksclient"].AllowedScopes.ToList(), "webhooks");
         CollectionAssert.Contains(clients["maui"].AllowedScopes.ToList(), "basket");
         CollectionAssert.Contains(clients["maui"].AllowedScopes.ToList(), "orders");
+    }
+
+    [TestMethod]
+    public void CatalogSwaggerUiClientCanRequestTheCatalogScope()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["CatalogApiClient"] = "https://catalog.test" })
+            .Build();
+
+        var client = Config.GetClients(configuration).Single(client => client.ClientId == "catalogswaggerui");
+
+        CollectionAssert.AreEquivalent(new[] { "catalog" }, client.AllowedScopes.ToList());
+        CollectionAssert.Contains(client.RedirectUris.ToList(), "https://catalog.test/swagger/oauth2-redirect.html");
     }
 
     [TestMethod]

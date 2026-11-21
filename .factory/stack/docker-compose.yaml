@@ -77,6 +77,7 @@ services:
       IDENTITYDB_JDBCCONNECTIONSTRING: jdbc:postgresql://postgres:5432/identitydb
       IDENTITYDB_DATABASENAME: identitydb
       BasketApiClient: http://basket-api:8080
+      CatalogApiClient: http://catalog-api:8080
       OrderingApiClient: http://ordering-api:8080
       WebhooksApiClient: http://webhooks-api:8080
       WebhooksWebClient: http://localhost:${WEBHOOKSCLIENT_HOST_PORT:-28086}
@@ -145,6 +146,7 @@ services:
       CATALOGDB_URI: postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/catalogdb
       CATALOGDB_JDBCCONNECTIONSTRING: jdbc:postgresql://postgres:5432/catalogdb
       CATALOGDB_DATABASENAME: catalogdb
+      Identity__Url: http://host.docker.internal:${IDENTITY_API_HOST_PORT:-28081}
       OTEL_EXPORTER_OTLP_ENDPOINT: http://teststack-dashboard:18889
       OTEL_EXPORTER_OTLP_PROTOCOL: grpc
       OTEL_SERVICE_NAME: catalog-api
