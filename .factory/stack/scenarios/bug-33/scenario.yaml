@@ -1,0 +1,7 @@
+description: BUG-33 duplicate basket entries; needs the seeded user bob, product 1 (Wanderer Black Hiking Boots, 109.99) and an empty basket.
+extends: default
+
+# No extra rows. TC-BUG-33-07 signs in as bob (Pass123$, id bc8b0071-21af-41ab-b1d2-15c4efc368df, from `default`),
+# writes his basket itself through gRPC Basket.UpdateBasket with product 1 listed twice, and reads it back on /cart.
+# Product 1 "Wanderer Black Hiking Boots" at 109.99 comes from the default catalog. Loading the scenario clears
+# Redis, so bob starts with no stored basket; the spec also deletes it before its update.

@@ -1,0 +1,2 @@
+{"ts":"2026-11-15T06:42:13.760Z","story":"BUG-33","kind":"stack-slot","stage":"automation pass","slot":1,"waitedSec":1,"outcome":"leased","poolSize":null}
+{"ts":"2026-11-15T06:54:43.103Z","story":"BUG-33","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":3,"outcome":"leased","poolSize":null,"held":true,"upSec":3}

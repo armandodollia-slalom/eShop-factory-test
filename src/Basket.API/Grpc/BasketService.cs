@@ -74,6 +74,9 @@ public class BasketService(
     [DoesNotReturn]
     private static void ThrowBasketDoesNotExist(string userId) => throw new RpcException(new Status(StatusCode.NotFound, $"Basket with buyer id {userId} does not exist"));
 
+    [DoesNotReturn]
+    private static void ThrowMergedQuantityOutOfRange(int productId) => throw new RpcException(new Status(StatusCode.InvalidArgument, $"The quantities listed for product {productId} add up to a total outside the range a basket line can hold."));
+
     private static CustomerBasketResponse MapToCustomerBasketResponse(CustomerBasket customerBasket)
     {
         var response = new CustomerBasketResponse();
@@ -97,13 +100,30 @@ public class BasketService(
             BuyerId = userId
         };
 
+        // A product listed more than once becomes one line holding the sum of its quantities,
+        // kept at the position where the product first appears.
+        var itemsByProductId = new Dictionary<int, Model.BasketItem>();
         foreach (var item in customerBasketRequest.Items)
         {
-            response.Items.Add(new()
+            if (itemsByProductId.TryGetValue(item.ProductId, out var existing))
+            {
+                var mergedQuantity = (long)existing.Quantity + item.Quantity;
+                if (mergedQuantity > int.MaxValue || mergedQuantity < int.MinValue)
+                {
+                    ThrowMergedQuantityOutOfRange(item.ProductId);
+                }
+
+                existing.Quantity = (int)mergedQuantity;
+                continue;
+            }
+
+            var basketItem = new Model.BasketItem
             {
                 ProductId = item.ProductId,
                 Quantity = item.Quantity,
-            });
+            };
+            itemsByProductId.Add(item.ProductId, basketItem);
+            response.Items.Add(basketItem);
         }
 
         return response;
