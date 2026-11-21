@@ -48,6 +48,8 @@ priority: P1
 
 1. Exact request or UI action, with method, path, body and identity. For an `e2e` case, write each UI step as a user action on a named element ("click the **Summer sale** card on the Offers page", "choose **Newest** in **Sort**") and each expected result as what the screen shows: the demo video narrates the steps from those names, so a viewer can follow the case without a caption.
 
+For a **bug**, write its reproduction as an `e2e` case of type `sad` that does what the ticket describes and expects the fixed behaviour: for a defect a browser shows, through the page; for a defect in a service's answer, through the service's public interface (the requests a client sends, with method, path, body and identity). The pipeline runs it on the code the fix starts from, where it must fail at that check, to show the bug before and after the fix.
+
 ## Expected result
 
 - Exact, checkable outcomes: status codes, body fields and values, persisted state, events, what must NOT happen.

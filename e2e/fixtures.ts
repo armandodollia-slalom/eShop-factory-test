@@ -139,7 +139,39 @@ export interface ApiExchange {
   requestBody?: string;
   status: number;
   responseContentType?: string;
+  responseHeaders?: Record<string, string>;
   responseBody?: string;
+  durationMs?: number;
+  /** The label of the `reproduction` block the call was made in. */
+  repro?: string;
+}
+
+/**
+ * A backend bug's reproduction: the calls a test makes through the `request` fixture inside `fn` are recorded as the
+ * reproduction (`repro: label` on each exchange), and an assertion that fails inside it is recorded as the reproduction
+ * check that failed. The factory runs the bug's case on the code the fix starts from (where it must fail here) and on
+ * the fix, and posts the recorded requests and responses on the ticket and in the PR (docs/ai-pipeline/pr-demo-video.md).
+ *
+ *   await reproduction('Place an order with a card type the shop does not know', async () => {
+ *     const response = await request.post(url('ordering', '/api/orders'), { data: order, headers });
+ *     expect(response.status()).toBe(400);
+ *   });
+ */
+let reproLabel: string | null = null;
+let reproRecord: { labels: string[]; failed?: { label: string; message: string } } = { labels: [] };
+export async function reproduction<T>(label: string, fn: () => Promise<T>): Promise<T> {
+  reproLabel = label;
+  if (!reproRecord.labels.includes(label)) reproRecord.labels.push(label);
+  try {
+    return await fn();
+  } catch (error) {
+    // eslint-disable-next-line no-control-regex
+    const message = String((error as Error)?.message ?? error).replace(/\u001b\[[0-9;]*m/g, '').split('\n').filter(l => /expect|received|expected/i.test(l)).slice(0, 4).join('\n').slice(0, 600);
+    reproRecord.failed ??= { label, message };
+    throw error;
+  } finally {
+    reproLabel = null;
+  }
 }
 
 function redact(value: unknown): unknown {
@@ -174,6 +206,7 @@ async function toExchange(name: string, target: any, options: any, response: API
     .map(([k, v]) => [k, SECRET_HEADER.test(k) ? '***' : String(v)]);
   const form = options?.form ?? (options?.multipart ? Object.fromEntries(Object.keys(options.multipart).map(k => [k, '<part>'])) : undefined);
   const contentType = response.headers()['content-type'];
+  const responseHeaders = Object.fromEntries(Object.entries(response.headers()).map(([k, v]) => [k, SECRET_HEADER.test(k) ? '***' : String(v)]));
   const raw = await response.body().catch(() => undefined);
   return {
     method,
@@ -182,6 +215,7 @@ async function toExchange(name: string, target: any, options: any, response: API
     ...(options?.data !== undefined || form ? { requestBody: bodyText(options?.data ?? form) } : {}),
     status: response.status(),
     ...(contentType ? { responseContentType: contentType } : {}),
+    responseHeaders,
     ...(raw?.length ? { responseBody: /json|text|xml|problem/i.test(contentType ?? '') ? bodyText(raw.toString('utf8')) : `<${raw.length} bytes>` } : {}),
   };
 }
@@ -193,8 +227,12 @@ function recordApiCalls(context: APIRequestContext, log: ApiExchange[]): APIRequ
       if (typeof value !== 'function') return value;
       if (typeof prop !== 'string' || !API_METHODS.has(prop)) return value.bind(target);
       return async (urlOrRequest: any, options?: any) => {
+        const repro = reproLabel;
+        const started = Date.now();
         const response: APIResponse = await value.call(target, urlOrRequest, options);
-        log.push(await toExchange(prop, urlOrRequest, options, response).catch(() => ({ method: prop.toUpperCase(), url: response.url(), status: response.status() })));
+        const durationMs = Date.now() - started;
+        const exchange: ApiExchange = await toExchange(prop, urlOrRequest, options, response).catch(() => ({ method: prop.toUpperCase(), url: response.url(), status: response.status() }));
+        log.push({ ...exchange, durationMs, ...(repro ? { repro } : {}) });
         return response;
       };
     },
@@ -216,8 +254,10 @@ export const test = withStepKeyframes(base.extend<{ _recordManualContexts: void 
   request: async ({ request }, use, testInfo) => {
     if (!API_LOG) return use(request);
     const log: ApiExchange[] = [];
+    reproRecord = { labels: [] };
     await use(recordApiCalls(request, log));
     if (log.length) await testInfo.attach('api-exchanges', { body: JSON.stringify(log), contentType: 'application/json' });
+    if (reproRecord.labels.length) await testInfo.attach('api-reproduction', { body: JSON.stringify(reproRecord), contentType: 'application/json' });
   },
 
   page: async ({ page }, use, testInfo) => {
