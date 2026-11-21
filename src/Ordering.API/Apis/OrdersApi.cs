@@ -139,9 +139,9 @@ public static class OrdersApi
         CreateOrderRequest request,
         [AsParameters] OrderServices services)
     {
-        
+
         //mask the credit card number
-        
+
         services.Logger.LogInformation(
             "Sending command: {CommandName} - {IdProperty}: {CommandId}",
             request.GetGenericTypeName(),
@@ -160,6 +160,15 @@ public static class OrdersApi
             return TypedResults.ValidationProblem(new Dictionary<string, string[]>
             {
                 [nameof(request.CardNumber)] = ["Card number must contain at least 4 characters."]
+            });
+        }
+
+        var cardTypes = await services.Queries.GetCardTypesAsync();
+        if (!cardTypes.Any(cardType => cardType.Id == request.CardTypeId))
+        {
+            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
+            {
+                [nameof(request.CardTypeId)] = [$"Card type {request.CardTypeId} is not known."]
             });
         }
 

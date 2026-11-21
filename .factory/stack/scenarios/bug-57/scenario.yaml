@@ -1,0 +1,5 @@
+description: BUG-57 card type check on order creation; needs only the seeded user alice and the card types 1 Amex, 2 Visa, 3 MasterCard.
+extends: default
+
+# No extra rows: every case places its own order as alice (Pass123$) with the card types Ordering.API seeds at startup
+# (1 Amex, 2 Visa, 3 MasterCard) and counts alice's orders before and after, so earlier orders do not matter.
