@@ -1,0 +1,33 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:09.600
+This video shows "Brands" link on an item page opens the Brands page. Ticket BRAND-1: A Brands page with a card for every brand.
+
+2
+00:00:09.600 --> 00:00:12.533
+Opened the Item page
+
+3
+00:00:12.533 --> 00:00:16.467
+The Adventurer GPS Watch heading is shown.
+
+4
+00:00:16.467 --> 00:00:20.467
+Item page: Adventurer GPS Watch
+
+5
+00:00:20.467 --> 00:00:25.400
+"Shop all" and "Brands" side by side in the header
+
+6
+00:00:25.400 --> 00:00:32.251
+Now at the Brands page
+
+7
+00:00:32.251 --> 00:00:36.251
+Brands page at the Brands page
+
+8
+00:00:36.251 --> 00:00:42.184
+Result: "Brands" link on an item page opens the Brands page, as expected.

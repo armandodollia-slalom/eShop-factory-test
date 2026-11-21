@@ -1,0 +1,49 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:09.600
+This video shows choosing "Name" after "Most products" restores the alphabetical order. Ticket BRAND-3: Sort the brands by name or by number of products.
+
+2
+00:00:09.600 --> 00:00:13.533
+Opened the Brands page, with sort count
+
+3
+00:00:13.533 --> 00:00:19.800
+13 headings are shown, in this order: Gravitator, Raptor Elite, WildRunner, B&R, and more.
+
+4
+00:00:19.800 --> 00:00:23.800
+Count order: Gravitator first
+
+5
+00:00:23.800 --> 00:00:30.344
+Click "Name"
+
+6
+00:00:30.344 --> 00:00:36.277
+13 headings are shown, in this order: AirStrider, B&R, Daybird, Gravitator, and more.
+
+7
+00:00:36.277 --> 00:00:39.544
+Now at the Brands page
+
+8
+00:00:39.544 --> 00:00:43.544
+"Name" selected (aria-current), "Most products" not
+
+9
+00:00:43.544 --> 00:00:47.872
+First card: AirStrider (alphabetical)
+
+10
+00:00:47.872 --> 00:00:51.872
+Middle card: Legend (7th of 13)
+
+11
+00:00:51.872 --> 00:00:55.872
+Last card: Zephyr (13 cards)
+
+12
+00:00:55.872 --> 00:01:01.472
+Result: choosing "Name" after "Most products" restores the alphabetical order, as expected.

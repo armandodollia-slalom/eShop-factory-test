@@ -1,0 +1,29 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:09.933
+This video shows catalog filtered to Daybird shows "Brand: Daybird" instead of the usual title. Ticket BRAND-2: From a brand card to that brand's products.
+
+2
+00:00:09.933 --> 00:00:12.867
+Open the Brands page
+
+3
+00:00:12.867 --> 00:00:19.412
+Click the Daybird card
+
+4
+00:00:19.412 --> 00:00:23.678
+Now at the home page, with brand 1
+
+5
+00:00:23.678 --> 00:00:28.007
+Header title: "Brand: Daybird"
+
+6
+00:00:28.007 --> 00:00:32.007
+no usual title or subtitle text
+
+7
+00:00:32.007 --> 00:00:38.607
+Result: catalog filtered to Daybird shows "Brand: Daybird" instead of the usual title, as expected.

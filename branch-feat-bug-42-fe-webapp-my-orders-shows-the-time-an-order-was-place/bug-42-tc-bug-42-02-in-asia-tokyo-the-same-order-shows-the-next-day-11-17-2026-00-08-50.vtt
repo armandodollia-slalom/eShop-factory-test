@@ -1,0 +1,53 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:12.267
+This video shows in Asia/Tokyo the same order shows the next day, 11/17/2026 00:08:50. Ticket BUG-42: My orders shows the time an order was placed in UTC, not the shopper's own time.
+
+2
+00:00:12.267 --> 00:00:15.200
+Open the home page
+
+3
+00:00:15.200 --> 00:00:18.467
+Click the Sign in link
+
+4
+00:00:18.467 --> 00:00:21.733
+The Login heading is shown.
+
+5
+00:00:21.733 --> 00:00:25.333
+Type “alice” into the Username field
+
+6
+00:00:25.333 --> 00:00:28.267
+Type the Password (hidden)
+
+7
+00:00:28.267 --> 00:00:31.200
+Click the Login button
+
+8
+00:00:31.200 --> 00:00:34.467
+The Account button is shown.
+
+9
+00:00:34.467 --> 00:00:38.733
+Browser time zone Asia/Tokyo: opened the Orders page
+
+10
+00:00:38.733 --> 00:00:43.667
+“NUMBER DATE TOTAL STATUS 1 11/17/2026 00:08:50 $149.99” is shown.
+
+11
+00:00:43.667 --> 00:00:46.600
+“11/17/2026 00:08:50” is shown.
+
+12
+00:00:46.600 --> 00:00:51.200
+Order 1 (11/16 15:08:50 UTC) in Asia/Tokyo: 11/17/2026 00:08:50
+
+13
+00:00:51.200 --> 00:00:57.467
+Result: in Asia/Tokyo the same order shows the next day, 11/17/2026 00:08:50, as expected.

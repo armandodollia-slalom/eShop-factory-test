@@ -1,0 +1,33 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:10.267
+This video shows every brand card links to the home page, with brand <its own id>. Ticket BRAND-2: From a brand card to that brand's products.
+
+2
+00:00:10.267 --> 00:00:13.200
+Opened the Brands page
+
+3
+00:00:13.200 --> 00:00:17.467
+13 cards are shown. 1 card is shown.
+
+4
+00:00:17.467 --> 00:00:22.733
+13 cards, 13 different links the home page, with brand <data-brand-id>
+
+5
+00:00:22.733 --> 00:00:27.667
+First card links to the home page, with brand 9
+
+6
+00:00:27.667 --> 00:00:32.600
+Daybird card links to the home page, with brand 1
+
+7
+00:00:32.600 --> 00:00:37.533
+XE card links to the home page, with brand 13
+
+8
+00:00:37.533 --> 00:00:44.467
+Result: every brand card links to the home page, with brand <its own id>, as expected.

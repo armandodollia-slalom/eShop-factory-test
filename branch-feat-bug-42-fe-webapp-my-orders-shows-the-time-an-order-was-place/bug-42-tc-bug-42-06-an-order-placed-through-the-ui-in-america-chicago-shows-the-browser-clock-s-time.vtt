@@ -1,0 +1,97 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:13.933
+This video shows an order placed through the UI in America/Chicago shows the browser clock's time on My orders. Ticket BUG-42: My orders shows the time an order was placed in UTC, not the shopper's own time.
+
+2
+00:00:13.933 --> 00:00:16.867
+Open the home page
+
+3
+00:00:16.867 --> 00:00:20.133
+Click the Sign in link
+
+4
+00:00:20.133 --> 00:00:23.400
+The Login heading is shown.
+
+5
+00:00:23.400 --> 00:00:27.000
+Type “alice” into the Username field
+
+6
+00:00:27.000 --> 00:00:29.933
+Type the Password (hidden)
+
+7
+00:00:29.933 --> 00:00:32.867
+Click the Login button
+
+8
+00:00:32.867 --> 00:00:36.133
+The Account button is shown.
+
+9
+00:00:36.133 --> 00:00:39.067
+Open the Item page
+
+10
+00:00:39.067 --> 00:00:43.000
+The Explorer 45L Backpack heading is shown.
+
+11
+00:00:43.000 --> 00:00:46.600
+Click the Add to basket button
+
+12
+00:00:46.600 --> 00:00:50.200
+The shopping bag link is shown.
+
+13
+00:00:50.200 --> 00:00:54.467
+Added Explorer 45L Backpack to the shopping bag
+
+14
+00:00:54.467 --> 00:00:57.733
+The Checkout heading is shown.
+
+15
+00:00:57.733 --> 00:01:02.000
+Browser time zone America/Chicago: before = 11/20/2026 18:56:50
+
+16
+00:01:02.000 --> 00:01:04.933
+Reload the Orders page
+
+17
+00:01:04.933 --> 00:01:08.867
+Order placed; after = 11/20/2026 18:56:56 (America/Chicago)
+
+18
+00:01:08.867 --> 00:01:12.467
+The My orders link is shown.
+
+19
+00:01:12.467 --> 00:01:18.400
+Now on the Orders page. 1 item is shown. “11/20/2026 18:56:55” is shown.
+
+20
+00:01:18.400 --> 00:01:21.333
+Reload the Orders page
+
+21
+00:01:21.333 --> 00:01:24.267
+“11/20/2026 18:56:55” is shown.
+
+22
+00:01:24.267 --> 00:01:28.867
+Window 11/20/2026 18:56:50 .. 11/20/2026 18:56:56; UTC 11/21/2026 00:56:55
+
+23
+00:01:28.867 --> 00:01:33.800
+Placed order shows 11/20/2026 18:56:55 (America/Chicago), not 11/21/2026 00:56:55 UTC
+
+24
+00:01:33.800 --> 00:01:41.733
+Result: an order placed through the UI in America/Chicago shows the browser clock's time on My orders, as expected.

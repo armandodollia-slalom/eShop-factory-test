@@ -1,0 +1,97 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:09.933
+This video shows the Gravitator card applies the same filter as the Brand filter tag. Ticket BRAND-2: From a brand card to that brand's products.
+
+2
+00:00:09.933 --> 00:00:12.867
+Opened the home page
+
+3
+00:00:12.867 --> 00:00:15.800
+“101 products” is shown.
+
+4
+00:00:15.800 --> 00:00:19.800
+Click the "Gravitator" Brand filter tag
+
+5
+00:00:19.800 --> 00:00:23.067
+Click the Gravitator 11 link
+
+6
+00:00:23.067 --> 00:00:29.667
+“11 products” is shown. 9 items are shown. The Gravitator 11 link is marked active.
+
+7
+00:00:29.667 --> 00:00:34.600
+Via filter: the home page, with brand 2, 11 products
+
+8
+00:00:34.600 --> 00:00:38.600
+Via the filter: 11 products
+
+9
+00:00:38.600 --> 00:00:42.600
+Via the filter: "Gravitator" active
+
+10
+00:00:42.600 --> 00:00:49.867
+Via the filter: 1. Cosmic Purple Snowboard, 2. Expedition 200 GPS Navigator, 3. Gravity 5000 All-Mountain Skis
+
+11
+00:00:49.867 --> 00:00:56.467
+Via the filter: 4. Gravity Beam Climbing Rope, 5. Gravity Harness, 6. Gravity Hiking Backpack
+
+12
+00:00:56.467 --> 00:01:03.067
+Via the filter: 7. GravityZone All-Mountain Skis, 8. Nebula Pro Headlamp, 9. Stellar Duffle Bag
+
+13
+00:01:03.067 --> 00:01:06.000
+Opened the Brands page
+
+14
+00:01:06.000 --> 00:01:12.548
+Click the Gravitator card
+
+15
+00:01:12.548 --> 00:01:19.148
+“11 products” is shown. 9 items are shown. The Gravitator 11 link is marked active.
+
+16
+00:01:19.148 --> 00:01:24.081
+Via card: the home page, with brand 2, 11 products
+
+17
+00:01:24.081 --> 00:01:28.081
+Via the card: 11 products
+
+18
+00:01:28.081 --> 00:01:32.081
+Via the card: "Gravitator" active
+
+19
+00:01:32.081 --> 00:01:39.348
+Via the card: 1. Cosmic Purple Snowboard, 2. Expedition 200 GPS Navigator, 3. Gravity 5000 All-Mountain Skis
+
+20
+00:01:39.348 --> 00:01:45.948
+Via the card: 4. Gravity Beam Climbing Rope, 5. Gravity Harness, 6. Gravity Hiking Backpack
+
+21
+00:01:45.948 --> 00:01:52.548
+Via the card: 7. GravityZone All-Mountain Skis, 8. Nebula Pro Headlamp, 9. Stellar Duffle Bag
+
+22
+00:01:52.548 --> 00:01:57.148
+Card 1 of 9 in both: Cosmic Purple Snowboard
+
+23
+00:01:57.148 --> 00:02:01.748
+Card 9 of 9 in both: Stellar Duffle Bag
+
+24
+00:02:01.748 --> 00:02:08.348
+Result: the Gravitator card applies the same filter as the Brand filter tag, as expected.

@@ -1,0 +1,33 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:11.933
+This video shows opening the Brands page, with sort count directly shows "Most products" selected and the count order. Ticket BRAND-3: Sort the brands by name or by number of products.
+
+2
+00:00:11.933 --> 00:00:16.200
+Opened the Brands page, with sort count directly
+
+3
+00:00:16.200 --> 00:00:19.133
+13 cards are shown.
+
+4
+00:00:19.133 --> 00:00:23.133
+"Most products" selected (aria-current), "Name" not
+
+5
+00:00:23.133 --> 00:00:27.462
+First card: Gravitator (most products)
+
+6
+00:00:27.462 --> 00:00:31.462
+Middle card: Legend (7th of 13)
+
+7
+00:00:31.462 --> 00:00:35.462
+Last card: XE (13 cards)
+
+8
+00:00:35.462 --> 00:00:43.396
+Result: opening the Brands page, with sort count directly shows "Most products" selected and the count order, as expected.

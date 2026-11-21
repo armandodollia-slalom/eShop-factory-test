@@ -1,0 +1,41 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:09.600
+This video shows choosing Gravitator in the Brand filter names it in the header. Ticket BRAND-2: From a brand card to that brand's products.
+
+2
+00:00:09.600 --> 00:00:12.533
+Opened the home page
+
+3
+00:00:12.533 --> 00:00:16.467
+“Ready for a new adventure?” is shown.
+
+4
+00:00:16.467 --> 00:00:20.467
+Usual title: "Ready for a new adventure?"
+
+5
+00:00:20.467 --> 00:00:24.467
+Click "Gravitator"
+
+6
+00:00:24.467 --> 00:00:27.733
+Click the Gravitator 11 link
+
+7
+00:00:27.733 --> 00:00:32.000
+Now at the home page, with brand 2
+
+8
+00:00:32.000 --> 00:00:36.335
+Header title: "Brand: Gravitator"
+
+9
+00:00:36.335 --> 00:00:40.335
+"All brands" links to the Brands page
+
+10
+00:00:40.335 --> 00:00:46.602
+Result: choosing Gravitator in the Brand filter names it in the header, as expected.

@@ -1,0 +1,37 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:11.267
+This video shows opening the Brands page, with sort COUNT shows the alphabetical order with "Name" selected. Ticket BRAND-3: Sort the brands by name or by number of products.
+
+2
+00:00:11.267 --> 00:00:15.200
+Opened the Brands page, with sort COUNT
+
+3
+00:00:15.200 --> 00:00:18.133
+13 cards are shown.
+
+4
+00:00:18.133 --> 00:00:22.461
+No error for ?sort=COUNT
+
+5
+00:00:22.461 --> 00:00:26.461
+"Name" selected (aria-current), "Most products" not
+
+6
+00:00:26.461 --> 00:00:30.795
+First card: AirStrider (alphabetical)
+
+7
+00:00:30.795 --> 00:00:34.795
+Middle card: Legend (7th of 13)
+
+8
+00:00:34.795 --> 00:00:38.795
+Last card: Zephyr (13 cards)
+
+9
+00:00:38.795 --> 00:00:46.062
+Result: opening the Brands page, with sort COUNT shows the alphabetical order with "Name" selected, as expected.

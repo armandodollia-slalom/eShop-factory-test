@@ -1,0 +1,21 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:10.600
+This video shows catalog without a brand filter shows the usual title and no "All brands" link. Ticket BRAND-2: From a brand card to that brand's products.
+
+2
+00:00:10.600 --> 00:00:14.533
+Opened the home page (no brand filter)
+
+3
+00:00:14.533 --> 00:00:18.882
+Usual title: "Ready for a new adventure?"
+
+4
+00:00:18.882 --> 00:00:22.882
+Usual subtitle, no "All brands" link
+
+5
+00:00:22.882 --> 00:00:30.149
+Result: catalog without a brand filter shows the usual title and no "All brands" link, as expected.

@@ -1,0 +1,25 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:10.115
+A shopper whose browser runs on Chicago time opens the store to look up when they placed their latest order, which they placed at 9:08 in the morning.
+
+2
+00:00:10.115 --> 00:00:14.534
+From the home page, they click Sign in, and the Login page opens.
+
+3
+00:00:14.534 --> 00:00:24.115
+They type alice as the username, fill in their sign-in details, and click Login, which brings them back to the home page, now signed in to their account.
+
+4
+00:00:24.115 --> 00:00:28.662
+Signed in, they open My orders to find the order they placed this morning.
+
+5
+00:00:28.662 --> 00:00:47.545
+My orders lists order number 1 for $149.99, but its Date reads 11/16/2026 15:08:50, six hours ahead of the shopper's own clock. The store shows the time in UTC, with nothing on the page to say so.
+
+6
+00:00:47.545 --> 00:00:54.268
+A Chicago shopper sees an afternoon time for a morning order, so the Date on My orders can't be trusted.

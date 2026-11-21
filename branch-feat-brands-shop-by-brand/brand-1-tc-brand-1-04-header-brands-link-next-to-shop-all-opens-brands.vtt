@@ -1,0 +1,29 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:09.933
+This video shows header "Brands" link next to "Shop all" opens the Brands page. Ticket BRAND-1: A Brands page with a card for every brand.
+
+2
+00:00:09.933 --> 00:00:12.867
+Opened the home page
+
+3
+00:00:12.867 --> 00:00:17.467
+The Ready for a new adventure? heading is shown.
+
+4
+00:00:17.467 --> 00:00:22.400
+"Shop all" and "Brands" side by side in the header
+
+5
+00:00:22.400 --> 00:00:29.253
+Now at the Brands page
+
+6
+00:00:29.253 --> 00:00:33.253
+Brands page at the Brands page
+
+7
+00:00:33.253 --> 00:00:39.520
+Result: header "Brands" link next to "Shop all" opens the Brands page, as expected.

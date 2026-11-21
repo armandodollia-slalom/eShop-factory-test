@@ -1,0 +1,37 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:10.933
+This video shows card of a brand without products is not a link and says "No products yet". Ticket BRAND-2: From a brand card to that brand's products.
+
+2
+00:00:10.933 --> 00:00:13.867
+Opened the Brands page
+
+3
+00:00:13.867 --> 00:00:18.280
+Acme Empty: "No products yet", not a link
+
+4
+00:00:18.280 --> 00:00:21.546
+Click the Acme Empty heading
+
+5
+00:00:21.546 --> 00:00:24.813
+The Brands heading is shown.
+
+6
+00:00:24.813 --> 00:00:29.080
+After the click still at the Brands page
+
+7
+00:00:29.080 --> 00:00:33.080
+Still on the Brands page
+
+8
+00:00:33.080 --> 00:00:38.680
+Mono Gear (1 product) links to the home page, with brand 15
+
+9
+00:00:38.680 --> 00:00:46.280
+Result: card of a brand without products is not a link and says "No products yet", as expected.

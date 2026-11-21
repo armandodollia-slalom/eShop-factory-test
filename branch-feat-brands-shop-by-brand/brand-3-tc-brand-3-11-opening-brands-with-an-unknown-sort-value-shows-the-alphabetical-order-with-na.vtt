@@ -1,0 +1,37 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:11.933
+This video shows opening the Brands page with an unknown sort value shows the alphabetical order with "Name" selected. Ticket BRAND-3: Sort the brands by name or by number of products.
+
+2
+00:00:11.933 --> 00:00:15.867
+Opened the Brands page, with sort price
+
+3
+00:00:15.867 --> 00:00:18.800
+13 cards are shown.
+
+4
+00:00:18.800 --> 00:00:23.136
+Heading "Brands", no error for ?sort=price
+
+5
+00:00:23.136 --> 00:00:27.136
+"Name" selected (aria-current), "Most products" not
+
+6
+00:00:27.136 --> 00:00:31.469
+First card: AirStrider (alphabetical)
+
+7
+00:00:31.469 --> 00:00:35.469
+Middle card: Legend (7th of 13)
+
+8
+00:00:35.469 --> 00:00:39.469
+Last card: Zephyr (13 cards)
+
+9
+00:00:39.469 --> 00:00:47.402
+Result: opening the Brands page with an unknown sort value shows the alphabetical order with "Name" selected, as expected.

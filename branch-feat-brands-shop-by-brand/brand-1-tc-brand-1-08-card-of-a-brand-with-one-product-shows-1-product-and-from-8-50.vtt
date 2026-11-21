@@ -1,0 +1,17 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:10.600
+This video shows card of a brand with one product shows "1 product" and "from $8.50". Ticket BRAND-1: A Brands page with a card for every brand.
+
+2
+00:00:10.600 --> 00:00:13.533
+Open the Brands page
+
+3
+00:00:13.533 --> 00:00:17.948
+Mono Gear: 1 product, from $8.50
+
+4
+00:00:17.948 --> 00:00:24.882
+Result: card of a brand with one product shows "1 product" and "from $8.50", as expected.

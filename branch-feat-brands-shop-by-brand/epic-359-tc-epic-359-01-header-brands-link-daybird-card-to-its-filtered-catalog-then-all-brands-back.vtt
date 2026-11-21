@@ -1,0 +1,61 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:09.389
+A shopper on the home page wants to shop one brand, then come back to see the others. This walk goes from the header to a brand's products and back again.
+
+2
+00:00:09.389 --> 00:00:16.240
+From the header, the shopper selects the new Brands link, right next to Shop all, and lands on the Brands page.
+
+3
+00:00:16.240 --> 00:00:21.299
+The page is headed Brands and lays out a card for every brand in the catalog.
+
+4
+00:00:21.299 --> 00:00:33.299
+Cards run alphabetically from AirStrider through Legend to Zephyr, and each shows how many products the brand has and its lowest price, written as from and a dollar amount.
+
+5
+00:00:33.299 --> 00:00:42.432
+The Daybird card reads 10 products, from $49.99. Selecting that card opens the catalog filtered to Daybird.
+
+6
+00:00:42.432 --> 00:00:47.277
+The header title now reads Brand: Daybird instead of the usual welcome.
+
+7
+00:00:47.277 --> 00:00:55.277
+The catalog reports 10 products, the same count as on the card, and only Daybird is active in the Brand filter.
+
+8
+00:00:55.277 --> 00:01:07.608
+The first page lists Daybird gear only, from the Arctic Shield Insulated Jacket and Blizzard Snowboard to the LumenHead Headlamp and the Trailblaze hiking backpack.
+
+9
+00:01:07.608 --> 00:01:14.144
+To see the rest, the shopper moves on to the next page of results.
+
+10
+00:01:14.144 --> 00:01:21.720
+Page two holds the last one, the Wanderer Black Hiking Boots, which completes all ten Daybird products from the card.
+
+11
+00:01:21.720 --> 00:01:25.720
+The header still reads Brand: Daybird on this page too.
+
+12
+00:01:25.720 --> 00:01:32.259
+Now the shopper selects All brands, just under the title, to head back.
+
+13
+00:01:32.259 --> 00:01:37.830
+That leads straight back to the Brands page, with its heading and the full set of brand cards.
+
+14
+00:01:37.830 --> 00:01:45.830
+In the header, Brands is marked as the current page and Shop all is not, so the shopper always knows where they are.
+
+15
+00:01:45.830 --> 00:01:52.489
+Shoppers can now go from the header to any brand's products and back to all brands without losing their way.

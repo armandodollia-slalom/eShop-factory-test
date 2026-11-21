@@ -1,0 +1,33 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:09.267
+This video shows selecting the Daybird card opens the catalog filtered to Daybird. Ticket BRAND-2: From a brand card to that brand's products.
+
+2
+00:00:09.267 --> 00:00:12.200
+Opened the Brands page
+
+3
+00:00:12.200 --> 00:00:15.133
+13 cards are shown.
+
+4
+00:00:15.133 --> 00:00:21.667
+Click the Daybird card
+
+5
+00:00:21.667 --> 00:00:25.934
+Now at the home page, with brand 1
+
+6
+00:00:25.934 --> 00:00:30.259
+10 products
+
+7
+00:00:30.259 --> 00:00:34.601
+Brand filter: only "Daybird" active, "All" not
+
+8
+00:00:34.601 --> 00:00:40.534
+Result: selecting the Daybird card opens the catalog filtered to Daybird, as expected.

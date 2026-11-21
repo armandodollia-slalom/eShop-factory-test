@@ -1,0 +1,49 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:11.267
+This video shows choosing "Most products" reorders the cards by count and adds ?sort=count to the address. Ticket BRAND-3: Sort the brands by name or by number of products.
+
+2
+00:00:11.267 --> 00:00:14.200
+Opened the Brands page
+
+3
+00:00:14.200 --> 00:00:17.133
+13 cards are shown.
+
+4
+00:00:17.133 --> 00:00:24.432
+Click "Most products"
+
+5
+00:00:24.432 --> 00:00:28.699
+Now at the Brands page, with sort count
+
+6
+00:00:28.699 --> 00:00:32.699
+"Most products" selected (aria-current), "Name" not
+
+7
+00:00:32.699 --> 00:00:37.024
+First card: Gravitator (most products)
+
+8
+00:00:37.024 --> 00:00:41.024
+Middle card: Legend (7th of 13)
+
+9
+00:00:41.024 --> 00:00:45.024
+Last card: XE (13 cards)
+
+10
+00:00:45.024 --> 00:00:49.352
+Gravitator: 11 products · from $59.99
+
+11
+00:00:49.352 --> 00:00:53.352
+XE: 3 products · from $199.00
+
+12
+00:00:53.352 --> 00:01:00.619
+Result: choosing "Most products" reorders the cards by count and adds ?sort=count to the address, as expected.

@@ -1,0 +1,21 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:10.600
+This video shows card of a brand without products shows "No products yet" and no price. Ticket BRAND-1: A Brands page with a card for every brand.
+
+2
+00:00:10.600 --> 00:00:13.533
+Open the Brands page
+
+3
+00:00:13.533 --> 00:00:17.944
+Acme Empty: No products yet
+
+4
+00:00:17.944 --> 00:00:22.878
+no count and no price on the Acme Empty card
+
+5
+00:00:22.878 --> 00:00:29.811
+Result: card of a brand without products shows "No products yet" and no price, as expected.

@@ -1,0 +1,21 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:10.392
+When a shopper narrows the catalog to more than one brand, the page should keep its usual title. Here the catalog opens filtered to both Daybird and Gravitator.
+
+2
+00:00:10.392 --> 00:00:19.568
+With the products of both brands listed together, the header still reads Ready for a new adventure?, the usual title, rather than naming a single brand.
+
+3
+00:00:19.568 --> 00:00:27.827
+Under it is the usual subtitle about starting the season, and there is no All brands link, because this is not a single brand's page.
+
+4
+00:00:27.827 --> 00:00:35.827
+In the Brand filter, both Daybird and Gravitator are marked active, showing the two-brand selection behind this view.
+
+5
+00:00:35.827 --> 00:00:42.955
+Shoppers comparing several brands see an honest, general title instead of a label that names only one of them.

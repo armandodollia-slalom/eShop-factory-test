@@ -1,0 +1,49 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:09.600
+This video shows reloading after choosing "Most products" keeps the count order. Ticket BRAND-3: Sort the brands by name or by number of products.
+
+2
+00:00:09.600 --> 00:00:12.533
+Opened the Brands page
+
+3
+00:00:12.533 --> 00:00:15.467
+13 cards are shown.
+
+4
+00:00:15.467 --> 00:00:23.967
+Click "Most products"
+
+5
+00:00:23.967 --> 00:00:32.900
+Now on the Brands page, with sort count. 13 headings are shown, in this order: Gravitator, Raptor Elite, WildRunner, B&R, and more.
+
+6
+00:00:32.900 --> 00:00:37.500
+Reloaded, still at the Brands page, with sort count
+
+7
+00:00:37.500 --> 00:00:40.433
+13 cards are shown.
+
+8
+00:00:40.433 --> 00:00:44.433
+"Most products" selected (aria-current), "Name" not
+
+9
+00:00:44.433 --> 00:00:48.763
+First card: Gravitator (most products after reload)
+
+10
+00:00:48.763 --> 00:00:52.763
+Middle card: Legend (7th of 13)
+
+11
+00:00:52.763 --> 00:00:56.763
+Last card: XE (13 cards)
+
+12
+00:00:56.763 --> 00:01:02.363
+Result: reloading after choosing "Most products" keeps the count order, as expected.

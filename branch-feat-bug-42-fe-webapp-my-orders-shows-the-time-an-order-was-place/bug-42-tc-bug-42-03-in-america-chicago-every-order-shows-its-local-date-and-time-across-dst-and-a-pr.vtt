@@ -1,0 +1,89 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:13.933
+This video shows in America/Chicago every order shows its local date and time, across DST and a previous-day rollover. Ticket BUG-42: My orders shows the time an order was placed in UTC, not the shopper's own time.
+
+2
+00:00:13.933 --> 00:00:16.867
+Open the home page
+
+3
+00:00:16.867 --> 00:00:20.133
+Click the Sign in link
+
+4
+00:00:20.133 --> 00:00:23.400
+The Login heading is shown.
+
+5
+00:00:23.400 --> 00:00:27.000
+Type “alice” into the Username field
+
+6
+00:00:27.000 --> 00:00:29.933
+Type the Password (hidden)
+
+7
+00:00:29.933 --> 00:00:32.867
+Click the Login button
+
+8
+00:00:32.867 --> 00:00:36.133
+The Account button is shown.
+
+9
+00:00:36.133 --> 00:00:40.400
+Browser time zone America/Chicago: opened the Orders page
+
+10
+00:00:40.400 --> 00:00:45.333
+“NUMBER DATE TOTAL STATUS 1 11/16/2026 09:08:50 $149.99” is shown.
+
+11
+00:00:45.333 --> 00:00:49.600
+5 items are shown. “11/16/2026 09:08:50” is shown.
+
+12
+00:00:49.600 --> 00:00:53.600
+Order 1 (15:08:50 UTC, CST): 11/16/2026 09:08:50
+
+13
+00:00:53.600 --> 00:00:56.533
+“07/04/2026 16:05:07” is shown.
+
+14
+00:00:56.533 --> 00:01:00.533
+Order 2 (21:05:07 UTC, CDT): 07/04/2026 16:05:07
+
+15
+00:01:00.533 --> 00:01:03.467
+“03/01/2026 23:59:59” is shown.
+
+16
+00:01:03.467 --> 00:01:08.067
+Order 3 (03/02 05:59:59 UTC, previous day): 03/01/2026 23:59:59
+
+17
+00:01:08.067 --> 00:01:11.000
+“11/16/2026 08:59:59” is shown.
+
+18
+00:01:11.000 --> 00:01:15.000
+Order 4 (14:59:59 UTC): 11/16/2026 08:59:59
+
+19
+00:01:15.000 --> 00:01:17.933
+“11/16/2026 09:00:00” is shown.
+
+20
+00:01:17.933 --> 00:01:21.933
+Order 5 (15:00:00 UTC): 11/16/2026 09:00:00
+
+21
+00:01:21.933 --> 00:01:26.533
+5 orders, each in Chicago time, MM/dd/yyyy HH:mm:ss (24-hour)
+
+22
+00:01:26.533 --> 00:01:34.467
+Result: in America/Chicago every order shows its local date and time, across DST and a previous-day rollover, as expected.

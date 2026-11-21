@@ -1,0 +1,93 @@
+WEBVTT
+
+1
+00:00:00.000 --> 00:00:12.267
+This video shows order number, total and status are unchanged by the date conversion. Ticket BUG-42: My orders shows the time an order was placed in UTC, not the shopper's own time.
+
+2
+00:00:12.267 --> 00:00:15.200
+Open the home page
+
+3
+00:00:15.200 --> 00:00:18.467
+Click the Sign in link
+
+4
+00:00:18.467 --> 00:00:21.733
+The Login heading is shown.
+
+5
+00:00:21.733 --> 00:00:25.333
+Type “alice” into the Username field
+
+6
+00:00:25.333 --> 00:00:28.267
+Type the Password (hidden)
+
+7
+00:00:28.267 --> 00:00:31.200
+Click the Login button
+
+8
+00:00:31.200 --> 00:00:34.467
+The Account button is shown.
+
+9
+00:00:34.467 --> 00:00:38.733
+Browser time zone Asia/Tokyo: opened the Orders page
+
+10
+00:00:38.733 --> 00:00:43.667
+“NUMBER DATE TOTAL STATUS 1 11/17/2026 00:08:50 $149.99” is shown.
+
+11
+00:00:43.667 --> 00:00:48.933
+4 items are shown, in this order: Number, Date, Total, Status.
+
+12
+00:00:48.933 --> 00:00:52.933
+Header: Number, Date, Total, Status
+
+13
+00:00:52.933 --> 00:00:57.200
+5 items are shown. “11/17/2026 00:08:50” is shown.
+
+14
+00:00:57.200 --> 00:01:01.200
+Order 1: $149.99, Submitted; Date 11/17/2026 00:08:50
+
+15
+00:01:01.200 --> 00:01:04.133
+“07/05/2026 06:05:07” is shown.
+
+16
+00:01:04.133 --> 00:01:08.133
+Order 2: $399.98, Paid; Date 07/05/2026 06:05:07
+
+17
+00:01:08.133 --> 00:01:11.067
+“03/02/2026 14:59:59” is shown.
+
+18
+00:01:11.067 --> 00:01:15.067
+Order 3: $349.98, Shipped; Date 03/02/2026 14:59:59
+
+19
+00:01:15.067 --> 00:01:18.000
+“11/16/2026 23:59:59” is shown.
+
+20
+00:01:18.000 --> 00:01:22.000
+Order 4: $199.99, Cancelled; Date 11/16/2026 23:59:59
+
+21
+00:01:22.000 --> 00:01:24.933
+“11/17/2026 00:00:00” is shown.
+
+22
+00:01:24.933 --> 00:01:28.933
+Order 5: $149.99, Submitted; Date 11/17/2026 00:00:00
+
+23
+00:01:28.933 --> 00:01:35.200
+Result: order number, total and status are unchanged by the date conversion, as expected.
