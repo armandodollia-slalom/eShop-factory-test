@@ -55,7 +55,10 @@ export function fingerprint(tool, f, text = null) {
 }
 
 // Adds `file` (repository-relative), `fingerprint` and `tool` to a tool's raw findings, and a unique `id`
-// (`tool:<rule>:<fingerprint>`, with `~2`, `~3` for further copies of the same finding).
+// (`tool:fp-<fingerprint>:<rule>`, with `~2`, `~3` after the fingerprint for further copies of the same finding).
+// The fingerprint comes first and is prefixed: `tool:<rule>:<hex>` put a rule name such as generic-api-key directly
+// before a hex string, which third-party secret scanners read as a posted API key (dogfood C23, owner report). Ids
+// written before 0.2.85 are read through canonicalFindingId.
 export function identify(root, toolId, raw) {
   const cache = new Map();
   const seen = new Map();
@@ -64,9 +67,23 @@ export function identify(root, toolId, raw) {
     const fp = fingerprint(toolId, { ...f, file }, f.redacted ? null : lineText(root, file, f.line, cache));
     const n = (seen.get(fp) ?? 0) + 1;
     seen.set(fp, n);
-    return { ...f, tool: toolId, file, fingerprint: fp, id: `tool:${f.rule ?? 'unknown'}:${fp}${n > 1 ? `~${n}` : ''}` };
+    // A secret finding's `key` (a hash of the value) has done its work in the fingerprint; it is not recorded (a field named
+    // key before a hash reads as a posted credential to secret scanners).
+    const { key, ...rest } = f.redacted ? f : { ...f, key: f.key };
+    return { ...rest, ...(f.redacted ? {} : { key }), tool: toolId, file, fingerprint: fp, id: findingId(f.rule, fp, n) };
   });
 }
+
+export const findingId = (rule, fp, n = 1) => `tool:fp-${fp}${n > 1 ? `~${n}` : ''}:${rule ?? 'unknown'}`;
+
+// Either form, as the current one: `tool:<rule>:<fp>[~n]` (before 0.2.85) becomes `tool:fp-<fp>[~n]:<rule>`.
+export function canonicalFindingId(id) {
+  const s = String(id ?? '');
+  if (/^tool:fp-/.test(s)) return s;
+  const m = /^tool:(.+):([0-9a-f]{8,64})(~\d+)?$/.exec(s);
+  return m ? `tool:fp-${m[2]}${m[3] ?? ''}:${m[1]}` : s;
+}
+export const sameFindingId = (a, b) => canonicalFindingId(a) === canonicalFindingId(b);
 
 // Splits a tool's findings into the ones the change introduced and the pre-existing ones it can see.
 //   scope     changed-lines | changed-files | repo
