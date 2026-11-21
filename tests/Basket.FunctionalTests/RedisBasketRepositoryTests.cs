@@ -1,13 +1,16 @@
 namespace eShop.Basket.FunctionalTests;
 
-public sealed class RedisBasketRepositoryTests(RedisFixture fixture) : IClassFixture<RedisFixture>
+[Collection(BasketApiCollection.Name)]
+public sealed class RedisBasketRepositoryTests(BasketApiFixture apiFixture)
 {
+    private readonly RedisFixture _fixture = apiFixture.Redis;
+
     [Fact]
     public async Task UpdateGetAndDeleteRoundTrip()
     {
         var repository = new RedisBasketRepository(
             NullLogger<RedisBasketRepository>.Instance,
-            fixture.Connection);
+            _fixture.Connection);
         var buyerId = $"buyer-{Guid.NewGuid():N}";
         var basket = new CustomerBasket
         {
@@ -42,7 +45,7 @@ public sealed class RedisBasketRepositoryTests(RedisFixture fixture) : IClassFix
     {
         var repository = new RedisBasketRepository(
             NullLogger<RedisBasketRepository>.Instance,
-            fixture.Connection);
+            _fixture.Connection);
         var buyerId = $"missing-{Guid.NewGuid():N}";
 
         Assert.Null(await repository.GetBasketAsync(buyerId));
