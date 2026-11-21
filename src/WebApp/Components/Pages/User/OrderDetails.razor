@@ -1,0 +1,126 @@
+@page "/user/orders/{orderNumber}"
+@using System.Globalization
+@attribute [Authorize]
+@attribute [BufferResponse]
+@inject OrderingService OrderingService
+
+<PageTitle>Order details | AdventureWorks</PageTitle>
+<SectionContent SectionName="page-header-title">Order details</SectionContent>
+
+<div class="order-details">
+    <a class="order-details-back" href="user/orders">
+        <img role="presentation" src="icons/arrow-left.svg" /> Back to my orders
+    </a>
+
+    @if (notFound)
+    {
+        <p class="order-details-notfound">Order not found</p>
+    }
+    else if (order is not null)
+    {
+        <ul class="orders-list order-details-summary">
+            <li class="orders-header orders-item">
+                <div>Number</div>
+                <div>Date</div>
+                <div class="total-header">Total</div>
+                <div>Status</div>
+            </li>
+            <li class="orders-item">
+                <div class="order-number">
+                    @order.OrderNumber
+                </div>
+                <div class="order-date">
+                    @order.Date
+                </div>
+                <div class="order-total">
+                    $@order.Total.ToPriceDisplay()
+                </div>
+                <div class="order-status">
+                    <OrderStatusBadge Status="@order.Status" />
+                </div>
+            </li>
+        </ul>
+
+        <section class="order-details-section" aria-labelledby="order-details-address-heading">
+            <h2 id="order-details-address-heading">Delivery address</h2>
+            <dl class="order-details-address">
+                <dt>Street</dt>
+                <dd>@order.Street</dd>
+                <dt>City</dt>
+                <dd>@order.City</dd>
+                <dt>State</dt>
+                <dd>@order.State</dd>
+                <dt>Country</dt>
+                <dd>@order.Country</dd>
+                <dt>Zip code</dt>
+                <dd>@order.Zipcode</dd>
+            </dl>
+        </section>
+
+        <section class="order-details-section" aria-labelledby="order-details-items-heading">
+            <h2 id="order-details-items-heading">Items</h2>
+            <ul class="orders-list order-details-items">
+                <li class="orders-header orders-item">
+                    <div>Product</div>
+                    <div class="numeric-header">Unit price</div>
+                    <div class="numeric-header">Units</div>
+                    <div class="numeric-header">Line total</div>
+                </li>
+                @foreach (var item in order.OrderItems)
+                {
+                    <li class="orders-item">
+                        <div class="item-name">
+                            @item.ProductName
+                        </div>
+                        <div class="item-numeric">
+                            $@item.UnitPrice.ToPriceDisplay()
+                        </div>
+                        <div class="item-numeric">
+                            @item.Units
+                        </div>
+                        <div class="item-numeric item-line-total">
+                            $@((item.UnitPrice * item.Units).ToPriceDisplay())
+                        </div>
+                    </li>
+                }
+            </ul>
+        </section>
+    }
+</div>
+
+@code {
+    private OrderDetailRecord? order;
+    private bool notFound;
+
+    [Parameter]
+    // A string, not a numeric route constraint, so any whole number (however long) still
+    // reaches this page and gets "Order not found" instead of the WebApp's bare 404 for an
+    // unmatched route.
+    public string? OrderNumber { get; set; }
+
+    [CascadingParameter]
+    public HttpContext? HttpContext { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (int.TryParse(OrderNumber, NumberStyles.None, CultureInfo.InvariantCulture, out var orderNumber)
+            && orderNumber >= 1)
+        {
+            order = await OrderingService.GetOrder(orderNumber);
+        }
+
+        if (order is null)
+        {
+            notFound = true;
+            // A 404 set during rendering makes the SSR endpoint send an empty body,
+            // so apply it only when the rendered response starts. [BufferResponse] makes that
+            // happen after rendering even when the layout's streaming cart menu is still loading.
+            var httpContext = HttpContext!;
+            httpContext.Response.OnStarting(() =>
+            {
+                httpContext.Response.StatusCode = StatusCodes.Status404NotFound;
+                return Task.CompletedTask;
+            });
+        }
+    }
+}

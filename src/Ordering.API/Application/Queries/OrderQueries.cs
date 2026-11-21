@@ -3,11 +3,13 @@
 public class OrderQueries(OrderingContext context)
     : IOrderQueries
 {
-    public async Task<Order> GetOrderAsync(int id)
+    public async Task<Order> GetOrderAsync(int id, string userId)
     {
+        // An order owned by another buyer is reported exactly like a missing one,
+        // so callers cannot tell whether a foreign order id exists.
         var order = await context.Orders
             .Include(o => o.OrderItems)
-            .FirstOrDefaultAsync(o => o.Id == id);
+            .FirstOrDefaultAsync(o => o.Id == id && o.Buyer.IdentityGuid == userId);
       
         if (order is null)
             throw new KeyNotFoundException();

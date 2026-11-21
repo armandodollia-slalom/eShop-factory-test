@@ -1,0 +1,23 @@
+.status {
+    display: inline-flex;
+    align-items: center;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--color-line-strong);
+    color: var(--color-muted);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    line-height: 1;
+    padding: 0.4rem 0.85rem;
+}
+
+.status.cancelled {
+    color: var(--color-danger);
+    border-color: var(--color-danger);
+    background: var(--color-danger-tint);
+}
+
+.status.paid {
+    color: var(--color-success);
+    border-color: var(--color-success);
+    background: var(--color-success-tint);
+}

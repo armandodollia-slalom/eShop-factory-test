@@ -1,0 +1,8 @@
+<span class="status @Status.ToLower()">
+    @Status
+</span>
+
+@code {
+    [Parameter, EditorRequired]
+    public string Status { get; set; } = string.Empty;
+}

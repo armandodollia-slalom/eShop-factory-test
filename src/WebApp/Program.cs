@@ -27,6 +27,8 @@ app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 
+app.UseBufferedResponses();
+
 app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 
 app.MapForwarder("/product-images/{id}", "https+http://catalog-api", "/api/catalog/items/{id}/pic");
