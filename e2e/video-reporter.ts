@@ -141,7 +141,7 @@ export default class VideoReporter implements Reporter {
   }
 
   onEnd() {
-    if (this.tests.some(t => t.videos.length || t.keyframes.length || t.api?.length)) {
+    if (this.tests.some(t => t.videos.length || t.keyframes.length || t.api?.length || t.apiRepro || !t.ok)) {
       fs.mkdirSync(OUT_DIR, { recursive: true });
       fs.writeFileSync(MANIFEST, JSON.stringify({ startedAt: this.startedAt, finishedAt: new Date().toISOString(), tests: this.tests }, null, 2));
     }
