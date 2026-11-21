@@ -83,7 +83,8 @@ public static class OrdersApi
     {
         try
         {
-            var order = await services.Queries.GetOrderAsync(orderId);
+            var userId = services.IdentityService.GetUserIdentity();
+            var order = await services.Queries.GetOrderAsync(orderId, userId);
             return TypedResults.Ok(order);
         }
         catch
@@ -139,9 +140,9 @@ public static class OrdersApi
         CreateOrderRequest request,
         [AsParameters] OrderServices services)
     {
-        
+
         //mask the credit card number
-        
+
         services.Logger.LogInformation(
             "Sending command: {CommandName} - {IdProperty}: {CommandId}",
             request.GetGenericTypeName(),

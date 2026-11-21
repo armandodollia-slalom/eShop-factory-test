@@ -1,9 +1,9 @@
 ﻿namespace eShop.Ordering.UnitTests.Application;
 
-using Microsoft.AspNetCore.Http.HttpResults;
 using eShop.Ordering.API.Application.Queries;
-using Order = eShop.Ordering.API.Application.Queries.Order;
+using Microsoft.AspNetCore.Http.HttpResults;
 using NSubstitute.ExceptionExtensions;
+using Order = eShop.Ordering.API.Application.Queries.Order;
 
 [TestClass]
 public class OrdersWebApiTest
@@ -107,8 +107,10 @@ public class OrdersWebApiTest
     {
         // Arrange
         var fakeOrderId = 123;
+        var fakeUserId = "fake-user-id";
         var fakeDynamicResult = new Order();
-        _orderQueriesMock.GetOrderAsync(Arg.Any<int>())
+        _identityServiceMock.GetUserIdentity().Returns(fakeUserId);
+        _orderQueriesMock.GetOrderAsync(fakeOrderId, fakeUserId)
             .Returns(Task.FromResult(fakeDynamicResult));
 
         // Act
@@ -118,6 +120,7 @@ public class OrdersWebApiTest
         // Assert
         Assert.IsInstanceOfType<Ok<Order>>(result.Result);
         Assert.AreSame(fakeDynamicResult, ((Ok<Order>)result.Result).Value);
+        await _orderQueriesMock.Received(1).GetOrderAsync(fakeOrderId, fakeUserId);
     }
 
     [TestMethod]
@@ -126,7 +129,7 @@ public class OrdersWebApiTest
         // Arrange
         var fakeOrderId = 123;
 #pragma warning disable NS5003
-        _orderQueriesMock.GetOrderAsync(Arg.Any<int>())
+        _orderQueriesMock.GetOrderAsync(Arg.Any<int>(), Arg.Any<string>())
             .Throws(new KeyNotFoundException());
 #pragma warning restore NS5003
 
