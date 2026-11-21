@@ -1,0 +1,6 @@
+description: BUG-41 double-click on Place order; needs only the seeded user alice with an empty bag, no orders, and catalog item 28.
+extends: default
+
+# No extra rows: every case starts from `default` (reloaded before each test) as alice (Pass123$,
+# Id 50ddac7e-9b69-4d68-a91b-25100ef2e403, address 15703 NE 61st Ct / Redmond / WA / 98052 / U.S.) with an
+# empty shopping bag and no orders, and checks out catalog item 28 "Alpine Peak Down Jacket" (249.99).

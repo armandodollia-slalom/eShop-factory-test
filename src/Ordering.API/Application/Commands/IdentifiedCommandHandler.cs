@@ -45,7 +45,16 @@ public abstract class IdentifiedCommandHandler<T, R> : IRequestHandler<Identifie
         }
         else
         {
-            await _requestManager.CreateRequestForCommandAsync<T>(message.Id);
+            try
+            {
+                await _requestManager.CreateRequestForCommandAsync<T>(message.Id);
+            }
+            catch (OrderingDomainException)
+            {
+                // A concurrent request with the same id was recorded first: treat this one as its duplicate.
+                return CreateResultForDuplicateRequest();
+            }
+
             try
             {
                 var command = message.Command;
