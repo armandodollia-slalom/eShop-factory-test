@@ -129,7 +129,7 @@ function videoSettings(testInfo: TestInfo): VideoOption | undefined {
 const API_LOG = /^(1|true|yes)$/i.test(process.env.E2E_API_LOG ?? '');
 const API_METHODS = new Set(['get', 'post', 'put', 'patch', 'delete', 'head', 'fetch']);
 const API_BODY_LIMIT = 4000;
-const SECRET_HEADER = /^(authorization|cookie|set-cookie|x-api-key)$/i;
+const SECRET_HEADER = /authorization|cookie|(?<!(?:continuation|page|next|cursor)[-_.]?)token|secret|password|passwd|passphrase|(?:^|[-_.])(?:pass|pwd)(?:$|[-_.])|(?:api|access|private|auth|encryption|signing|subscription|functions?|master|host|client|app)[-_.]?key|client[-_.]?principal|session|credential|signature|(?:^|[-_.])pat$/i;
 const SECRET_KEY = /pass(word)?|secret|token|api[-_]?key/i;
 
 export interface ApiExchange {
@@ -158,19 +158,75 @@ export interface ApiExchange {
  *   });
  */
 let reproLabel: string | null = null;
-let reproRecord: { labels: string[]; failed?: { label: string; message: string } } = { labels: [] };
+let reproTestInfo: TestInfo | undefined;
+let reproResponses = 0;
+// testInfo.errors.length when the current top-level block recorded its first response: only a soft assertion that fails
+// after it counts as the reproduction (one that failed before, a precondition, does not).
+let reproErrorsAtFirstResponse: number | null = null;
+let reproRecord: { labels: string[]; failed?: { label: string; kind: 'check' | 'error'; matcher?: string; soft?: boolean; responses: number; message: string } } = { labels: [] };
+
+// eslint-disable-next-line no-control-regex
+const stripAnsiCodes = (t: string) => t.replace(/\u001b\[[0-9;]*m/g, '');
+
+function formatCheckMessage(raw: unknown): string {
+  const lines = stripAnsiCodes(String(raw ?? '')).split('\n').filter(l => l.trim());
+  const checkLines = lines.filter(l => /expect|received|expected/i.test(l));
+  return (checkLines.length ? checkLines : lines).slice(0, 4).join('\n').slice(0, 600);
+}
+
+/**
+ * True only for a Playwright `expect(...)` matcher failure (`ExpectError` / `JestAssertionError` carrying a
+ * `matcherResult` object with string `name`, boolean `pass`, and `message`).
+ */
+function isPlaywrightAssertion(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const e = error as { matcherResult?: unknown; constructor?: { name?: string } };
+  const ctor = e.constructor?.name ?? '';
+  if (ctor !== 'ExpectError' && ctor !== 'JestAssertionError') return false;
+  const mr = e.matcherResult as { name?: unknown; pass?: unknown; message?: unknown } | undefined;
+  return Boolean(
+    mr && typeof mr === 'object'
+    && typeof mr.name === 'string'
+    && typeof mr.pass === 'boolean'
+    && (typeof mr.message === 'string' || typeof mr.message === 'function'),
+  );
+}
+
 export async function reproduction<T>(label: string, fn: () => Promise<T>): Promise<T> {
+  const prevLabel = reproLabel;
+  if (prevLabel === null) {
+    reproRecord.failed = undefined;
+    reproErrorsAtFirstResponse = null;
+  }
+  const responsesBefore = reproResponses;
+  const errorsBefore = reproTestInfo?.errors.length ?? 0;
   reproLabel = label;
   if (!reproRecord.labels.includes(label)) reproRecord.labels.push(label);
   try {
-    return await fn();
+    const result = await fn();
+    const added = reproTestInfo ? reproTestInfo.errors.slice(errorsBefore) : [];
+    const afterResponse = reproTestInfo && reproErrorsAtFirstResponse !== null ? reproTestInfo.errors.slice(Math.max(errorsBefore, reproErrorsAtFirstResponse)) : [];
+    const responses = reproResponses - responsesBefore;
+    if (added.length > 0 && reproRecord.failed?.kind !== 'check') {
+      if (responses > 0 && afterResponse.length > 0) {
+        reproRecord.failed = { label, kind: 'check', soft: true, responses, message: formatCheckMessage(afterResponse.at(-1)?.message) };
+      } else if (prevLabel === null) {
+        reproRecord.failed = { label, kind: 'error', responses: 0, message: '' };
+      }
+    }
+    return result;
   } catch (error) {
-    // eslint-disable-next-line no-control-regex
-    const message = String((error as Error)?.message ?? error).replace(/\u001b\[[0-9;]*m/g, '').split('\n').filter(l => /expect|received|expected/i.test(l)).slice(0, 4).join('\n').slice(0, 600);
-    reproRecord.failed ??= { label, message };
+    const responses = reproResponses - responsesBefore;
+    const assertion = isPlaywrightAssertion(error);
+    const kind: 'check' | 'error' = assertion && responses > 0 ? 'check' : 'error';
+    const mr = (error as { matcherResult?: { name?: unknown } })?.matcherResult;
+    const matcher = typeof mr?.name === 'string' ? mr.name : undefined;
+    if (reproRecord.failed?.kind !== 'check') {
+      reproRecord.failed = { label, kind, ...(kind === 'check' && matcher ? { matcher } : {}), responses, message: kind === 'check' ? formatCheckMessage((error as Error)?.message ?? error) : '' };
+    }
     throw error;
   } finally {
-    reproLabel = null;
+    reproLabel = prevLabel;
   }
 }
 
@@ -233,6 +289,10 @@ function recordApiCalls(context: APIRequestContext, log: ApiExchange[]): APIRequ
         const durationMs = Date.now() - started;
         const exchange: ApiExchange = await toExchange(prop, urlOrRequest, options, response).catch(() => ({ method: prop.toUpperCase(), url: response.url(), status: response.status() }));
         log.push({ ...exchange, durationMs, ...(repro ? { repro } : {}) });
+        if (repro) {
+          if (reproErrorsAtFirstResponse === null) reproErrorsAtFirstResponse = reproTestInfo?.errors.length ?? 0;
+          reproResponses++;
+        }
         return response;
       };
     },
@@ -254,8 +314,15 @@ export const test = withStepKeyframes(base.extend<{ _recordManualContexts: void 
   request: async ({ request }, use, testInfo) => {
     if (!API_LOG) return use(request);
     const log: ApiExchange[] = [];
+    reproTestInfo = testInfo;
+    reproResponses = 0;
+    reproErrorsAtFirstResponse = null;
     reproRecord = { labels: [] };
-    await use(recordApiCalls(request, log));
+    try {
+      await use(recordApiCalls(request, log));
+    } finally {
+      reproTestInfo = undefined;
+    }
     if (log.length) await testInfo.attach('api-exchanges', { body: JSON.stringify(log), contentType: 'application/json' });
     if (reproRecord.labels.length) await testInfo.attach('api-reproduction', { body: JSON.stringify(reproRecord), contentType: 'application/json' });
   },
