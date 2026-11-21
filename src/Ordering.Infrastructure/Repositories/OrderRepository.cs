@@ -20,6 +20,12 @@ public class OrderRepository
 
     public async Task<Order> GetAsync(int orderId)
     {
+        // Every status change loads the order through here inside its command's transaction. Locking the row
+        // makes concurrent status changes (cancel, grace period, stock, payment) run one after another, so each
+        // reads the status the previous one committed instead of overwriting it with a stale copy.
+        await _context.Database.ExecuteSqlAsync(
+            $"""SELECT 1 FROM ordering.orders WHERE "Id" = {orderId} FOR UPDATE""");
+
         var order = await _context.Orders.FindAsync(orderId);
 
         if (order != null)
