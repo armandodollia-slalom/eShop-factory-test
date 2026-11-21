@@ -42,6 +42,8 @@ interface ManifestTest {
   keyframes: { label: string; path: string }[];
   /** HTTP calls made through the `request` fixture (E2E_API_LOG=1, e2e/fixtures.ts). */
   api?: unknown[];
+  /** The `reproduction` blocks the test ran and the one whose check failed (e2e/fixtures.ts). */
+  apiRepro?: unknown;
   /** The demo fixture's step log of the first video (captions, timings, covered regions, redacted visible text). */
   steps?: string;
 }
@@ -86,6 +88,14 @@ export default class VideoReporter implements Reporter {
       videos: [],
       keyframes: [],
     };
+    const repro = result.attachments.find(a => a.name === 'api-reproduction' && a.body);
+    if (repro) {
+      try {
+        entry.apiRepro = JSON.parse(repro.body!.toString('utf8'));
+      } catch {
+        // as for the exchanges below
+      }
+    }
     const api = result.attachments.find(a => a.name === 'api-exchanges' && a.body);
     if (api) {
       try {
