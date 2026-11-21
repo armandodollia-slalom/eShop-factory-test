@@ -1,0 +1,36 @@
+description: ORDST-1 status filter on My orders; alice has orders 101 and 102 Paid, 103 Shipped, 104 Cancelled; bob has none.
+extends: default
+
+# alice (Pass123$, Id 50ddac7e-9b69-4d68-a91b-25100ef2e403) owns four orders in the three statuses background
+# processing never moves an order out of (Paid, Shipped, Cancelled), so the data stays stable while the tests run.
+# No Submitted, AwaitingValidation or StockConfirmed orders: TC-ORDST-1-04 and TC-ORDST-1-14 need a status alice has none of.
+# bob (bc8b0071-21af-41ab-b1d2-15c4efc368df) has no buyer row and no orders (TC-ORDST-1-05, TC-ORDST-1-15).
+# Every order has one line of product 99 at 10.00 with 1 to 4 units, so the totals are 10.00, 20.00, 30.00 and 40.00.
+postgres:
+  orderingdb:
+    # The buyer the orders belong to: GET /api/orders matches buyers.IdentityGuid to the token's subject.
+    - table: ordering.buyers
+      rows:
+        - { Id: 1, IdentityGuid: 50ddac7e-9b69-4d68-a91b-25100ef2e403, Name: Alice }
+    # alice's card, which the orders reference (Visa, card type 2 from the base scenario).
+    - table: ordering.paymentmethods
+      rows:
+        - { Id: 1, BuyerId: 1, Alias: "Payment Method on 2026-11-01", CardHolderName: Alice Smith, CardNumber: "4012888888881881", CardTypeId: 2, Expiration: "2030-12-31T00:00:00Z" }
+    - table: ordering.orders
+      rows:
+        # 101 and 102: the two Paid orders (TC-ORDST-1-01, -10, -16 ships 101).
+        - { Id: 101, BuyerId: 1, PaymentMethodId: 1, OrderStatus: Paid, OrderDate: "2026-11-01T10:00:00Z", Description: null, Address_Street: 15703 NE 61st Ct, Address_City: Redmond, Address_State: WA, Address_Country: U.S., Address_ZipCode: "98052" }
+        - { Id: 102, BuyerId: 1, PaymentMethodId: 1, OrderStatus: Paid, OrderDate: "2026-11-02T10:00:00Z", Description: null, Address_Street: 15703 NE 61st Ct, Address_City: Redmond, Address_State: WA, Address_Country: U.S., Address_ZipCode: "98052" }
+        # 103: alice's only Shipped order (TC-ORDST-1-03, -11).
+        - { Id: 103, BuyerId: 1, PaymentMethodId: 1, OrderStatus: Shipped, OrderDate: "2026-11-03T10:00:00Z", Description: null, Address_Street: 15703 NE 61st Ct, Address_City: Redmond, Address_State: WA, Address_Country: U.S., Address_ZipCode: "98052" }
+        # 104: alice's only Cancelled order (TC-ORDST-1-12).
+        - { Id: 104, BuyerId: 1, PaymentMethodId: 1, OrderStatus: Cancelled, OrderDate: "2026-11-04T10:00:00Z", Description: null, Address_Street: 15703 NE 61st Ct, Address_City: Redmond, Address_State: WA, Address_Country: U.S., Address_ZipCode: "98052" }
+    # One line per order; Units sets the total (Units x 10.00).
+    - table: ordering.orderItems
+      rows:
+        - { Id: 1, OrderId: 101, ProductId: 99, ProductName: Adventurer GPS Watch, UnitPrice: 10.00, Units: 1, Discount: 0, PictureUrl: null }
+        - { Id: 2, OrderId: 102, ProductId: 99, ProductName: Adventurer GPS Watch, UnitPrice: 10.00, Units: 2, Discount: 0, PictureUrl: null }
+        - { Id: 3, OrderId: 103, ProductId: 99, ProductName: Adventurer GPS Watch, UnitPrice: 10.00, Units: 3, Discount: 0, PictureUrl: null }
+        - { Id: 4, OrderId: 104, ProductId: 99, ProductName: Adventurer GPS Watch, UnitPrice: 10.00, Units: 4, Discount: 0, PictureUrl: null }
+    # The HiLo sequences no column owns: move them past the ids above so orders created later do not collide.
+    - sql: sequences.sql

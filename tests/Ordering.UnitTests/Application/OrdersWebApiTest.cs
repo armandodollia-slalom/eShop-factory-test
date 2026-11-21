@@ -1,9 +1,9 @@
 ﻿namespace eShop.Ordering.UnitTests.Application;
 
-using Microsoft.AspNetCore.Http.HttpResults;
 using eShop.Ordering.API.Application.Queries;
-using Order = eShop.Ordering.API.Application.Queries.Order;
+using Microsoft.AspNetCore.Http.HttpResults;
 using NSubstitute.ExceptionExtensions;
+using Order = eShop.Ordering.API.Application.Queries.Order;
 
 [TestClass]
 public class OrdersWebApiTest
@@ -99,7 +99,7 @@ public class OrdersWebApiTest
         var result = await OrdersApi.GetOrdersByUserAsync(orderServices);
 
         // Assert
-        Assert.IsInstanceOfType<Ok<IEnumerable<OrderSummary>>>(result);
+        Assert.IsInstanceOfType<Ok<IEnumerable<OrderSummary>>>(result.Result);
     }
 
     [TestMethod]

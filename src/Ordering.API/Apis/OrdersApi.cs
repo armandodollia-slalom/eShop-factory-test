@@ -12,7 +12,8 @@ public static class OrdersApi
         api.MapPut("/cancel", CancelOrderAsync);
         api.MapPut("/ship", ShipOrderAsync);
         api.MapGet("{orderId:int}", GetOrderAsync);
-        api.MapGet("/", GetOrdersByUserAsync);
+        api.MapGet("/", GetOrdersByUserAsync)
+            .ProducesProblem(StatusCodes.Status400BadRequest);
         api.MapGet("/cardtypes", GetCardTypesAsync);
         api.MapPost("/draft", CreateOrderDraftAsync)
             .ProducesProblem(StatusCodes.Status400BadRequest);
@@ -92,10 +93,27 @@ public static class OrdersApi
         }
     }
 
-    public static async Task<Ok<IEnumerable<OrderSummary>>> GetOrdersByUserAsync([AsParameters] OrderServices services)
+    public static async Task<Results<Ok<IEnumerable<OrderSummary>>, ProblemHttpResult>> GetOrdersByUserAsync(
+        [AsParameters] OrderServices services,
+        string status = null)
     {
+        OrderStatus? orderStatus = null;
+        if (status is not null)
+        {
+            // Only the status names are accepted; Enum.TryParse alone would also take numbers and comma lists.
+            var name = Enum.GetNames<OrderStatus>().FirstOrDefault(n => string.Equals(n, status, StringComparison.OrdinalIgnoreCase));
+            if (name is null)
+            {
+                return TypedResults.Problem(
+                    detail: $"Unknown order status '{status}'. Valid values: {string.Join(", ", Enum.GetNames<OrderStatus>())}.",
+                    statusCode: StatusCodes.Status400BadRequest);
+            }
+
+            orderStatus = Enum.Parse<OrderStatus>(name);
+        }
+
         var userId = services.IdentityService.GetUserIdentity();
-        var orders = await services.Queries.GetOrdersFromUserAsync(userId);
+        var orders = await services.Queries.GetOrdersFromUserAsync(userId, orderStatus);
         return TypedResults.Ok(orders);
     }
 
@@ -139,9 +157,9 @@ public static class OrdersApi
         CreateOrderRequest request,
         [AsParameters] OrderServices services)
     {
-        
+
         //mask the credit card number
-        
+
         services.Logger.LogInformation(
             "Sending command: {CommandName} - {IdProperty}: {CommandId}",
             request.GetGenericTypeName(),

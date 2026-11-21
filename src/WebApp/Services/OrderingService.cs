@@ -4,9 +4,12 @@ public class OrderingService(HttpClient httpClient)
 {
     private readonly string remoteServiceBaseUrl = "/api/Orders/";
 
-    public Task<OrderRecord[]> GetOrders()
+    public Task<OrderRecord[]> GetOrders(string? status = null)
     {
-        return httpClient.GetFromJsonAsync<OrderRecord[]>(remoteServiceBaseUrl)!;
+        var uri = string.IsNullOrEmpty(status)
+            ? remoteServiceBaseUrl
+            : $"{remoteServiceBaseUrl}?status={Uri.EscapeDataString(status)}";
+        return httpClient.GetFromJsonAsync<OrderRecord[]>(uri)!;
     }
 
     public Task CreateOrder(CreateOrderRequest request, Guid requestId)
