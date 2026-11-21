@@ -1,0 +1,23 @@
+description: Alice's orders in each status for the invalid order status change cases of BUG-10 (cancel and ship).
+extends: default
+
+postgres:
+  orderingdb:
+    - table: ordering.buyers
+      rows:
+        # alice, the user the tests sign in as (identity id from the default scenario)
+        - { Id: 1, IdentityGuid: 50ddac7e-9b69-4d68-a91b-25100ef2e403, Name: alice }
+    - table: ordering.orders
+      rows:
+        # order 5 Shipped, read-only: cancel and ship are rejected (TC-01, 04, 09, 10, 14)
+        - { Id: 5, OrderStatus: Shipped, Description: BUG-10 order 5, BuyerId: 1, OrderDate: 2026-01-01T10:00:00Z, Address_Street: 1 Main St, Address_City: Seattle, Address_State: WA, Address_Country: USA, Address_ZipCode: '98101' }
+        # order 6 Paid, read-only: cancel is rejected (TC-02)
+        - { Id: 6, OrderStatus: Paid, Description: BUG-10 order 6, BuyerId: 1, OrderDate: 2026-01-01T10:00:00Z, Address_Street: 1 Main St, Address_City: Seattle, Address_State: WA, Address_Country: USA, Address_ZipCode: '98101' }
+        # order 7 Submitted, read-only: ship is rejected (TC-03)
+        - { Id: 7, OrderStatus: Submitted, Description: BUG-10 order 7, BuyerId: 1, OrderDate: 2026-01-01T10:00:00Z, Address_Street: 1 Main St, Address_City: Seattle, Address_State: WA, Address_Country: USA, Address_ZipCode: '98101' }
+        # order 8 Submitted, mutated by TC-11 (cancel succeeds)
+        - { Id: 8, OrderStatus: Submitted, Description: BUG-10 order 8, BuyerId: 1, OrderDate: 2026-01-01T10:00:00Z, Address_Street: 1 Main St, Address_City: Seattle, Address_State: WA, Address_Country: USA, Address_ZipCode: '98101' }
+        # order 9 Paid, mutated by TC-12 (ship succeeds)
+        - { Id: 9, OrderStatus: Paid, Description: BUG-10 order 9, BuyerId: 1, OrderDate: 2026-01-01T10:00:00Z, Address_Street: 1 Main St, Address_City: Seattle, Address_State: WA, Address_Country: USA, Address_ZipCode: '98101' }
+        # order 10 Submitted, mutated by TC-13 (cancel twice with the same request id)
+        - { Id: 10, OrderStatus: Submitted, Description: BUG-10 order 10, BuyerId: 1, OrderDate: 2026-01-01T10:00:00Z, Address_Street: 1 Main St, Address_City: Seattle, Address_State: WA, Address_Country: USA, Address_ZipCode: '98101' }
