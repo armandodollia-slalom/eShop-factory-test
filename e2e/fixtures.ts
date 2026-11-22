@@ -134,9 +134,14 @@ const SECRET_KEY = /pass(word)?|secret|token|api[-_]?key/i;
 
 export interface ApiExchange {
   method: string;
+  /** Where the response came from (after any redirect). */
   url: string;
+  /** What the test asked for (before any redirect). */
+  requestUrl?: string;
   requestHeaders?: Record<string, string>;
   requestBody?: string;
+  /** 'as-given': the body is the object or form the test passed, printed as JSON, not the bytes sent. */
+  requestBodyForm?: 'as-given';
   status: number;
   responseContentType?: string;
   responseHeaders?: Record<string, string>;
@@ -238,17 +243,19 @@ function redact(value: unknown): unknown {
   return value;
 }
 
+// A `"key": value` pair of a JSON text whose value is a string, number or literal (an object or list under a secret-named
+// key is left whole for the harness, which masks it by its span); every part length-bounded (linear time on any body).
+const JSON_PAIR = /("(?:[^"\\\n]|\\.){1,128}")(\s*:\s*)("(?:[^"\\\n]|\\.){0,4096}"|-?\d[\d.eE+-]{0,64}|true|false|null)(?=\s*[,}\]\n]|$)/g;
+
 function bodyText(value: unknown): string | undefined {
   if (value === undefined || value === null) return undefined;
   let text: string;
   if (Buffer.isBuffer(value)) {
     text = `<${value.length} bytes>`;
   } else if (typeof value === 'string') {
-    try {
-      text = JSON.stringify(redact(JSON.parse(value)), null, 2);
-    } catch {
-      text = value;
-    }
+    // A text body is kept as it was sent or received, never parsed and printed again (that rounds integers above 2^53
+    // and drops duplicate keys); values under secret-named keys are masked in place.
+    text = value.replace(JSON_PAIR, (pair, key, sep) => (SECRET_KEY.test(key) ? `${key}${sep}"***"` : pair));
   } else {
     text = JSON.stringify(redact(value), null, 2);
   }
@@ -261,14 +268,18 @@ async function toExchange(name: string, target: any, options: any, response: API
   const headers = Object.entries((options?.headers ?? {}) as Record<string, string>)
     .map(([k, v]) => [k, SECRET_HEADER.test(k) ? '***' : String(v)]);
   const form = options?.form ?? (options?.multipart ? Object.fromEntries(Object.keys(options.multipart).map(k => [k, '<part>'])) : undefined);
+  // An object, form or multipart body is the test's own value, printed: not the bytes Playwright sent.
+  const given = options?.data !== undefined ? typeof options.data !== 'string' && !Buffer.isBuffer(options.data) : Boolean(form);
+  const requested = typeof target === 'string' ? target : isRequest ? target.url() : undefined;
   const contentType = response.headers()['content-type'];
   const responseHeaders = Object.fromEntries(Object.entries(response.headers()).map(([k, v]) => [k, SECRET_HEADER.test(k) ? '***' : String(v)]));
   const raw = await response.body().catch(() => undefined);
   return {
     method,
     url: response.url(),
+    ...(requested ? { requestUrl: requested } : {}),
     ...(headers.length ? { requestHeaders: Object.fromEntries(headers) } : {}),
-    ...(options?.data !== undefined || form ? { requestBody: bodyText(options?.data ?? form) } : {}),
+    ...(options?.data !== undefined || form ? { requestBody: bodyText(options?.data ?? form), ...(given ? { requestBodyForm: 'as-given' as const } : {}) } : {}),
     status: response.status(),
     ...(contentType ? { responseContentType: contentType } : {}),
     responseHeaders,
