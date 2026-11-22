@@ -29,7 +29,9 @@ const MARK = (rule) => `[redacted:${rule}]`;
 
 // Rule ids follow the scanner's (gitleaks / betterleaks default rules).
 export const RULES = [
-  { id: 'private-key', re: /-----BEGIN[ A-Z0-9_-]{0,100}PRIVATE KEY(?: BLOCK)?-----[\s\S]{16,}?-----END[ A-Z0-9_-]{0,100}PRIVATE KEY(?: BLOCK)?-----/g },
+  // A key block: the first end marker at least 16 characters after its begin marker (a forward pass, privateKeySpans; the
+  // equivalent lazy regex, quadratic on repeated begin markers, is the oracle of its test).
+  { id: 'private-key', scan: (t) => privateKeySpans(t) },
   { id: 'github-pat', re: /\bghp_[0-9A-Za-z]{36}\b/g },
   { id: 'github-fine-grained-pat', re: /\bgithub_pat_[0-9A-Za-z_]{82}\b/g },
   { id: 'github-oauth', re: /\bgho_[0-9A-Za-z]{36}\b/g },
@@ -49,8 +51,58 @@ export const RULES = [
   { id: 'connection-string-password', re: /\b((?:Password|Pwd)\s*=\s*)([^;'"\s<>{}]{4,128})/gi, group: 2 },
   // The credential shape: a name ending in a credential word, an assignment or separator, then a value that looks like
   // one (hex or base64-like, 8+ characters, with letters and digits). `key` alone is not a credential word (ticket keys).
-  { id: 'generic-api-key', re: /((?:[A-Za-z0-9_.-]*?)(?:api[_.-]?key|access[_.-]?key|secret[_.-]?key|private[_.-]?key|auth[_.-]?key|encryption[_.-]?key|signing[_.-]?key|client[_.-]?secret|secret|token|passwd|password|pwd|credentials?)s?["']?\s*(?:=>|:=|[:=])\s*["']?)([A-Za-z0-9+/_.~-]{8,}={0,2})/gi, group: 2, check: credentialLike },
+  // The match starts at the credential word, not at the start of the name around it: the name's prefix is never
+  // replaced, and a lazy prefix made every position of a long base64-like run scan to the run's end (quadratic).
+  { id: 'generic-api-key', re: /((?:api[_.-]?key|access[_.-]?key|secret[_.-]?key|private[_.-]?key|auth[_.-]?key|encryption[_.-]?key|signing[_.-]?key|client[_.-]?secret|secret|token|passwd|password|pwd|credentials?)s?["']?\s*(?:=>|:=|[:=])\s*["']?)([A-Za-z0-9+/_.~-]{8,}={0,2})/gi, group: 2, check: credentialLike },
 ];
+
+// The private-key rule's matches in one pass, as the lazy rule finds them: from each begin marker (after the last match),
+// its header read as the rule would (the longest first, ` BLOCK` before none), the first header with an end marker at
+// least 16 characters after it, and the first such end marker. Headers are bounded (100 characters): linear in the text.
+const HEADER = /[ A-Z0-9_-]/;
+const END_KEY = /-----END[ A-Z0-9_-]{0,100}PRIVATE KEY(?: BLOCK)?-----/y;
+export function privateKeySpans(text) {
+  if (!text.includes('-----BEGIN')) return [];
+  const ends = [];
+  for (let i = text.indexOf('-----END'); i >= 0; i = text.indexOf('-----END', i + 1)) {
+    END_KEY.lastIndex = i;
+    const m = END_KEY.exec(text);
+    if (m) ends.push({ start: i, end: i + m[0].length });
+  }
+  if (!ends.length) return [];
+  const firstEndFrom = (min) => {
+    let lo = 0;
+    let hi = ends.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (ends[mid].start < min) lo = mid + 1;
+      else hi = mid;
+    }
+    return lo < ends.length ? ends[lo] : null;
+  };
+  const spans = [];
+  let pos = 0;
+  for (let i = text.indexOf('-----BEGIN', pos); i >= 0; i = text.indexOf('-----BEGIN', Math.max(i + 1, pos))) {
+    const from = i + 10;
+    let run = 0;
+    while (run < 100 && from + run < text.length && HEADER.test(text[from + run])) run++;
+    let found = null;
+    for (let h = run; h >= 0 && !found; h--) {
+      for (const tail of ['PRIVATE KEY BLOCK-----', 'PRIVATE KEY-----']) {
+        if (!text.startsWith(tail, from + h)) continue;
+        const end = firstEndFrom(from + h + tail.length + 16);
+        if (end) {
+          found = end;
+          break;
+        }
+      }
+    }
+    if (!found) continue;
+    spans.push([i, found.end]);
+    pos = found.end;
+  }
+  return spans;
+}
 
 function entropy(s) {
   const n = new Map();
@@ -140,6 +192,23 @@ export function redactText(text, { env = process.env } = {}) {
     }
   }
   for (const r of RULES) {
+    if (r.scan) {
+      let at = 0;
+      let next = '';
+      for (const [start, end] of r.scan(out)) {
+        const value = out.slice(start, end);
+        next += out.slice(at, start);
+        if (value.toLowerCase().includes(PLACEHOLDER_MARKER)) next += value;
+        else {
+          next += MARK(r.id);
+          hits.push(r.id);
+          rememberSecret(value, r.id);
+        }
+        at = end;
+      }
+      out = next + out.slice(at);
+      continue;
+    }
     r.re.lastIndex = 0;
     out = out.replace(r.re, (...m) => {
       const groups = m.slice(1, -2);
