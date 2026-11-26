@@ -14,6 +14,7 @@ namespace IdentityServerHost.Quickstart.UI
         private readonly IAuthenticationSchemeProvider _schemeProvider;
         private readonly IAuthenticationHandlerProvider _handlerProvider;
         private readonly IEventService _events;
+        private readonly ILogger<AccountController> _logger;
 
         public AccountController(
             UserManager<ApplicationUser> userManager,
@@ -22,7 +23,8 @@ namespace IdentityServerHost.Quickstart.UI
             IClientStore clientStore,
             IAuthenticationSchemeProvider schemeProvider,
             IAuthenticationHandlerProvider handlerProvider,
-            IEventService events)
+            IEventService events,
+            ILogger<AccountController> logger)
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -31,6 +33,7 @@ namespace IdentityServerHost.Quickstart.UI
             _schemeProvider = schemeProvider;
             _handlerProvider = handlerProvider;
             _events = events;
+            _logger = logger;
         }
 
         /// <summary>
@@ -122,8 +125,10 @@ namespace IdentityServerHost.Quickstart.UI
                     }
                     else
                     {
-                        // user might have clicked on a malicious link - should be logged
-                        throw new Exception("invalid return URL");
+                        // user might have clicked on a malicious link; the URL comes from user input,
+                        // so it is not written to the log, and it is never followed
+                        _logger.LogWarning("Ignored a return URL that is neither local nor part of an authorization request after sign-in");
+                        return Redirect("~/");
                     }
                 }
 
