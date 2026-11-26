@@ -6,10 +6,25 @@ namespace eShop.WebApp.Services;
 
 public class BasketService(GrpcBasketClient basketClient)
 {
-    public async Task<IReadOnlyCollection<BasketQuantity>> GetBasketAsync()
+    public async Task<BasketContents> GetBasketAsync()
     {
         var result = await basketClient.GetBasketAsync(new ());
-        return MapToBasket(result);
+        return new BasketContents(MapToQuantities(result.Items), MapToQuantities(result.SavedItems));
+    }
+
+    public async Task SaveForLaterAsync(int productId)
+    {
+        await basketClient.SaveForLaterAsync(new SaveForLaterRequest { ProductId = productId });
+    }
+
+    public async Task MoveToCartAsync(int productId)
+    {
+        await basketClient.MoveToCartAsync(new MoveToCartRequest { ProductId = productId });
+    }
+
+    public async Task RemoveSavedItemAsync(int productId)
+    {
+        await basketClient.RemoveSavedItemAsync(new RemoveSavedItemRequest { ProductId = productId });
     }
 
     public async Task DeleteBasketAsync()
@@ -34,10 +49,10 @@ public class BasketService(GrpcBasketClient basketClient)
         await basketClient.UpdateBasketAsync(updatePayload);
     }
 
-    private static List<BasketQuantity> MapToBasket(CustomerBasketResponse response)
+    private static List<BasketQuantity> MapToQuantities(IEnumerable<GrpcBasketItem> items)
     {
         var result = new List<BasketQuantity>();
-        foreach (var item in response.Items)
+        foreach (var item in items)
         {
             result.Add(new BasketQuantity(item.ProductId, item.Quantity));
         }
@@ -47,3 +62,5 @@ public class BasketService(GrpcBasketClient basketClient)
 }
 
 public record BasketQuantity(int ProductId, int Quantity);
+
+public record BasketContents(IReadOnlyCollection<BasketQuantity> Items, IReadOnlyCollection<BasketQuantity> SavedItems);

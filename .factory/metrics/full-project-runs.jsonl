@@ -1,3 +1,13 @@
+{"ts":"2026-11-14T16:19:56.415Z","story":"CART-1","unit":"tests/Basket.UnitTests","why":"holds the story's tests","argv":"dotnet test --project tests/Basket.UnitTests --no-build","status":0,"timedOut":false}
+{"ts":"2026-11-14T16:20:31.874Z","story":"CART-1","unit":"tests/Basket.FunctionalTests","why":"holds the story's tests","argv":"dotnet test --project tests/Basket.FunctionalTests --no-build","status":2,"timedOut":false}
+{"ts":"2026-11-14T16:24:24.405Z","story":"CART-1","unit":"tests/Basket.UnitTests","why":"holds the story's tests","argv":"dotnet test --project tests/Basket.UnitTests --no-build","status":0,"timedOut":false}
+{"ts":"2026-11-14T16:24:32.739Z","story":"CART-1","unit":"tests/Basket.FunctionalTests","why":"holds the story's tests","argv":"dotnet test --project tests/Basket.FunctionalTests --no-build","status":0,"timedOut":false}
+{"ts":"2026-11-14T16:36:29.028Z","story":"CART-1","unit":"tests/Basket.UnitTests","why":"holds the story's tests","argv":"dotnet test --project tests/Basket.UnitTests --no-build","status":0,"timedOut":false}
+{"ts":"2026-11-14T16:36:39.172Z","story":"CART-1","unit":"tests/Basket.FunctionalTests","why":"holds the story's tests","argv":"dotnet test --project tests/Basket.FunctionalTests --no-build","status":0,"timedOut":false}
+{"ts":"2026-11-14T16:47:08.371Z","story":"CART-1","unit":"tests/Basket.UnitTests","why":"holds the story's tests","argv":"dotnet test --project tests/Basket.UnitTests --no-build","status":0,"timedOut":false}
+{"ts":"2026-11-14T16:47:17.430Z","story":"CART-1","unit":"tests/Basket.FunctionalTests","why":"holds the story's tests","argv":"dotnet test --project tests/Basket.FunctionalTests --no-build","status":0,"timedOut":false}
+{"ts":"2026-11-14T17:12:59.842Z","story":"CART-1","unit":"tests/Basket.UnitTests","why":"holds the story's tests","argv":"dotnet test --project tests/Basket.UnitTests --no-build","status":0,"timedOut":false}
+{"ts":"2026-11-14T17:13:06.824Z","story":"CART-1","unit":"tests/Basket.FunctionalTests","why":"holds the story's tests","argv":"dotnet test --project tests/Basket.FunctionalTests --no-build","status":0,"timedOut":false}
 {"ts":"2026-11-14T16:58:34.292Z","story":"BUG-19","unit":"tests/Application.UnitTests","why":"covers catalog-api","argv":"dotnet test --project tests/Application.UnitTests --no-build","status":0,"timedOut":false}
 {"ts":"2026-11-14T16:58:52.531Z","story":"BUG-19","unit":"tests/Catalog.FunctionalTests","why":"covers catalog-api","argv":"dotnet test --project tests/Catalog.FunctionalTests --no-build","status":0,"timedOut":false}
 {"ts":"2026-11-14T18:16:12.323Z","story":"BUG-16","unit":"tests/Webhooks.FunctionalTests","why":"holds the story's tests","argv":"dotnet test --project tests/Webhooks.FunctionalTests --no-build","status":0,"timedOut":false}
@@ -10,6 +20,8 @@
 {"ts":"2026-11-14T20:30:34.440Z","story":"BUG-15","unit":"tests/Ordering.UnitTests","why":"covers ordering-api","argv":"dotnet test --project tests/Ordering.UnitTests --no-build","status":0,"timedOut":false}
 {"ts":"2026-11-14T20:36:07.552Z","story":"BUG-15","unit":"tests/Ordering.FunctionalTests","why":"holds the story's tests","argv":"dotnet test --project tests/Ordering.FunctionalTests --no-build","status":0,"timedOut":false}
 {"ts":"2026-11-14T20:36:11.477Z","story":"BUG-15","unit":"tests/Ordering.UnitTests","why":"covers ordering-api","argv":"dotnet test --project tests/Ordering.UnitTests --no-build","status":0,"timedOut":false}
+{"ts":"2026-11-15T03:11:09.972Z","story":"CART-1","unit":"tests/Basket.UnitTests","why":"holds the story's tests","argv":"dotnet test --project tests/Basket.UnitTests --no-build","status":0,"timedOut":false}
+{"ts":"2026-11-15T03:11:17.301Z","story":"CART-1","unit":"tests/Basket.FunctionalTests","why":"holds the story's tests","argv":"dotnet test --project tests/Basket.FunctionalTests --no-build","status":0,"timedOut":false}
 {"ts":"2026-11-15T03:00:47.280Z","story":"BUG-30","unit":"tests/Ordering.FunctionalTests","why":"holds the story's tests","argv":"dotnet test --project tests/Ordering.FunctionalTests --no-build","status":0,"timedOut":false}
 {"ts":"2026-11-15T03:01:02.012Z","story":"BUG-30","unit":"tests/Ordering.UnitTests","why":"covers ordering-api","argv":"dotnet test --project tests/Ordering.UnitTests --no-build","status":0,"timedOut":false}
 {"ts":"2026-11-15T03:07:15.444Z","story":"BUG-30","unit":"tests/Ordering.FunctionalTests","why":"holds the story's tests","argv":"dotnet test --project tests/Ordering.FunctionalTests --no-build","status":0,"timedOut":false}

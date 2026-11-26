@@ -1,0 +1,4 @@
+{"ts":"2026-11-15T05:43:26.819Z","story":"CART-1","unit":"tests/Basket.UnitTests","why":"holds the story's tests","argv":"dotnet test --project tests/Basket.UnitTests --no-build","status":0,"timedOut":false}
+{"ts":"2026-11-15T05:43:33.660Z","story":"CART-1","unit":"tests/Basket.FunctionalTests","why":"holds the story's tests","argv":"dotnet test --project tests/Basket.FunctionalTests --no-build","status":0,"timedOut":false}
+{"ts":"2026-11-15T05:48:39.848Z","story":"CART-1","unit":"tests/Basket.UnitTests","why":"holds the story's tests","argv":"dotnet test --project tests/Basket.UnitTests --no-build","status":0,"timedOut":false}
+{"ts":"2026-11-15T05:48:47.300Z","story":"CART-1","unit":"tests/Basket.FunctionalTests","why":"holds the story's tests","argv":"dotnet test --project tests/Basket.FunctionalTests --no-build","status":0,"timedOut":false}
