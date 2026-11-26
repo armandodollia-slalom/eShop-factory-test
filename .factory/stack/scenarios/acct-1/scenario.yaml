@@ -1,0 +1,7 @@
+description: ACCT-1 My account page; needs only the seeded users alice and bob with their profile claims.
+extends: default
+
+# No extra rows. Every case reads the identity claims of the users the default scenario seeds (identitydb.sql):
+#   alice / Pass123$: Alice Smith, AliceSmith@email.com, 15703 NE 61st Ct, Redmond, WA 98052, U.S.
+#   bob   / Pass123$: Bob Smith, BobSmith@email.com (same address as alice)
+# Empty baskets and no orders: TC-ACCT-1-09 opens the (empty) orders page.
