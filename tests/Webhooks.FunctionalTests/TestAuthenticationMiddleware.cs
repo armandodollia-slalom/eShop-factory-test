@@ -8,7 +8,7 @@ public sealed class TestAuthenticationMiddleware(RequestDelegate next)
     {
         var userId = context.Request.Headers["X-Test-User"].FirstOrDefault() ?? "test-user";
         context.User = new ClaimsPrincipal(new ClaimsIdentity(
-            [new Claim("sub", userId)],
+            [new Claim("sub", userId), new Claim("scope", "webhooks")],
             "Test"));
         await next(context);
     }

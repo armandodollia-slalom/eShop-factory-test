@@ -1,8 +1,20 @@
-﻿internal static class Extensions
+﻿using System.Security.Claims;
+
+internal static class Extensions
 {
+    public const string WebhooksScopePolicy = "WebhooksScope";
+
+    private const string WebhooksScope = "webhooks";
+
     public static void AddApplicationServices(this IHostApplicationBuilder builder)
     {
         builder.AddDefaultAuthentication();
+
+        // Only access tokens issued for this API (carrying the "webhooks" scope) may call it.
+        builder.Services.AddAuthorizationBuilder()
+            .AddPolicy(WebhooksScopePolicy, policy => policy
+                .RequireAuthenticatedUser()
+                .RequireAssertion(context => HasScope(context.User, WebhooksScope)));
 
         builder.AddRabbitMqEventBus("eventbus")
                .AddEventBusSubscriptions();
@@ -15,6 +27,12 @@
         builder.Services.AddTransient<IWebhooksRetriever, WebhooksRetriever>();
         builder.Services.AddTransient<IWebhooksSender, WebhooksSender>();
     }
+
+    // Scopes arrive either as one claim per scope or as a single space-delimited claim.
+    private static bool HasScope(ClaimsPrincipal user, string scope) =>
+        user.FindAll(c => c.Type == "scope")
+            .SelectMany(c => c.Value.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+            .Contains(scope, StringComparer.Ordinal);
 
     private static void AddEventBusSubscriptions(this IEventBusBuilder eventBus)
     {

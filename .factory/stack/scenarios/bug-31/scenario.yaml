@@ -1,0 +1,5 @@
+description: BUG-31 Webhooks.API scope check; needs only the seeded users alice and bob and no webhook subscriptions.
+extends: default
+
+# No extra rows: alice (Pass123$) starts with no webhook subscriptions. Cases that need one create it through the
+# API with a webhooks-scoped token, so its id comes from the real Location header and every case starts from [].

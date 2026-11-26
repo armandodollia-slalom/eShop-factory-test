@@ -3,6 +3,11 @@
 {"ts":"2026-11-14T20:30:09.706Z","story":"BUG-15","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":1,"outcome":"leased","poolSize":null}
 {"ts":"2026-11-14T20:32:20.174Z","story":"BUG-15","kind":"stack-slot","stage":"automation agent","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null}
 {"ts":"2026-11-14T20:35:51.133Z","story":"BUG-15","kind":"stack-slot","stage":"precheck","slot":1,"waitedSec":0,"outcome":"leased","poolSize":null}
+{"ts":"2026-11-15T02:46:01.739Z","story":"BUG-31","kind":"lsp","worktree":"bug-31","missing":["csharp (all 3 leased language server slots are in use (/Users/armando.dollia/code/eShop-factory-test-worktrees/cart-1 (csharp), /Users/armando.dollia/code/eShop-factory-test-worktrees/whk-1 (csharp), /Users/armando.dollia/code/eShop-factory-test-worktrees/bug-30 (csharp)))"]}
+{"ts":"2026-11-15T02:51:40.667Z","story":"BUG-31","kind":"stack-slot","stage":"automation pass","slot":3,"waitedSec":1,"outcome":"leased","poolSize":null}
+{"ts":"2026-11-15T03:03:51.662Z","story":"BUG-31","kind":"stack-slot","stage":"precheck","slot":3,"waitedSec":4,"outcome":"leased","poolSize":null,"held":true,"upSec":4}
+{"ts":"2026-11-15T03:28:04.843Z","story":"BUG-31","kind":"stack-slot","stage":"automation pass","slot":2,"waitedSec":0,"outcome":"leased","poolSize":null}
+{"ts":"2026-11-15T03:29:53.399Z","story":"BUG-31","kind":"stack-slot","stage":"precheck","slot":2,"waitedSec":105,"outcome":"leased","poolSize":null,"held":true,"upSec":105}
 {"ts":"2026-11-15T02:45:35.174Z","story":"BUG-30","kind":"stack-slot","stage":"automation pass","slot":2,"waitedSec":1,"outcome":"leased","poolSize":null}
 {"ts":"2026-11-15T02:59:16.982Z","story":"BUG-30","kind":"stack-slot","stage":"precheck","slot":2,"waitedSec":6,"outcome":"leased","poolSize":null,"held":true,"upSec":6}
 {"ts":"2026-11-15T03:05:47.502Z","story":"BUG-30","kind":"stack-slot","stage":"automation pass","slot":2,"waitedSec":0,"outcome":"leased","poolSize":null}
