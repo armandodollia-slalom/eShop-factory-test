@@ -1,0 +1,7 @@
+{"ts":"2026-11-15T07:01:51.185Z","stage":"plan","story":"ORDD-1","round":1,"agent_prompt_ver":"1edb523e","verifier_ver":"67b01306","cli":"claude","score":9,"passed":true,"gaps":2}
+{"ts":"2026-11-15T07:16:22.271Z","stage":"automation","story":"ORDD-1","round":1,"agent_prompt_ver":"1c92a147","verifier_ver":"3dd540d1","cli":"claude","score":10,"passed":true,"gaps":0}
+{"ts":"2026-11-15T07:38:11.385Z","stage":"automation","story":"ORDD-1","round":0,"agent_prompt_ver":"unchanged","verifier_ver":"3dd540d1","cli":"claude","score":10,"passed":true,"gaps":0}
+{"ts":"2026-11-15T07:46:56.819Z","stage":"automation","story":"ORDD-1","round":0,"agent_prompt_ver":"unchanged","verifier_ver":"3dd540d1","cli":"claude","score":10,"passed":true,"gaps":0}
+{"ts":"2026-11-15T14:15:24.234Z","stage":"automation","story":"ORDD-1","round":0,"agent_prompt_ver":"unchanged","verifier_ver":"3dd540d1","cli":"claude","score":10,"passed":true,"gaps":0}
+{"ts":"2026-11-15T14:27:34.894Z","stage":"automation","story":"ORDD-1","round":0,"agent_prompt_ver":"unchanged","verifier_ver":"3dd540d1","cli":"claude","score":10,"passed":true,"gaps":0}
+{"ts":"2026-11-15T14:34:04.437Z","stage":"automation","story":"ORDD-1","round":0,"agent_prompt_ver":"unchanged","verifier_ver":"3dd540d1","cli":"claude","score":9,"passed":true,"gaps":1}

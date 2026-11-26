@@ -83,10 +83,11 @@ public static class OrdersApi
     {
         try
         {
-            var order = await services.Queries.GetOrderAsync(orderId);
+            var userId = services.IdentityService.GetUserIdentity();
+            var order = await services.Queries.GetOrderAsync(orderId, userId);
             return TypedResults.Ok(order);
         }
-        catch
+        catch (KeyNotFoundException)
         {
             return TypedResults.NotFound();
         }

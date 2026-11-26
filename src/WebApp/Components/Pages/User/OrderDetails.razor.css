@@ -1,0 +1,93 @@
+.order-details {
+    max-width: var(--content-max);
+    margin: 0 auto;
+    padding: 0 var(--page-pad) 4rem;
+}
+
+.order-details-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 1.25rem;
+    color: var(--color-ink-2);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    text-decoration: none;
+    transition: color var(--dur-1) var(--ease);
+}
+
+.order-details-back:hover {
+    color: var(--color-ink);
+}
+
+.order-details-back img {
+    width: 1.1rem;
+    height: 1.1rem;
+}
+
+.order-details-notfound {
+    color: var(--color-ink-2);
+    font-size: var(--text-lg);
+}
+
+/* The summary and item rows use the shared order rows ("Order rows" in wwwroot/css/app.css)
+   and OrderStatusBadge; only the item columns are specific to this page. */
+.numeric-header {
+    text-align: right;
+}
+
+/* The product column (header and rows) gets twice the room of the numeric columns
+   so product names do not wrap while the numbers leave empty space. */
+.order-details-items .orders-item > div:first-child {
+    flex: 2 0 0;
+}
+
+.item-name {
+    font-weight: 700;
+    color: var(--color-ink);
+}
+
+.item-numeric {
+    color: var(--color-ink-2);
+    text-align: right;
+}
+
+.item-line-total {
+    color: var(--color-ink);
+    font-size: var(--text-base);
+    font-weight: 700;
+}
+
+.order-details-section {
+    max-width: 56rem;
+    margin-top: 2.5rem;
+}
+
+.order-details-section h2 {
+    margin: 0 0 1rem;
+    color: var(--color-ink);
+    font-size: var(--text-xl);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.order-details-address {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 0.5rem 1.75rem;
+    margin: 0;
+}
+
+.order-details-address dt {
+    color: var(--color-muted);
+    font-size: var(--text-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    align-self: center;
+}
+
+.order-details-address dd {
+    margin: 0;
+    color: var(--color-ink);
+}
