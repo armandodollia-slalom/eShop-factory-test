@@ -45,4 +45,6 @@ public class CancelOrderIdentifiedCommandHandler : IdentifiedCommandHandler<Canc
     {
         return true; // Ignore duplicate requests for processing order.
     }
+
+    protected override bool ReportsFailuresToCaller => true;
 }

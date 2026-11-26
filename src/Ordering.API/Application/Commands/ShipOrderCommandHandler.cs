@@ -45,4 +45,6 @@ public class ShipOrderIdentifiedCommandHandler : IdentifiedCommandHandler<ShipOr
     {
         return true; // Ignore duplicate requests for processing order.
     }
+
+    protected override bool ReportsFailuresToCaller => true;
 }
