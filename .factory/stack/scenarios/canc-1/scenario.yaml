@@ -1,0 +1,43 @@
+description: CANC-1 cancel an order from My orders; alice owns eight orders in every status, bob owns none.
+extends: default
+
+# The users come from `default` (alice and bob, password Pass123$). Ids start at 9001/9101/9201 to stay clear of the HiLo sequences.
+# Submitted orders are dated 2099 so the OrderProcessor's grace-period job never moves them during a test; seeded rows publish no
+# integration events, so the AwaitingValidation and StockConfirmed orders do not move on their own either.
+postgres:
+  orderingdb:
+    - table: ordering.buyers
+      rows:
+        # alice: owner of every seeded order
+        - { Id: 9001, IdentityGuid: 50ddac7e-9b69-4d68-a91b-25100ef2e403, Name: alice }
+        # bob: no orders; tries to cancel alice's order 9108 (TC-CANC-1-09, -10)
+        - { Id: 9002, IdentityGuid: bc8b0071-21af-41ab-b1d2-15c4efc368df, Name: bob }
+    - table: ordering.orders
+      rows:
+        # Submitted: cancelled through the UI (TC-CANC-1-03)
+        - { Id: 9101, BuyerId: 9001, OrderStatus: Submitted, OrderDate: "2099-01-01T10:00:00Z", Address_Street: 15703 NE 61st Ct, Address_City: Redmond, Address_State: WA, Address_Country: U.S., Address_ZipCode: "98052" }
+        # AwaitingValidation: cancelled through the UI (TC-CANC-1-07); its row is checked in TC-CANC-1-11
+        - { Id: 9102, BuyerId: 9001, OrderStatus: AwaitingValidation, OrderDate: "2026-11-02T10:00:00Z", Address_Street: 15703 NE 61st Ct, Address_City: Redmond, Address_State: WA, Address_Country: U.S., Address_ZipCode: "98052" }
+        # StockConfirmed: cancelled through the UI (TC-CANC-1-06), the last status before Paid
+        - { Id: 9103, BuyerId: 9001, OrderStatus: StockConfirmed, OrderDate: "2026-11-03T10:00:00Z", Address_Street: 15703 NE 61st Ct, Address_City: Redmond, Address_State: WA, Address_Country: U.S., Address_ZipCode: "98052" }
+        # Paid: no Cancel button (TC-CANC-1-02); its row is checked in TC-CANC-1-11
+        - { Id: 9104, BuyerId: 9001, OrderStatus: Paid, OrderDate: "2026-11-04T10:00:00Z", Address_Street: 15703 NE 61st Ct, Address_City: Redmond, Address_State: WA, Address_Country: U.S., Address_ZipCode: "98052" }
+        # Shipped: no Cancel button (TC-CANC-1-02)
+        - { Id: 9105, BuyerId: 9001, OrderStatus: Shipped, OrderDate: "2026-11-05T10:00:00Z", Address_Street: 15703 NE 61st Ct, Address_City: Redmond, Address_State: WA, Address_Country: U.S., Address_ZipCode: "98052" }
+        # Cancelled: no Cancel button (TC-CANC-1-02); its row is checked in TC-CANC-1-11
+        - { Id: 9106, BuyerId: 9001, OrderStatus: Cancelled, OrderDate: "2026-11-06T10:00:00Z", Address_Street: 15703 NE 61st Ct, Address_City: Redmond, Address_State: WA, Address_Country: U.S., Address_ZipCode: "98052" }
+        # StockConfirmed: set to Paid in the database after the page loaded (TC-CANC-1-08)
+        - { Id: 9107, BuyerId: 9001, OrderStatus: StockConfirmed, OrderDate: "2026-11-07T10:00:00Z", Address_Street: 15703 NE 61st Ct, Address_City: Redmond, Address_State: WA, Address_Country: U.S., Address_ZipCode: "98052" }
+        # Submitted: bob's cancel target (TC-CANC-1-09, -10)
+        - { Id: 9108, BuyerId: 9001, OrderStatus: Submitted, OrderDate: "2099-01-02T10:00:00Z", Address_Street: 15703 NE 61st Ct, Address_City: Redmond, Address_State: WA, Address_Country: U.S., Address_ZipCode: "98052" }
+    - table: ordering.orderItems
+      # One item per order (ProductId 99 "Adventurer GPS Watch"); Units x UnitPrice gives the order's total.
+      rows:
+        - { Id: 9201, OrderId: 9101, ProductId: 99, ProductName: Adventurer GPS Watch, UnitPrice: 10.00, Discount: 0, PictureUrl: 99.webp, Units: 1 }
+        - { Id: 9202, OrderId: 9102, ProductId: 99, ProductName: Adventurer GPS Watch, UnitPrice: 15.00, Discount: 0, PictureUrl: 99.webp, Units: 2 }
+        - { Id: 9203, OrderId: 9103, ProductId: 99, ProductName: Adventurer GPS Watch, UnitPrice: 20.00, Discount: 0, PictureUrl: 99.webp, Units: 1 }
+        - { Id: 9204, OrderId: 9104, ProductId: 99, ProductName: Adventurer GPS Watch, UnitPrice: 25.00, Discount: 0, PictureUrl: 99.webp, Units: 1 }
+        - { Id: 9205, OrderId: 9105, ProductId: 99, ProductName: Adventurer GPS Watch, UnitPrice: 40.00, Discount: 0, PictureUrl: 99.webp, Units: 1 }
+        - { Id: 9206, OrderId: 9106, ProductId: 99, ProductName: Adventurer GPS Watch, UnitPrice: 50.00, Discount: 0, PictureUrl: 99.webp, Units: 1 }
+        - { Id: 9207, OrderId: 9107, ProductId: 99, ProductName: Adventurer GPS Watch, UnitPrice: 60.00, Discount: 0, PictureUrl: 99.webp, Units: 1 }
+        - { Id: 9208, OrderId: 9108, ProductId: 99, ProductName: Adventurer GPS Watch, UnitPrice: 70.00, Discount: 0, PictureUrl: 99.webp, Units: 1 }
