@@ -400,6 +400,7 @@
         {
           "services": [
             "basket-api",
+            "catalog-api",
             "ordering-api",
             "webhooks-api"
           ],

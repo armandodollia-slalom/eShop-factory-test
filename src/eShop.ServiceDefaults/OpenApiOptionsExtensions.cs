@@ -112,7 +112,7 @@ internal static class OpenApiOptionsExtensions
             operation.Responses.TryAdd("401", new OpenApiResponse { Description = "Unauthorized" });
             operation.Responses.TryAdd("403", new OpenApiResponse { Description = "Forbidden" });
 
-            var oAuthScheme = new OpenApiSecuritySchemeReference("oauth2", null);
+            var oAuthScheme = new OpenApiSecuritySchemeReference("oauth2", context.Document);
 
             operation.Security = new List<OpenApiSecurityRequirement>
             {
@@ -182,9 +182,9 @@ internal static class OpenApiOptionsExtensions
                     }
                 }
             };
-            document.Components ??= new();
-            document.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>();
-            document.Components.SecuritySchemes.Add("oauth2", securityScheme);
+            // AddComponent also registers the scheme in the document's workspace, so the
+            // operations' oauth2 security requirements resolve and serialize with their scopes.
+            document.AddComponent("oauth2", securityScheme);
             return Task.CompletedTask;
         }
     }
