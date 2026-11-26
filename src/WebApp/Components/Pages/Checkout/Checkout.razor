@@ -9,8 +9,9 @@
 <SectionContent SectionName="page-header-title">Checkout</SectionContent>
 
 <div class='checkout'>
-    <EditForm EditContext="@editContext" FormName="checkout" OnSubmit="@HandleSubmitAsync" Enhance>
+    <EditForm EditContext="@editContext" FormName="checkout" OnSubmit="@HandleSubmitAsync" Enhance data-submit-once="true">
         <DataAnnotationsValidator />
+        <input type="hidden" name="Info.RequestId" value="@Info.RequestId" />
         <div class="form">
             <div class="form-section">
                 <h2>Shipping address</h2>
