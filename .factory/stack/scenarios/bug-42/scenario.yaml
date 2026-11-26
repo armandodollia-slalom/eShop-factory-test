@@ -1,0 +1,37 @@
+description: BUG-42 My orders dates in the browser's time zone; alice has five orders placed at fixed UTC instants.
+extends: default
+
+# alice (Pass123$, IdentityGuid 50ddac7e-9b69-4d68-a91b-25100ef2e403) is buyer 1 and owns orders 1 to 5.
+# Every OrderDate is a fixed UTC instant so the Date shown in America/Chicago and Asia/Tokyo is exact
+# (see the table in .factory/plans/BUG-42-*/_index.md). Totals come from the order items below.
+postgres:
+  orderingdb:
+    - table: ordering.buyers
+      rows:
+        # alice: GET /api/orders lists the orders of the buyer whose IdentityGuid is the token's subject
+        - { Id: 1, IdentityGuid: 50ddac7e-9b69-4d68-a91b-25100ef2e403, Name: alice }
+    - table: ordering.orders
+      rows:
+        # 1: the bug report's order; 09:08:50 in Chicago (CST, UTC-6), 00:08:50 on 17 Nov in Tokyo
+        - { Id: 1, BuyerId: 1, OrderDate: "2026-11-16T15:08:50Z", OrderStatus: Submitted, Address_Street: 15703 NE 61st Ct, Address_City: Redmond, Address_State: WA, Address_Country: U.S., Address_ZipCode: "98052" }
+        # 2: US daylight time (CDT, UTC-5); 16:05:07 checks the 24-hour format
+        - { Id: 2, BuyerId: 1, OrderDate: "2026-07-04T21:05:07Z", OrderStatus: Paid, Address_Street: 15703 NE 61st Ct, Address_City: Redmond, Address_State: WA, Address_Country: U.S., Address_ZipCode: "98052" }
+        # 3: rolls back to the previous day (03/01 23:59:59) in Chicago
+        - { Id: 3, BuyerId: 1, OrderDate: "2026-03-02T05:59:59Z", OrderStatus: Shipped, Address_Street: 15703 NE 61st Ct, Address_City: Redmond, Address_State: WA, Address_Country: U.S., Address_ZipCode: "98052" }
+        # 4: one second before midnight in Tokyo (11/16 23:59:59)
+        - { Id: 4, BuyerId: 1, OrderDate: "2026-11-16T14:59:59Z", OrderStatus: Cancelled, Address_Street: 15703 NE 61st Ct, Address_City: Redmond, Address_State: WA, Address_Country: U.S., Address_ZipCode: "98052" }
+        # 5: exactly midnight in Tokyo (11/17 00:00:00)
+        - { Id: 5, BuyerId: 1, OrderDate: "2026-11-16T15:00:00Z", OrderStatus: Submitted, Address_Street: 15703 NE 61st Ct, Address_City: Redmond, Address_State: WA, Address_Country: U.S., Address_ZipCode: "98052" }
+    - table: ordering.orderItems
+      rows:
+        # order 1: $149.99
+        - { Id: 1, OrderId: 1, ProductId: 7, ProductName: Explorer 45L Backpack, UnitPrice: 149.99, Discount: 0, Units: 1, PictureUrl: null }
+        # order 2: 2 x 199.99 = $399.98
+        - { Id: 2, OrderId: 2, ProductId: 99, ProductName: Adventurer GPS Watch, UnitPrice: 199.99, Discount: 0, Units: 2, PictureUrl: null }
+        # order 3: 149.99 + 199.99 = $349.98
+        - { Id: 3, OrderId: 3, ProductId: 7, ProductName: Explorer 45L Backpack, UnitPrice: 149.99, Discount: 0, Units: 1, PictureUrl: null }
+        - { Id: 4, OrderId: 3, ProductId: 99, ProductName: Adventurer GPS Watch, UnitPrice: 199.99, Discount: 0, Units: 1, PictureUrl: null }
+        # order 4: $199.99
+        - { Id: 5, OrderId: 4, ProductId: 99, ProductName: Adventurer GPS Watch, UnitPrice: 199.99, Discount: 0, Units: 1, PictureUrl: null }
+        # order 5: $149.99
+        - { Id: 6, OrderId: 5, ProductId: 7, ProductName: Explorer 45L Backpack, UnitPrice: 149.99, Discount: 0, Units: 1, PictureUrl: null }

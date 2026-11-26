@@ -1,0 +1,6 @@
+{"ts":"2026-11-16T18:00:31.464Z","stage":"plan","story":"BUG-42","round":1,"agent_prompt_ver":"d8121b51","verifier_ver":"67b01306","cli":"claude","score":9,"passed":true,"gaps":1}
+{"ts":"2026-11-16T18:22:57.056Z","stage":"automation","story":"BUG-42","round":1,"agent_prompt_ver":"452b59bc","verifier_ver":"5b110a7e","cli":"claude","score":9,"passed":true,"gaps":1}
+{"ts":"2026-11-16T18:43:53.461Z","stage":"automation","story":"BUG-42","round":0,"agent_prompt_ver":"unchanged","verifier_ver":"5b110a7e","cli":"claude","score":9,"passed":true,"gaps":1}
+{"ts":"2026-11-16T19:05:37.782Z","stage":"automation","story":"BUG-42","round":0,"agent_prompt_ver":"unchanged","verifier_ver":"5b110a7e","cli":"claude","score":8,"passed":false,"gaps":2}
+{"ts":"2026-11-16T19:19:25.923Z","stage":"automation","story":"BUG-42","round":1,"agent_prompt_ver":"452b59bc","verifier_ver":"5b110a7e","cli":"claude","score":10,"passed":true,"gaps":0}
+{"ts":"2026-11-16T19:26:40.308Z","stage":"automation","story":"BUG-42","round":0,"agent_prompt_ver":"unchanged","verifier_ver":"5b110a7e","cli":"claude","score":10,"passed":true,"gaps":0}
