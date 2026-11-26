@@ -132,7 +132,14 @@ public class BasketState(
             var catalogItems = (await catalogService.GetCatalogItems(productIds)).ToDictionary(k => k.Id, v => v);
             foreach (var item in quantities)
             {
-                var catalogItem = catalogItems[item.ProductId];
+                // A basket line can refer to a product that is no longer in the catalog.
+                // Skip it so the rest of the basket still shows; the next basket write
+                // (add, quantity change) is built from these items and drops the orphan line.
+                if (!catalogItems.TryGetValue(item.ProductId, out var catalogItem))
+                {
+                    continue;
+                }
+
                 var orderItem = new BasketItem
                 {
                     Id = Guid.NewGuid().ToString(), // TODO: this value is meaningless, use ProductId instead.
