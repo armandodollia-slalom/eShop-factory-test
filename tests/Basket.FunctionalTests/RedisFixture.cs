@@ -8,9 +8,13 @@ public sealed class RedisFixture : IAsyncLifetime
     private readonly IHost _app;
     private readonly IResourceBuilder<RedisResource> _redis;
     private IConnectionMultiplexer? _connection;
+    private string? _connectionString;
 
     public IConnectionMultiplexer Connection =>
         _connection ?? throw new InvalidOperationException("The Redis fixture has not been initialized.");
+
+    public string ConnectionString =>
+        _connectionString ?? throw new InvalidOperationException("The Redis fixture has not been initialized.");
 
     public RedisFixture()
     {
@@ -29,8 +33,8 @@ public sealed class RedisFixture : IAsyncLifetime
         var notifications = _app.Services.GetRequiredService<ResourceNotificationService>();
         await notifications.WaitForResourceHealthyAsync(_redis.Resource.Name);
 
-        var connectionString = await _redis.Resource.ConnectionStringExpression.GetValueAsync(CancellationToken.None);
-        _connection = await ConnectionMultiplexer.ConnectAsync(connectionString!);
+        _connectionString = await _redis.Resource.ConnectionStringExpression.GetValueAsync(CancellationToken.None);
+        _connection = await ConnectionMultiplexer.ConnectAsync(_connectionString!);
     }
 
     public async ValueTask DisposeAsync()
