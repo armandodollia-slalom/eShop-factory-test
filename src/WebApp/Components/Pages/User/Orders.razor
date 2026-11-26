@@ -12,7 +12,7 @@
 {
     <p class="orders-loading" role="status">Loading your orders...</p>
 }
-else if (orders.Length == 0)
+else if (!hasAnyOrders)
 {
     <div class="orders-empty">
         <span class="orders-empty-icon" aria-hidden="true">
@@ -28,41 +28,82 @@ else if (orders.Length == 0)
 }
 else
 {
-    <ul class="orders-list">
-        <li class="orders-header orders-item">
-            <div>Number</div>
-            <div>Date</div>
-            <div class="total-header">Total</div>
-            <div>Status</div>
-        </li>
-        @foreach (var order in orders)
-        {
-            <li class="orders-item">
-                <div class="order-number">
-                    @order.OrderNumber
-                </div>
-                <div class="order-date">
-                    @order.Date
-                </div>
-                <div class="order-total">
-                   $@order.Total.ToPriceDisplay()
-                </div>
-                <div class="order-status">
-                    <span class="status @order.Status.ToLower()">
-                        @order.Status
-                    </span>
-                </div>
+    <nav class="orders-filter" aria-labelledby="orders-filter-label">
+        <span class="orders-filter-label" id="orders-filter-label">Status</span>
+        <ul class="orders-filter-options">
+            <li>
+                <a class="orders-filter-option" href="user/orders" aria-current="@(selectedStatus is null ? "true" : null)">All</a>
             </li>
-        }
-    </ul>
+            @foreach (var status in Statuses)
+            {
+                <li>
+                    <a class="orders-filter-option" href="user/orders?status=@status" aria-current="@(status == selectedStatus ? "true" : null)">@status</a>
+                </li>
+            }
+        </ul>
+    </nav>
+
+    @if (orders.Length == 0)
+    {
+        <div class="orders-filter-empty" role="status">
+            <p>No @selectedStatus orders.</p>
+            <a href="user/orders">Show all orders</a>
+        </div>
+    }
+    else
+    {
+        <ul class="orders-list">
+            <li class="orders-header orders-item">
+                <div>Number</div>
+                <div>Date</div>
+                <div class="total-header">Total</div>
+                <div>Status</div>
+            </li>
+            @foreach (var order in orders)
+            {
+                <li class="orders-item">
+                    <div class="order-number">
+                        @order.OrderNumber
+                    </div>
+                    <div class="order-date">
+                        @order.Date
+                    </div>
+                    <div class="order-total">
+                       $@order.Total.ToPriceDisplay()
+                    </div>
+                    <div class="order-status">
+                        <span class="status @order.Status.ToLower()">
+                            @order.Status
+                        </span>
+                    </div>
+                </li>
+            }
+        </ul>
+    }
 }
 </div>
 
 @code {
+    // The status names Ordering.API reports and accepts in ?status=, in its order.
+    private static readonly string[] Statuses = ["Submitted", "AwaitingValidation", "StockConfirmed", "Paid", "Shipped", "Cancelled"];
+
     private OrderRecord[]? orders;
+    private bool hasAnyOrders;
+    private string? selectedStatus;
+
+    [SupplyParameterFromQuery(Name = "status")]
+    public string? Status { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        orders = await OrderingService.GetOrders();
+        // An unknown status falls back to "All" instead of reaching the API, which would answer 400.
+        selectedStatus = Statuses.FirstOrDefault(s => s == Status);
+
+        var result = await OrderingService.GetOrders(selectedStatus);
+
+        // A filter with no matches must not look like a shopper with no orders at all.
+        hasAnyOrders = result.Length > 0
+            || (selectedStatus is not null && (await OrderingService.GetOrders()).Length > 0);
+        orders = result;
     }
 }
